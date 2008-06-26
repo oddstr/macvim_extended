@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:		Ruby
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
-" Info:			$Id: ruby.vim,v 1.12 2008/06/24 20:29:02 vimboss Exp $
+" Info:			$Id: ruby.vim,v 1.13 2008/06/25 19:55:02 vimboss Exp $
 " URL:			http://vim-ruby.rubyforge.org
 " Anon CVS:		See above site
 " Release Coordinator:	Doug Kearns <dougkearns@gmail.com>

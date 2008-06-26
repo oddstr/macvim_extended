@@ -1,7 +1,7 @@
 " Vim indent file
 " Language:		Ruby
 " Maintainer:		Nikolai Weibull <now at bitwi.se>
-" Info:			$Id: ruby.vim,v 1.10 2008/06/24 21:34:55 vimboss Exp $
+" Info:			$Id: ruby.vim,v 1.11 2008/06/25 19:57:26 vimboss Exp $
 " URL:			http://vim-ruby.rubyforge.org
 " Anon CVS:		See above site
 " Release Coordinator:	Doug Kearns <dougkearns@gmail.com>

@@ -1,7 +1,7 @@
 " Vim compiler file
 " Language:		eRuby
 " Maintainer:		Doug Kearns <dougkearns@gmail.com>
-" Info:			$Id: eruby.vim,v 1.5 2008/06/24 21:48:25 vimboss Exp $
+" Info:			$Id: eruby.vim,v 1.6 2008/06/25 19:58:00 vimboss Exp $
 " URL:			http://vim-ruby.rubyforge.org
 " Anon CVS:		See above site
 " Release Coordinator:	Doug Kearns <dougkearns@gmail.com>

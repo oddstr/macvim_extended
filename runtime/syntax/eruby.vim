@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:		eRuby
 " Maintainer:		Tim Pope <vimNOSPAM@tpope.info>
-" Info:			$Id: eruby.vim,v 1.9 2008/06/24 21:47:59 vimboss Exp $
+" Info:			$Id: eruby.vim,v 1.10 2008/06/25 19:57:56 vimboss Exp $
 " URL:			http://vim-ruby.rubyforge.org
 " Anon CVS:		See above site
 " Release Coordinator:	Doug Kearns <dougkearns@gmail.com>

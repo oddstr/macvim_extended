@@ -2,7 +2,7 @@
 " Language:     BibTeX Bibliography Style
 " Maintainer:   Tim Pope <vimNOSPAM@tpope.info>
 " Filenames:    *.bst
-" $Id: bst.vim,v 1.6 2008/06/24 22:48:06 vimboss Exp $
+" $Id: bst.vim,v 1.7 2008/06/25 20:00:36 vimboss Exp $
 
 " For version 5.x: Clear all syntax items
 " For version 6.x: Quit when a syntax file was already loaded

@@ -1,7 +1,7 @@
 " Vim filetype plugin file
 " Language:	cobol
 " Author:	Tim Pope <vimNOSPAM@tpope.info>
-" $Id: cobol.vim,v 1.5 2008/06/24 20:47:03 vimboss Exp $
+" $Id: cobol.vim,v 1.6 2008/06/25 19:55:34 vimboss Exp $
 
 " Insert mode mappings: <C-T> <C-D> <Tab>
 " Normal mode mappings: < > << >> [[ ]] [] ][

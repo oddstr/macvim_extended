@@ -3,7 +3,7 @@
 " Maintainer:  Johannes Ranke <jranke@uni-bremen.de>
 " Last Change: 2008 Apr 10
 " Version:     0.7.1
-" SVN:		   $Id: rhelp.vim,v 1.5 2008/06/24 21:45:01 vimboss Exp $
+" SVN:		   $Id: rhelp.vim,v 1.6 2008/06/25 19:57:48 vimboss Exp $
 " Remarks:     - Now includes R syntax highlighting in the appropriate
 "                sections if an r.vim file is in the same directory or in the
 "                default debian location.
