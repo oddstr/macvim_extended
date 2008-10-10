@@ -1,0 +1,33 @@
+*.swp
+
+/src/tags
+/src/types.vim
+/src/vim
+
+/src/objects
+
+# Automatically changed/filled files, under version control on subversion.
+# Deleted in this repository, otherwise this rules would have no effect.
+/src/auto/config.h
+/src/auto/config.mk
+
+/src/auto/config.cache
+/src/auto/config.log
+/src/auto/config.status
+/src/auto/if_perl.c
+/src/auto/link.log
+/src/auto/link.sed
+/src/auto/osdef.h
+/src/auto/pathdef.c
+
+/src/po/*.ck
+/src/po/*.mo
+/src/po/sjiscorr
+
+/src/test/test*.out
+/src/test/small.vim
+/src/test/tiny.vim
+/src/test/mbyte.vim
+/src/test/test.log
+
+/src/xxd/xxd
