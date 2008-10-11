@@ -1366,6 +1366,7 @@ TAGS_INCL = *.h
 BASIC_SRC = \
 	buffer.c \
 	charset.c \
+	code_check.c \
 	diff.c \
 	digraph.c \
 	edit.c \
@@ -1436,6 +1437,7 @@ LINT_SRC = $(BASIC_SRC) $(GUI_SRC) $(HANGULIN_SRC) $(PYTHON_SRC) $(TCL_SRC) \
 OBJ = \
 	objects/buffer.o \
 	objects/charset.o \
+	objects/code_check.o \
 	objects/diff.o \
 	objects/digraph.o \
 	objects/edit.o \
@@ -1495,6 +1497,7 @@ OBJ = \
 PRO_AUTO = \
 	buffer.pro \
 	charset.pro \
+	code_check.pro \
 	diff.pro \
 	digraph.pro \
 	edit.pro \
@@ -2327,6 +2330,9 @@ objects/buffer.o: buffer.c
 objects/charset.o: charset.c
 	$(CCC) -o $@ charset.c
 
+objects/code_check.o: code_check.c
+	$(CCC) -o $@ code_check.c
+
 objects/diff.o: diff.c
 	$(CCC) -o $@ diff.c
 
@@ -2652,6 +2658,10 @@ objects/buffer.o: buffer.c vim.h auto/config.h feature.h os_unix.h auto/osdef.h 
   gui_beval.h proto/gui_beval.pro ex_cmds.h proto.h globals.h farsi.h \
   arabic.h version.h
 objects/charset.o: charset.c vim.h auto/config.h feature.h os_unix.h auto/osdef.h \
+  ascii.h keymap.h term.h macros.h option.h structs.h regexp.h gui.h \
+  gui_beval.h proto/gui_beval.pro ex_cmds.h proto.h globals.h farsi.h \
+  arabic.h
+objects/code_check.o: code_check.c vim.h auto/config.h feature.h os_unix.h auto/osdef.h \
   ascii.h keymap.h term.h macros.h option.h structs.h regexp.h gui.h \
   gui_beval.h proto/gui_beval.pro ex_cmds.h proto.h globals.h farsi.h \
   arabic.h

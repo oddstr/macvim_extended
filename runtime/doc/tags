@@ -1898,8 +1898,10 @@ $VIMRUNTIME	starting.txt	/*$VIMRUNTIME*
 :cb	quickfix.txt	/*:cb*
 :cbuffer	quickfix.txt	/*:cbuffer*
 :cc	quickfix.txt	/*:cc*
+:ccadd	code_check.txt	/*:ccadd*
 :ccl	quickfix.txt	/*:ccl*
 :cclose	quickfix.txt	/*:cclose*
+:ccrem	code_check.txt	/*:ccrem*
 :cd	editing.txt	/*:cd*
 :cd-	editing.txt	/*:cd-*
 :ce	change.txt	/*:ce*
@@ -3192,6 +3194,7 @@ BufWritePre	autocmd.txt	/*BufWritePre*
 C	change.txt	/*C*
 C-editing	tips.txt	/*C-editing*
 C-indenting	indent.txt	/*C-indenting*
+CodeCheck	code_check.txt	/*CodeCheck*
 COMSPEC	starting.txt	/*COMSPEC*
 CR-used-for-NL	pattern.txt	/*CR-used-for-NL*
 CTRL-6	editing.txt	/*CTRL-6*
@@ -4829,6 +4832,8 @@ cmdwin	cmdline.txt	/*cmdwin*
 cmdwin-char	cmdline.txt	/*cmdwin-char*
 cobol.vim	syntax.txt	/*cobol.vim*
 codeset	mbyte.txt	/*codeset*
+codecheck	code_check.txt	/*codecheck*
+code_check	code_check.txt	/*code_check*
 coding-style	develop.txt	/*coding-style*
 col()	eval.txt	/*col()*
 coldfusion.vim	syntax.txt	/*coldfusion.vim*

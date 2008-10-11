@@ -2717,6 +2717,26 @@ win_line(wp, lnum, startrow, endrow, nochange)
 #else
     extra_check = 0;
 #endif
+
+    /* 
+     * Highlight the line if this buffer is in the code_check.c watchlist,
+     * and there is an associated error in the corresponding error/warning
+     * list.
+     */
+    if (cc_is_buf_watched(curbuf)) {
+	switch (cc_get_ew_type(curbuf, lnum)) {
+	    case /*CC_WARNING*/1:
+		line_attr = hl_attr(HLF_WM);
+		break;
+	    case /*CC_ERROR*/2:
+		line_attr = hl_attr(HLF_E);
+		break;
+	    default:
+		line_attr = 0;
+		break;
+	}
+    }
+
 #ifdef FEAT_SYN_HL
     if (syntax_present(wp->w_buffer) && !wp->w_buffer->b_syn_error)
     {
