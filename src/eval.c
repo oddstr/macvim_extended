@@ -467,9 +467,9 @@ static int non_zero_arg __ARGS((typval_T *argvars));
 #ifdef FEAT_FLOAT
 static void f_abs __ARGS((typval_T *argvars, typval_T *rettv));
 
-/* Below are the 10 added FP functions - I've kept then together  */
-/* here and in their definitions later on.  Because the funtion[] */
-/* table must be in ASCII order, they are scattered there - WJMc  */
+/* Below are the 10 added FP functions - I've kept them together   */
+/* here and in their definitions later on. Because the functions[] */
+/* table must be in ASCII order, they are scattered there - WJMc   */
 
 static void f_acos __ARGS((typval_T *argvars, typval_T *rettv));
 static void f_asin __ARGS((typval_T *argvars, typval_T *rettv));
@@ -8164,7 +8164,6 @@ non_zero_arg(argvars)
  */
 
 #ifdef FEAT_FLOAT
-
 /*
  * "abs(expr)" function
  */
