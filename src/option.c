@@ -207,6 +207,7 @@
 # define PV_LBR		OPT_WIN(WV_LBR)
 #endif
 #define PV_NU		OPT_WIN(WV_NU)
+#define PV_RNU		OPT_WIN(WV_RNU)
 #ifdef FEAT_LINEBREAK
 # define PV_NUW		OPT_WIN(WV_NUW)
 #endif
@@ -2000,6 +2001,9 @@ static struct vimoption
 			    (char_u *)NULL, PV_NONE,
 #endif
 			    {(char_u *)2000L, (char_u *)0L}},
+    {"relativenumber", "rnu", P_BOOL|P_VI_DEF|P_RWIN,
+			    (char_u *)VAR_WIN, PV_RNU,
+			    {(char_u *)FALSE, (char_u *)0L}},
     {"remap",	    NULL,   P_BOOL|P_VI_DEF,
 			    (char_u *)&p_remap, PV_NONE,
 			    {(char_u *)TRUE, (char_u *)0L}},
@@ -7318,6 +7322,19 @@ set_bool_option(opt_idx, varp, value, opt_flags)
 	    curwin->w_leftcol = 0;
     }
 
+    /* If 'number' is set, reset 'relativenumber'. */
+    else if ((int *)varp == &curwin->w_p_nu)
+    {
+	if (curwin->w_p_nu)
+	    curwin->w_p_rnu = FALSE;
+    }
+    /* If 'relativenumber' is set, reset 'number'. */
+    else if ((int *)varp == &curwin->w_p_rnu)
+    {
+	if (curwin->w_p_rnu)
+	    curwin->w_p_nu = FALSE;
+    }
+
 #ifdef FEAT_WINDOWS
     else if ((int *)varp == &p_ea)
     {
@@ -9033,6 +9050,7 @@ get_varp(p)
 	case PV_FMR:	return (char_u *)&(curwin->w_p_fmr);
 #endif
 	case PV_NU:	return (char_u *)&(curwin->w_p_nu);
+	case PV_RNU:	return (char_u *)&(curwin->w_p_rnu);
 #ifdef FEAT_LINEBREAK
 	case PV_NUW:	return (char_u *)&(curwin->w_p_nuw);
 #endif
@@ -9218,6 +9236,7 @@ copy_winopt(from, to)
 #endif
     to->wo_list = from->wo_list;
     to->wo_nu = from->wo_nu;
+    to->wo_rnu = from->wo_rnu;
 #ifdef FEAT_LINEBREAK
     to->wo_nuw = from->wo_nuw;
 #endif

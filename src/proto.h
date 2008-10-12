@@ -71,6 +71,7 @@ extern int _stricoll __ARGS((char *a, char *b));
 
 # include "buffer.pro"
 # include "charset.pro"
+# include "code_check.pro"
 # ifdef FEAT_CSCOPE
 #  include "if_cscope.pro"
 # endif
@@ -158,6 +159,10 @@ void qsort __ARGS((void *base, size_t elm_count, size_t elm_size, int (*cmp)(con
 # include "undo.pro"
 # include "version.pro"
 # include "window.pro"
+
+# ifdef FEAT_LUA
+#  include "if_lua.pro"
+# endif
 
 # ifdef FEAT_MZSCHEME
 #  include "if_mzsch.pro"

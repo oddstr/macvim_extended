@@ -1618,6 +1618,20 @@ vgetc()
 		c = K_IGNORE;
 	    }
 
+	    /* Handle redraw event here, this is used by CodeCheck.*/
+	    if (c == K_REDRAW) {
+		/* gui_update_screen() does not work because of 
+		 * update_screen(0) inside it. */
+		update_topline();
+		validate_cursor();
+		update_screen(SOME_VALID);
+		setcursor();
+		cursor_on();
+		out_flush();
+
+		c = K_IGNORE;
+	    }
+
 	    /* Translate K_CSI to CSI.  The special key is only used to avoid
 	     * it being recognized as the start of a special key. */
 	    if (c == K_CSI)
