@@ -314,7 +314,7 @@ CClink = $(CC)
 #CONF_ARGS = --without-local-dir
 
 # Use this one if you distribute a modified version of Vim.
-#CONF_ARGS = --with-modified-by="John Doe"
+CONF_ARGS = --with-modified-by="Vim extended"
 
 # GUI - For creating Vim with GUI (gvim) (B)
 # Uncomment this line when you don't want to get the GUI version, although you
