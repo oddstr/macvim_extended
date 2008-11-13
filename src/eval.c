@@ -871,6 +871,7 @@ eval_clear()
 	}
     }
     hash_clear(&vimvarht);
+    hash_init(&vimvarht);  /* garbage_collect() will access it */
     hash_clear(&compat_hashtab);
 
     /* script-local variables */
