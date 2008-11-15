@@ -384,7 +384,7 @@ CClink = $(CC)
 
 # ECL - For creating Vim with ECL interface
 # Uncomment this when you want to include the ECL interface.
-#CONF_OPT_ECL = --enable-eclinterp
+CONF_OPT_ECL = --enable-eclinterp
 
 # PYTHON
 # Uncomment this when you want to include the Python interface.
