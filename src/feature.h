@@ -971,7 +971,9 @@
  *			a modifed version of Vim.
  *			Also from the "--with-modified-by" configure argument.
  */
-/* #define MODIFIED_BY "John Doe" */
+#ifndef MODIFIED_BY
+# define MODIFIED_BY "Vim extended"
+#endif
 
 /*
  * Machine dependent:
