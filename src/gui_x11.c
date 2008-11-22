@@ -148,6 +148,9 @@ static void gui_x11_mouse_cb __ARGS((Widget w, XtPointer data, XEvent *event, Bo
 #ifdef FEAT_SNIFF
 static void gui_x11_sniff_request_cb __ARGS((XtPointer closure, int *source, XtInputId *id));
 #endif
+#ifdef FEAT_GDB
+static void gdb_request_cb __ARGS((XtPointer closure, int *source, XtInputId *id));
+#endif
 static void gui_x11_check_copy_area __ARGS((void));
 #ifdef FEAT_CLIENTSERVER
 static void gui_x11_send_event_handler __ARGS((Widget, XtPointer, XEvent *, Boolean *));
@@ -1178,6 +1181,21 @@ gui_x11_sniff_request_cb(closure, source, id)
     static char_u bytes[3] = {CSI, (int)KS_EXTRA, (int)KE_SNIFF};
 
     add_to_input_buf(bytes, 3);
+}
+#endif
+
+#ifdef FEAT_GDB
+/*
+ * Callback function, used when data is available on the gdb file descriptor.
+ */
+/* ARGSUSED */
+    static void
+gdb_request_cb (closure, source, id)
+    XtPointer	closure;
+    int		*source;
+    XtInputId	*id;
+{
+    gdb_set_event(gdb, TRUE);
 }
 #endif
 
@@ -2834,7 +2852,13 @@ gui_mch_update()
 	desired = (XtIMAll);
     while ((mask = XtAppPending(app_context)) && (mask & desired)
 	    && !vim_is_input_buf_full())
+    {
+#ifdef FEAT_GDB
+	if (gdb_event(gdb))	/* got a gdb event */
+	    return;
+#endif
 	XtAppProcessEvent(app_context, desired);
+    }
 }
 
 /*
@@ -2863,6 +2887,10 @@ gui_mch_wait_for_chars(wtime)
     static int	    sniff_on = 0;
     static XtInputId sniff_input_id = 0;
 #endif
+#ifdef FEAT_GDB
+    static int gdb_on = 0;
+    static XtInputId gdb_input_id = 0;
+#endif
 
     timed_out = FALSE;
 
@@ -2878,6 +2906,25 @@ gui_mch_wait_for_chars(wtime)
 	sniff_input_id = XtAppAddInput(app_context, fd_from_sniff,
 		     (XtPointer)XtInputReadMask, gui_x11_sniff_request_cb, 0);
 	sniff_on = 1;
+    }
+#endif
+
+#ifdef FEAT_GDB
+    /* Remove call back for previous gdb connection */
+    if (! gdb_allowed(gdb) && gdb_on)
+    {
+	if (gdb_input_id)
+	    XtRemoveInput(gdb_input_id);
+	gdb_on = 0;
+    }
+
+    /* A new gdb connection */
+    if (gdb_allowed(gdb) && !gdb_on)
+    {
+	/* Add gdb file descriptor to watch for available data in main loop. */
+	gdb_input_id = XtAppAddInput(app_context, gdb_fd(gdb),
+		     (XtPointer)XtInputReadMask, gdb_request_cb, 0);
+	gdb_on = 1;
     }
 #endif
 
@@ -2920,6 +2967,15 @@ gui_mch_wait_for_chars(wtime)
 		XtRemoveTimeOut(timer);
 	    return OK;
 	}
+
+#ifdef FEAT_GDB
+	if (wtime != 0L && gdb_allowed(gdb) && gdb_event(gdb))
+	{
+	    if (timer != (XtIntervalId)0 && !timed_out)
+		XtRemoveTimeOut(timer);
+	    return FAIL;
+	}
+#endif
     }
     return FAIL;
 }

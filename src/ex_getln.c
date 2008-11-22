@@ -741,6 +741,12 @@ getcmdline(firstc, count, indent)
 #ifdef FEAT_CMDWIN
 	if (c == cedit_key || c == K_CMDWIN)
 	{
+#ifdef FEAT_GDB
+            /* Set cmdfirstc before calling ex_window (up to now it is NUL:
+	     * the input line does not have a '@' leading character) */
+            if (firstc == '@')
+                ccline.cmdfirstc = firstc;
+#endif
 	    /*
 	     * Open a window to edit the command line (and history).
 	     */
@@ -6054,6 +6060,30 @@ ex_window()
     /* don't use a new tab page */
     cmdmod.tab = 0;
 
+# ifdef FEAT_GDB
+    /* Split below the displayed gdb window */
+    if (gdb_iswinput(gdb) && (wp = gdb_window(gdb)) != NULL
+	    && (wp = wp->w_next) != NULL)
+    {
+	linenr_T topline;
+	
+	curwin = wp;
+	curbuf = curwin->w_buffer;
+	topline = curwin->w_topline;
+
+	if (win_split((int)p_cwh, WSP_ABOVE) == FAIL)
+	{
+	    curwin = old_curwin;
+	    curbuf = old_curbuf;
+	    beep_flush();
+	    return K_IGNORE;
+	}
+
+	/* Do not scroll the window below gdb window */
+	set_topline(wp, topline + p_cwh + STATUS_HEIGHT);
+    }
+    else
+# endif
     /* Create a window for the command-line buffer. */
     if (win_split((int)p_cwh, WSP_BOT) == FAIL)
     {
@@ -6099,6 +6129,20 @@ ex_window()
 	}
 	set_option_value((char_u *)"ft", 0L, (char_u *)"vim", OPT_LOCAL);
     }
+
+# ifdef FEAT_GDB
+    if (gdb_iswinput(gdb))      /* gdb window input-line */
+    {
+	add_map((char_u *)"<buffer> <C-Z> <C-Z><CR>", INSERT);
+	add_map((char_u *)"<buffer> <Tab> <C-Q><C-I><CR>", INSERT);
+	set_option_value((char_u *)"ft", 0L, (char_u *)"gdb", OPT_LOCAL);
+	set_option_value((char_u *)"fdc", 0L, NULL, OPT_LOCAL);
+
+        /* The window search-line does not have this: with a two lines history,
+	 * the window shows an empty line at top */
+        curwin->w_valid = FALSE;
+    }
+# endif
 
     /* Reset 'textwidth' after setting 'filetype' (the Vim filetype plugin
      * sets 'textwidth' to 78). */
@@ -6223,6 +6267,10 @@ ex_window()
 	    cmdwin_result = Ctrl_C;
 	else
 	{
+#ifdef FEAT_GDB
+            if (ccline.cmdfirstc == '@')
+                ccline.cmdfirstc = NUL;
+#endif
 	    ccline.cmdlen = (int)STRLEN(ccline.cmdbuff);
 	    ccline.cmdbufflen = ccline.cmdlen + 1;
 	    ccline.cmdpos = curwin->w_cursor.col;

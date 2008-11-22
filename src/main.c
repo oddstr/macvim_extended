@@ -202,6 +202,10 @@ main
     vim_tcl_init(params.argv[0]);
 #endif
 
+#ifdef FEAT_GDB
+    gdb = gdb_new();
+#endif
+
 #ifdef MEM_PROFILE
     atexit(vim_mem_profile_dump);
 #endif
@@ -1278,6 +1282,11 @@ getout(exitval)
 		break;
 	}
     apply_autocmds(EVENT_VIMLEAVEPRE, NULL, NULL, FALSE, curbuf);
+#endif
+
+#ifdef FEAT_GDB
+    /* Before viminfo stuff to wipeout gdb buffer and remove from list */
+    gdb_delete(&gdb);
 #endif
 
 #ifdef FEAT_VIMINFO

@@ -5761,6 +5761,11 @@ win_redr_status(wp)
 	fillchar = fillchar_status(&attr, wp == curwin);
 
 	get_trans_bufname(wp->w_buffer);
+#ifdef FEAT_GDB
+	/* Replace fname with gdb window label */
+	gdb_label(gdb, wp->w_buffer, NameBuff, MAXPATHL);
+	trans_characters(NameBuff, MAXPATHL);
+#endif
 	p = NameBuff;
 	len = (int)STRLEN(p);
 

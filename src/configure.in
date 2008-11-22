@@ -1040,6 +1040,13 @@ if test "$enable_cscope" = "yes"; then
   AC_DEFINE(FEAT_CSCOPE)
 fi
 
+dnl FEAT_GDB defined later
+AC_MSG_CHECKING(--enable-gdb argument)
+AC_ARG_ENABLE(gdb,
+	[  --enable-gdb       Include GDB support.], ,
+	[enable_gdb="no"])
+AC_MSG_RESULT($enable_gdb)
+
 AC_MSG_CHECKING(--enable-workshop argument)
 AC_ARG_ENABLE(workshop,
 	[  --enable-workshop       Include Sun Visual Workshop support.], ,
@@ -2068,6 +2075,20 @@ AC_SUBST(GUI_INC_LOC)
 AC_SUBST(GUI_LIB_LOC)
 AC_SUBST(GUITYPE)
 AC_SUBST(GUI_X_LIBS)
+
+dnl do not add pty.o when a GUI is used
+if test "$enable_gdb" = "yes"; then
+  AC_DEFINE(FEAT_GDB)
+  if test "x$GUITYPE" = "xNONE"; then
+    GDB_SRC="gdb.c clewn/gdb_lvl2.c clewn/gdb_lvl3.c clewn/misc.c clewn/obstack.c pty.c"
+    GDB_OBJ="objects/gdb.o objects/gdb_lvl2.o objects/gdb_lvl3.o objects/misc.o objects/obstack.o objects/pty.o"
+  else
+    GDB_SRC="gdb.c clewn/gdb_lvl2.c clewn/gdb_lvl3.c clewn/misc.c clewn/obstack.c"
+    GDB_OBJ="objects/gdb.o objects/gdb_lvl2.o objects/gdb_lvl3.o objects/misc.o objects/obstack.o"
+  fi
+  AC_SUBST(GDB_SRC)
+  AC_SUBST(GDB_OBJ)
+fi
 
 if test "$enable_workshop" = "yes" -a -n "$SKIP_MOTIF"; then
   AC_MSG_ERROR([cannot use workshop without Motif])

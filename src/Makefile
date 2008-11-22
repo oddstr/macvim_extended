@@ -417,6 +417,9 @@ CClink = $(CC)
 # WORKSHOP - Sun Visual Workshop interface.  Only works with Motif!
 #CONF_OPT_WORKSHOP = --enable-workshop
 
+# GDB - Include support for gdb
+CONF_OPT_GDB = --enable-gdb
+
 # NETBEANS - NetBeans interface. Only works with Motif, GTK, and gnome.
 # Motif version must have XPM libraries (see |workshop-xpm|).
 # Uncomment this when you do not want the netbeans interface.
@@ -1438,6 +1441,7 @@ ALL_SRC = $(BASIC_SRC) $(ALL_GUI_SRC) $(EXTRA_SRC)
 # checks more, but may not work well for checking a GUI that wasn't configured.
 # The perl sources also don't work well with lint.
 LINT_SRC = $(BASIC_SRC) $(GUI_SRC) $(HANGULIN_SRC) $(PYTHON_SRC) $(TCL_SRC) \
+	$(GDB_SRC) \
 	$(SNIFF_SRC) $(WORKSHOP_SRC) $(WSDEBUG_SRC) $(NETBEANS_SRC)
 #LINT_SRC = $(SRC)
 #LINT_SRC = $(ALL_SRC)
@@ -1498,6 +1502,7 @@ OBJ = \
 	$(RUBY_OBJ) \
 	$(OS_EXTRA_OBJ) \
 	$(WORKSHOP_OBJ) \
+	$(GDB_OBJ) \
 	$(NETBEANS_OBJ) \
 	$(WSDEBUG_OBJ) \
 	$(SPIDERMONKEY_OBJ)
@@ -1555,6 +1560,7 @@ PRO_AUTO = \
 	window.pro \
 	gui_beval.pro \
 	workshop.pro \
+	gdb.pro \
 	netbeans.pro \
 	$(ALL_GUI_PRO) \
 	$(TCL_PRO)
@@ -1588,6 +1594,7 @@ config auto/config.mk: auto/configure config.mk.in config.h.in
 		$(CONF_OPT_TCL) $(CONF_OPT_RUBY) $(CONF_OPT_NLS) \
 		$(CONF_OPT_CSCOPE) $(CONF_OPT_MULTIBYTE) $(CONF_OPT_INPUT) \
 		$(CONF_OPT_OUTPUT) $(CONF_OPT_GPM) $(CONF_OPT_WORKSHOP) \
+		$(CONF_OPT_GDB) \
 		$(CONF_OPT_SNIFF) $(CONF_OPT_FEAT) $(CONF_TERM_LIB) \
 		$(CONF_OPT_COMPBY) $(CONF_OPT_ACL)  $(CONF_OPT_NETBEANS) \
 		$(CONF_ARGS) $(CONF_OPT_MZSCHEME) $(CONF_OPT_PLTHOME) \
@@ -2567,6 +2574,21 @@ objects/window.o: window.c
 objects/workshop.o: workshop.c
 	$(CCC) -o $@ workshop.c
 
+objects/gdb.o: gdb.c
+	$(CCC) -o $@ gdb.c
+
+objects/gdb_lvl2.o: clewn/gdb_lvl2.c
+	$(CCC) -o $@ clewn/gdb_lvl2.c
+
+objects/gdb_lvl3.o: clewn/gdb_lvl3.c
+	$(CCC) -o $@ clewn/gdb_lvl3.c
+
+objects/misc.o: clewn/misc.c
+	$(CCC) -o $@ clewn/misc.c
+
+objects/obstack.o: clewn/obstack.c
+	$(CCC) -o $@ clewn/obstack.c
+
 objects/wsdebug.o: wsdebug.c
 	$(CCC) -o $@ wsdebug.c
 
@@ -2963,6 +2985,13 @@ objects/workshop.o: workshop.c auto/config.h integration.h vim.h feature.h \
   os_unix.h auto/osdef.h ascii.h keymap.h term.h macros.h option.h \
   structs.h regexp.h gui.h gui_beval.h proto/gui_beval.pro ex_cmds.h \
   proto.h globals.h farsi.h arabic.h version.h workshop.h
+objects/gdb.o: gdb.c clewn/gdb.h clewn/misc.h auto/config.h vim.h feature.h
+objects/gdb_lvl2.o: clewn/misc.h clewn/gdb_lvl2.c clewn/gdb_lvl3.c \
+	gdb.c clewn/gdb.h auto/config.h vim.h feature.h
+objects/gdb_lvl3.o: clewn/misc.h clewn/gdb_lvl3.c gdb.c clewn/gdb.h\
+	auto/config.h vim.h feature.h
+objects/misc.o: clewn/misc.c clewn/misc.h
+objects/obstack.o: clewn/obstack.c clewn/obstack.h
 objects/wsdebug.o: wsdebug.c
 objects/integration.o: integration.c vim.h auto/config.h feature.h os_unix.h \
   auto/osdef.h ascii.h keymap.h term.h macros.h option.h structs.h \

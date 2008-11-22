@@ -647,9 +647,23 @@ normal_cmd(oap, toplevel)
     dont_scroll = FALSE;	/* allow scrolling here */
 #endif
 
+#if defined(FEAT_GDB) && defined(FEAT_CMDWIN)
+    /* Launch the input-line window */
+    if (cmdwin_type == 0 && gdb_iswinput(gdb))
+    {
+	gdb_winput(gdb);
+	goto normal_end;
+    }
+#endif
+
     /*
      * Get the command character from the user.
      */
+#ifdef FEAT_GDB
+    if (toplevel)
+        c = gdb_safe_vgetc(gdb);
+    else
+#endif
     c = safe_vgetc();
 
 #ifdef FEAT_LANGMAP
@@ -743,6 +757,11 @@ getcount:
 		++allow_keys;		/* no mapping for nchar, but keys */
 	    }
 	    ++no_zero_mapping;		/* don't map zero here */
+#ifdef FEAT_GDB
+            if (toplevel)
+                c = gdb_safe_vgetc(gdb);
+            else
+#endif
 	    c = plain_vgetc();
 #ifdef FEAT_LANGMAP
 	    LANGMAP_ADJUST(c, TRUE);
@@ -768,6 +787,11 @@ getcount:
 	    ca.count0 = 0;
 	    ++no_mapping;
 	    ++allow_keys;		/* no mapping for nchar, but keys */
+#ifdef FEAT_GDB
+            if (toplevel)
+                c = gdb_safe_vgetc(gdb);
+            else
+#endif
 	    c = plain_vgetc();		/* get next character */
 #ifdef FEAT_LANGMAP
 	    LANGMAP_ADJUST(c, TRUE);
@@ -958,6 +982,11 @@ getcount:
 	     * For 'g' get the next character now, so that we can check for
 	     * "gr", "g'" and "g`".
 	     */
+#ifdef FEAT_GDB
+            if (toplevel)
+                ca.nchar = gdb_safe_vgetc(gdb);
+            else
+#endif
 	    ca.nchar = plain_vgetc();
 #ifdef FEAT_LANGMAP
 	    LANGMAP_ADJUST(ca.nchar, TRUE);
@@ -1015,6 +1044,11 @@ getcount:
 		im_set_active(TRUE);
 #endif
 
+#ifdef FEAT_GDB
+            if (toplevel)
+                *cp = gdb_safe_vgetc(gdb);
+            else
+#endif
 	    *cp = plain_vgetc();
 
 	    if (langmap_active)
@@ -1122,6 +1156,11 @@ getcount:
 	    while (enc_utf8 && lang && (c = vpeekc()) > 0
 				 && (c >= 0x100 || MB_BYTE2LEN(vpeekc()) > 1))
 	    {
+#ifdef FEAT_GDB
+                if (toplevel)
+                    c = gdb_safe_vgetc(gdb);
+                else
+#endif
 		c = plain_vgetc();
 		if (!utf_iscomposing(c))
 		{
@@ -8752,6 +8791,10 @@ nv_esc(cap)
 		&& cap->opcount == 0
 		&& cap->count0 == 0
 		&& cap->oap->regname == 0
+#ifdef FEAT_GDB
+		/* don't beep when opening gdb input-line window */
+		&& !gdb_iswinput(gdb)
+#endif
 		&& !p_im);
 
     if (cap->arg)		/* TRUE for CTRL-C */

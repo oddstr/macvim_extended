@@ -541,6 +541,9 @@ static void f_foldtextresult __ARGS((typval_T *argvars, typval_T *rettv));
 static void f_foreground __ARGS((typval_T *argvars, typval_T *rettv));
 static void f_function __ARGS((typval_T *argvars, typval_T *rettv));
 static void f_garbagecollect __ARGS((typval_T *argvars, typval_T *rettv));
+#ifdef FEAT_GDB
+static void f_gdb __ARGS((typval_T *argvars, typval_T *rettv));
+#endif
 static void f_get __ARGS((typval_T *argvars, typval_T *rettv));
 static void f_getbufline __ARGS((typval_T *argvars, typval_T *rettv));
 static void f_getbufvar __ARGS((typval_T *argvars, typval_T *rettv));
@@ -7539,6 +7542,9 @@ static struct fst
     {"foreground",	0, 0, f_foreground},
     {"function",	1, 1, f_function},
     {"garbagecollect",	0, 1, f_garbagecollect},
+#ifdef FEAT_GDB
+    {"gdb",		1, 1, f_gdb},
+#endif
     {"get",		2, 3, f_get},
     {"getbufline",	2, 3, f_getbufline},
     {"getbufvar",	2, 2, f_getbufvar},
@@ -10367,6 +10373,25 @@ f_garbagecollect(argvars, rettv)
 	garbage_collect_at_exit = TRUE;
 }
 
+#ifdef FEAT_GDB
+/*
+ * "gdb()" function
+ */
+    static void
+f_gdb(argvars, rettv)
+    typval_T	*argvars;
+    typval_T	*rettv;
+{
+    char_u *cmd = get_tv_string(&argvars[0]);
+
+    if (*cmd == NUL)
+	gdb_setwinput(gdb, (char_u *)"");   /* open the window input-line */
+    else
+	gdb_docmd(gdb, cmd);	/* send cmd to gdb */
+    rettv->vval.v_number = 1;
+}
+#endif
+
 /*
  * "get()" function
  */
@@ -11519,6 +11544,9 @@ f_has(argvars, rettv)
 #endif
 #if !defined(USE_SYSTEM) && defined(UNIX)
 	"fork",
+#endif
+#ifdef FEAT_GDB
+	"gdb",
 #endif
 #ifdef FEAT_GETTEXT
 	"gettext",

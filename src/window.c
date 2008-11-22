@@ -6058,6 +6058,10 @@ only_one_window()
 # ifdef FEAT_QUICKFIX
 		    || wp->w_p_pvw
 # endif
+# ifdef FEAT_GDB
+		    /* not counting a gdb window */
+		    || gdb_isbuffer(gdb, wp->w_buffer)
+# endif
 	     ) || wp == curwin)
 	    ++count;
     return (count <= 1);
