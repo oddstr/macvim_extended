@@ -1190,6 +1190,10 @@ EXTERN int bevalServers INIT(= 0);
 extern cursorentry_T shape_table[SHAPE_IDX_COUNT];
 #endif
 
+#ifdef FEAT_GDB
+EXTERN gdb_handle_T *gdb INIT(= NULL);	/* gdb opaque handle */
+#endif
+
 #ifdef FEAT_PRINTER
 /*
  * Printer stuff shared between hardcopy.c and machine-specific printing code.

@@ -6381,7 +6381,13 @@ gui_mch_draw_part_cursor(int w, int h, guicolor_T color)
 gui_mch_update(void)
 {
     while (gtk_events_pending() && !vim_is_input_buf_full())
+    {
+#ifdef FEAT_GDB
+	if (gdb_event(gdb))	/* got a gdb event */
+	    return;
+#endif
 	gtk_main_iteration_do(FALSE);
+    }
 }
 
     static gint
@@ -6418,6 +6424,24 @@ sniff_request_cb(
 }
 #endif
 
+#ifdef FEAT_GDB
+/*
+ * Callback function, used when data is available on the gdb file descriptor.
+ */
+/* ARGSUSED */
+    static void
+gdb_request_cb(
+    gpointer	data,
+    gint	source_fd,
+    GdkInputCondition condition)
+{
+    gdb_set_event(gdb, TRUE);
+
+    if (gtk_main_level() > 0)
+	gtk_main_quit();
+}
+#endif
+
 /*
  * GUI input routine called by gui_wait_for_chars().  Waits for a character
  * from the keyboard.
@@ -6437,6 +6461,10 @@ gui_mch_wait_for_chars(long wtime)
     static int	sniff_on = 0;
     static gint	sniff_input_id = 0;
 #endif
+#ifdef FEAT_GDB
+    static int gdb_on        = 0;
+    static gint gdb_input_id = 0;
+#endif
 
 #ifdef FEAT_SNIFF
     if (sniff_on && !want_sniff_request)
@@ -6451,6 +6479,25 @@ gui_mch_wait_for_chars(long wtime)
 	sniff_input_id = gdk_input_add(fd_from_sniff,
 			       GDK_INPUT_READ, sniff_request_cb, NULL);
 	sniff_on = 1;
+    }
+#endif
+
+#ifdef FEAT_GDB
+    /* Remove call back for previous gdb connection */
+    if (! gdb_allowed(gdb) && gdb_on)
+    {
+	if (gdb_input_id)
+	    gdk_input_remove(gdb_input_id);
+	gdb_on = 0;
+    }
+
+    /* A new gdb connection */
+    if (gdb_allowed(gdb) && !gdb_on)
+    {
+	/* Add gdb file descriptor to watch for available data in main loop. */
+	gdb_input_id = gdk_input_add(gdb_fd(gdb),
+			       GDK_INPUT_READ, gdb_request_cb, NULL);
+	gdb_on = 1;
     }
 #endif
 
@@ -6498,6 +6545,15 @@ gui_mch_wait_for_chars(long wtime)
 		gtk_timeout_remove(timer);
 	    return OK;
 	}
+
+#ifdef FEAT_GDB
+	if (wtime != 0L && gdb_allowed(gdb) && gdb_event(gdb))
+	{
+	    if (timer != 0 && !timed_out)
+		gtk_timeout_remove(timer);
+	    return FAIL;
+	}
+#endif
     } while (wtime < 0 || !timed_out);
 
     /*

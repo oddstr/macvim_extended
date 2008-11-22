@@ -757,6 +757,8 @@ GUI_INC_LOC
 GUI_LIB_LOC
 GUITYPE
 GUI_X_LIBS
+GDB_SRC
+GDB_OBJ
 HANGULIN_SRC
 HANGULIN_OBJ
 TAGPRG
@@ -794,6 +796,7 @@ enable_rubyinterp
 enable_cscope
 enable_workshop
 enable_netbeans
+enable_gdb
 enable_sniff
 enable_multibyte
 enable_hangulinput
@@ -1465,6 +1468,7 @@ Optional Features:
   --enable-rubyinterp     Include Ruby interpreter.
   --enable-cscope         Include cscope interface.
   --enable-workshop       Include Sun Visual Workshop support.
+  --enable-gdb		  Include GDB support.
   --disable-netbeans      Disable NetBeans integration support.
   --enable-sniff          Include Sniff interface.
   --enable-multibyte      Include multibyte editing support.
@@ -5787,6 +5791,18 @@ if test "$enable_cscope" = "yes"; then
 _ACEOF
 
 fi
+
+echo "$as_me:$LINENO: checking --enable-gdb argument" >&5
+echo $ECHO_N "checking --enable-gdb argument... $ECHO_C" >&6
+# Check whether --enable-gdb or --disable-gdb was given.
+if test "${enable_gdb+set}" = set; then
+  enableval="$enable_gdb"
+
+else
+  enable_gdb="no"
+fi;
+echo "$as_me:$LINENO: result: $enable_gdb" >&5
+echo "${ECHO_T}$enable_gdb" >&6
 
 { $as_echo "$as_me:$LINENO: checking --enable-workshop argument" >&5
 $as_echo_n "checking --enable-workshop argument... " >&6; }
@@ -10196,6 +10212,22 @@ fi
 
 
 
+
+if test "$enable_gdb" = "yes"; then
+  cat >>confdefs.h <<\_ACEOF
+#define FEAT_GDB 1
+_ACEOF
+
+  if test "x$GUITYPE" = "xNONE"; then
+    GDB_SRC="gdb.c clewn/gdb_lvl2.c clewn/gdb_lvl3.c clewn/misc.c clewn/obstack.c pty.c"
+    GDB_OBJ="objects/gdb.o objects/gdb_lvl2.o objects/gdb_lvl3.o objects/misc.o objects/obstack.o objects/pty.o"
+  else
+    GDB_SRC="gdb.c clewn/gdb_lvl2.c clewn/gdb_lvl3.c clewn/misc.c clewn/obstack.c"
+    GDB_OBJ="objects/gdb.o objects/gdb_lvl2.o objects/gdb_lvl3.o objects/misc.o objects/obstack.o"
+  fi
+
+
+fi
 
 if test "$enable_workshop" = "yes" -a -n "$SKIP_MOTIF"; then
   { { $as_echo "$as_me:$LINENO: error: cannot use workshop without Motif" >&5

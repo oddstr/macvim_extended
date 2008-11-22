@@ -1210,6 +1210,24 @@
 #endif
 
 /*
+ * +gdb			Gdb interface. Must be included through configure,
+ *			see Makefile and uncomment "--enable-gdb"
+ *			Not included when required features are missing
+ *			and use explicitly the following FEAT_NORMAL features:
+ *			FEAT_CMDWIN FEAT_EVAL FEAT_STL_OPT FEAT_MODIFY_FNAME
+ *			FEAT_SEARCHPATH FEAT_WINDOWS FEAT_QUICKFIX
+ */
+#ifdef FEAT_GDB
+# if !defined(FEAT_NORMAL) || !defined(HAVE_SYS_WAIT_H) || !defined(HAVE_FCNTL_H)
+#  undef FEAT_GDB
+# else
+#  ifndef FEAT_SIGNS
+#   define FEAT_SIGNS	/* include +signs */
+#  endif
+# endif
+#endif
+
+/*
  * +balloon_eval	Allow balloon expression evaluation. Used with a
  *			debugger and for tooltips.
  *			Only for GUIs where it was implemented.

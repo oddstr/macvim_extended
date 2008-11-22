@@ -613,6 +613,9 @@ free_buffer(buf)
 #ifdef FEAT_AUTOCMD
     aubuflocal_remove(buf);
 #endif
+#ifdef FEAT_GDB
+    gdb_buffer_free(gdb, buf);
+#endif
     vim_free(buf);
 }
 
@@ -5094,7 +5097,7 @@ insert_sign(buf, prev, next, id, lnum, typenr)
 	newsign->lnum = lnum;
 	newsign->typenr = typenr;
 	newsign->next = next;
-#ifdef FEAT_NETBEANS_INTG
+#if defined(FEAT_NETBEANS_INTG) || defined(FEAT_GDB)
 	newsign->prev = prev;
 	if (next != NULL)
 	    next->prev = newsign;
@@ -5140,12 +5143,12 @@ buf_addsign(buf, id, lnum, typenr)
 	    return;
 	}
 	else if (
-#ifndef FEAT_NETBEANS_INTG  /* keep signs sorted by lnum */
+#if !defined(FEAT_NETBEANS_INTG) && !defined(FEAT_GDB)  /* keep signs sorted by lnum */
 		   id < 0 &&
 #endif
 			     lnum < sign->lnum)
 	{
-#ifdef FEAT_NETBEANS_INTG /* insert new sign at head of list for this lnum */
+#if defined(FEAT_NETBEANS_INTG) || defined(FEAT_GDB) /* insert new sign at head of list for this lnum */
 	    /* XXX - GRP: Is this because of sign slide problem? Or is it
 	     * really needed? Or is it because we allow multiple signs per
 	     * line? If so, should I add that feature to FEAT_SIGNS?
@@ -5162,7 +5165,7 @@ buf_addsign(buf, id, lnum, typenr)
 	}
 	prev = sign;
     }
-#ifdef FEAT_NETBEANS_INTG /* insert new sign at head of list for this lnum */
+#if defined(FEAT_NETBEANS_INTG) || defined(FEAT_GDB) /* insert new sign at head of list for this lnum */
     /* XXX - GRP: See previous comment */
     while (prev != NULL && prev->lnum == lnum)
 	prev = prev->prev;
@@ -5238,7 +5241,7 @@ buf_delsign(buf, id)
 	if (sign->id == id)
 	{
 	    *lastp = next;
-#ifdef FEAT_NETBEANS_INTG
+#if defined(FEAT_NETBEANS_INTG) || defined(FEAT_GDB)
 	    if (next != NULL)
 		next->prev = sign->prev;
 #endif
@@ -5418,6 +5421,35 @@ sign_mark_adjust(line1, line2, amount, amount_after)
     long	amount_after;
 {
     signlist_T	*sign;		/* a sign in a b_signlist */
+# ifdef FEAT_GDB
+    int lnum;
+
+    for (sign = curbuf->b_signlist; sign != NULL; sign = sign->next)
+    {
+	lnum = sign->lnum;
+
+	if (sign->lnum >= line1 && sign->lnum <= line2)
+	{
+	    if (amount == MAXLNUM)
+		lnum = line1;
+	    else
+		lnum += amount;
+	}
+	else if (sign->lnum > line2)
+	    lnum += amount_after;
+
+	/* Keep sign->lnum unchanged, but mark as changed the sign line and
+	 * the new line position if we had moved the line
+	 * (otherwise their highlighting may be scrolled along) */
+	if (gdb_isrunning(gdb) && lnum != sign->lnum)
+	{
+	    changed_lines(sign->lnum, 0, sign->lnum + 1, 0);
+	    changed_lines(lnum, 0, lnum + 1, 0);
+	}
+	else
+	    sign->lnum = lnum;
+    }
+# else
 
     for (sign = curbuf->b_signlist; sign != NULL; sign = sign->next)
     {
@@ -5431,6 +5463,7 @@ sign_mark_adjust(line1, line2, amount, amount_after)
 	else if (sign->lnum > line2)
 	    sign->lnum += amount_after;
     }
+# endif
 }
 #endif /* FEAT_SIGNS */
 

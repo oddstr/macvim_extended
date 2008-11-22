@@ -183,6 +183,9 @@ static RETSIGTYPE catch_sigpwr __ARGS(SIGPROTOARG);
 static RETSIGTYPE sig_alarm __ARGS(SIGPROTOARG);
 static int sig_alarm_called;
 #endif
+#if defined(FEAT_GDB) && defined(SIGCHLD)
+static RETSIGTYPE gdb_catch_sigchld __ARGS(SIGPROTOARG);
+#endif
 static RETSIGTYPE deathtrap __ARGS(SIGPROTOARG);
 
 static void catch_int_signal __ARGS((void));
@@ -312,6 +315,9 @@ static struct signalinfo
 #ifdef SIGPIPE
     {SIGPIPE,	    "PIPE",	FALSE},
 #endif
+#if defined(FEAT_GDB) && defined(SIGCHLD)
+    {SIGCHLD,	    "CHLD",	FALSE},
+#endif
     {-1,	    "Unknown!", FALSE}
 };
 
@@ -341,6 +347,10 @@ mch_inchar(buf, maxlen, wtime, tb_change_cnt)
     int		tb_change_cnt;
 {
     int		len;
+#if defined(FEAT_GDB) && defined(HAVE_GETTIMEOFDAY) && defined(HAVE_SYS_TIME_H)
+    struct timeval  start_tv;
+    gettimeofday(&start_tv, NULL);
+#endif
 
     /* Check if window changed size while we were busy, perhaps the ":set
      * columns=99" command was used. */
@@ -351,6 +361,21 @@ mch_inchar(buf, maxlen, wtime, tb_change_cnt)
     {
 	while (WaitForChar(wtime) == 0)		/* no character available */
 	{
+#ifdef FEAT_GDB
+	    if (gdb_event(gdb) && gdb_allowed(gdb))
+	    {
+# if defined(HAVE_GETTIMEOFDAY) && defined(HAVE_SYS_TIME_H)
+		if ((wtime = gdb_process_output(gdb, wtime, (void *)&start_tv)) < 0)
+# else
+		/* guess we got interrupted halfway */
+		wtime = wtime / 2;
+
+		if ((wtime = gdb_process_output(gdb, wtime, NULL)) < 0)
+# endif
+		    return 0;	/* launch input-line window */
+		continue;
+	    }
+#endif
 	    if (!do_resize)	/* return if not interrupted by resize */
 		return 0;
 	    handle_resize();
@@ -363,8 +388,25 @@ mch_inchar(buf, maxlen, wtime, tb_change_cnt)
 	 * flush all the swap files to disk.
 	 * Also done when interrupted by SIGWINCH.
 	 */
+#ifdef FEAT_GDB
+	{
+        wtime = p_ut;
+        while (WaitForChar(wtime) == 0)
+        {
+	    if (gdb_event(gdb) && gdb_allowed(gdb))
+	    {
+# if defined(HAVE_GETTIMEOFDAY) && defined(HAVE_SYS_TIME_H)
+		if ((wtime = gdb_process_output(gdb, wtime, (void *)&start_tv)) < 0)
+# else
+		if ((wtime = gdb_process_output(gdb, wtime, NULL)) < 0)
+# endif
+		    return 0;	/* launch input-line window */
+		continue;
+            }
+#else
 	if (WaitForChar(p_ut) == 0)
 	{
+#endif
 #ifdef FEAT_AUTOCMD
 	    if (trigger_cursorhold() && maxlen >= 3
 					   && !typebuf_changed(tb_change_cnt))
@@ -376,6 +418,10 @@ mch_inchar(buf, maxlen, wtime, tb_change_cnt)
 	    }
 #endif
 	    before_blocking();
+#ifdef FEAT_GDB
+             break;
+	} /* while (WaitForChar(wtime) == 0) */
+#endif
 	}
     }
 
@@ -387,6 +433,16 @@ mch_inchar(buf, maxlen, wtime, tb_change_cnt)
 	 * we want to be interrupted by the winch signal
 	 */
 	WaitForChar(-1L);
+
+#ifdef FEAT_GDB
+	if (gdb_event(gdb) && gdb_allowed(gdb))
+	{
+	    if (gdb_process_output(gdb, -1L, NULL) < 0)
+		return 0;	/* launch input-line window */
+	    continue;
+	}
+#endif
+
 	if (do_resize)	    /* interrupted by SIGWINCH signal */
 	    continue;
 
@@ -858,6 +914,30 @@ sig_alarm SIGDEFARG(sigarg)
 }
 #endif
 
+#if defined(FEAT_GDB) && defined(SIGCHLD)
+/*
+ * On SIGCHLD, note when gdb process is defunct or does not exist any more
+ */
+    static RETSIGTYPE
+gdb_catch_sigchld SIGDEFARG(sigarg)
+{
+    pid_t wait_pid;
+    pid_t pid;
+
+    if (sigarg == SIGCHLD && (pid = gdb_pid(gdb)) != -1)
+    {
+	wait_pid = waitpid(pid, NULL, WNOHANG);
+
+	if ((wait_pid == (pid_t)-1 && errno == ECHILD)
+		|| wait_pid == pid)
+	    gdb_set_sigchld(gdb, TRUE);
+    }
+
+    signal(SIGCHLD, (RETSIGTYPE (*)())gdb_catch_sigchld);
+    SIGRETURN;
+}
+#endif
+
 #if (defined(HAVE_SETJMP_H) \
 	&& ((defined(FEAT_X11) && defined(FEAT_XCLIPBOARD)) \
 	    || defined(FEAT_LIBCALL))) \
@@ -1200,6 +1280,13 @@ set_signals()
      */
 #ifdef SIGPWR
     signal(SIGPWR, (RETSIGTYPE (*)())catch_sigpwr);
+#endif
+
+    /*
+     * Catch SIGCHLD to monitor gdb process state
+     */
+#if defined(FEAT_GDB) && defined(SIGCHLD)
+    signal(SIGCHLD, (RETSIGTYPE (*)())gdb_catch_sigchld);
 #endif
 
     /*
@@ -4733,7 +4820,12 @@ RealWaitForChar(fd, msec, check_for_gpm)
 # endif
 #endif
 #ifndef HAVE_SELECT
+# ifdef FEAT_GDB
+	struct pollfd   fds[6];
+	int		gdb_idx = -1;
+# else
 	struct pollfd   fds[5];
+# endif
 	int		nfd;
 # ifdef FEAT_XCLIPBOARD
 	int		xterm_idx = -1;
@@ -4794,6 +4886,22 @@ RealWaitForChar(fd, msec, check_for_gpm)
 	    nfd++;
 	}
 # endif
+# ifdef FEAT_GDB
+	if (msec != 0L && gdb_allowed(gdb))
+	{
+	    /* handle pending SIGCHLD from gdb */
+	    if (gdb_sigchld(gdb))
+	    {
+		gdb_set_event(gdb, TRUE);
+		return 0;
+	    }
+
+	    gdb_idx = nfd;
+	    fds[nfd].fd = gdb_fd(gdb);
+	    fds[nfd].events = POLLIN;
+	    nfd++;
+	}
+# endif
 
 	ret = poll(fds, nfd, towait);
 # ifdef FEAT_MZSCHEME
@@ -4802,6 +4910,27 @@ RealWaitForChar(fd, msec, check_for_gpm)
 	    finished = FALSE;
 # endif
 
+# ifdef FEAT_GDB
+	if (msec != 0L && gdb_allowed(gdb))
+	{
+	    if (ret > 0 && fds[gdb_idx].revents & POLLIN)
+	    {
+		ret--;
+		if (!got_int)
+		    gdb_set_event(gdb, TRUE);
+		else
+		    gdb_set_event(gdb, FALSE);
+	    }
+
+	    /* EINTR poll error */
+	    if (ret < 0 && gdb_sigchld(gdb) && !got_int)
+		gdb_set_event(gdb, TRUE);
+
+	    /* an event: gdb's SIGCHLD or gdb data output */
+	    if (gdb_event(gdb))
+		return 0;
+	}
+# endif
 # ifdef FEAT_SNIFF
 	if (ret < 0)
 	    sniff_disconnect(1);
@@ -4928,6 +5057,23 @@ RealWaitForChar(fd, msec, check_for_gpm)
 		maxfd = xsmp_icefd;
 	}
 # endif
+# ifdef FEAT_GDB
+	if (msec != 0L && gdb_allowed(gdb))
+	{
+	    int fd = gdb_fd(gdb);
+
+	    /* handle pending SIGCHLD from gdb */
+	    if (gdb_sigchld(gdb))
+	    {
+		gdb_set_event(gdb, TRUE);
+		return 0;
+            }
+
+	    FD_SET(fd, &rfds);
+	    if (maxfd < fd)
+		maxfd = fd;
+	}
+# endif
 
 # ifdef OLD_VMS
 	/* Old VMS as v6.2 and older have broken select(). It waits more than
@@ -4950,6 +5096,27 @@ RealWaitForChar(fd, msec, check_for_gpm)
 	    finished = FALSE;
 # endif
 
+# ifdef FEAT_GDB
+	if (msec != 0L && gdb_allowed(gdb))
+	{
+	    if (ret > 0 && FD_ISSET(gdb_fd(gdb), &rfds))
+	    {
+		ret--;
+		if (! got_int)
+		    gdb_set_event(gdb, TRUE);
+		else
+		    gdb_set_event(gdb, FALSE);
+	    }
+
+	    /* EINTR select error */
+	    if (ret < 0 && gdb_sigchld(gdb) && ! got_int)
+		gdb_set_event(gdb, TRUE);
+
+	    /* an event: gdb's SIGCHLD or gdb data output */
+	    if (gdb_event(gdb))
+		return 0;
+	}
+# endif
 # ifdef FEAT_SNIFF
 	if (ret < 0 )
 	    sniff_disconnect(1);

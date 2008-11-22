@@ -577,7 +577,7 @@ struct signlist
     linenr_T	lnum;		/* line number which has this sign */
     int		typenr;		/* typenr of sign */
     signlist_T	*next;		/* next signlist entry */
-# ifdef FEAT_NETBEANS_INTG
+# if defined(FEAT_NETBEANS_INTG) || defined(FEAT_GDB)
     signlist_T  *prev;		/* previous entry -- for easy reordering */
 # endif
 };
@@ -587,6 +587,13 @@ struct signlist
 #define SIGN_LINEHL	1
 #define SIGN_ICON	2
 #define SIGN_TEXT	3
+#endif
+
+#ifdef FEAT_GDB
+typedef struct
+{
+    int dummy;
+} gdb_handle_T;
 #endif
 
 /*
