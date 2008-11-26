@@ -131,7 +131,7 @@ if &filetype == 'changelog'
 
   " Regular expression used to find the end of a date entry
   if !exists('g:changelog_date_end_entry_search')
-    let g:changelog_date_entry_search = '^\s*$'
+    let g:changelog_date_end_entry_search = '^\s*$'
   endif
 
 

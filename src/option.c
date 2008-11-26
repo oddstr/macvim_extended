@@ -696,6 +696,14 @@ static struct vimoption
 			    {(char_u *)0L, (char_u *)0L}
 #endif
 			    },
+    {"charspace",   "csp",  P_NUM|P_NODEFAULT|P_VIM|P_RCLR,
+#ifdef FEAT_GUI
+			    (char_u *)&p_charspace, PV_NONE,
+#else
+			    (char_u *)NULL, PV_NONE,
+#endif
+			    {(char_u *)0L, (char_u *)0L}
+			    },
     {"cindent",	    "cin",  P_BOOL|P_VI_DEF|P_VIM,
 #ifdef FEAT_CINDENT
 			    (char_u *)&p_cin, PV_CIN,
@@ -7710,7 +7718,7 @@ set_num_option(opt_idx, varp, value, errbuf, errbuflen, opt_flags)
 #endif
 
 #ifdef FEAT_GUI
-    else if (pp == &p_linespace)
+    else if (pp == &p_linespace || pp == &p_charspace)
     {
 	/* Recompute gui.char_height and resize the Vim window to keep the
 	 * same number of lines. */

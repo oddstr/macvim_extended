@@ -1240,7 +1240,7 @@ GetFontSize(GuiFont font)
     TEXTMETRIC tm;
 
     GetTextMetrics(hdc, &tm);
-    gui.char_width = tm.tmAveCharWidth + tm.tmOverhang;
+    gui.char_width = tm.tmAveCharWidth + tm.tmOverhang + p_charspace;
 
     gui.char_height = tm.tmHeight
 #ifndef MSWIN16_FASTTEXT
