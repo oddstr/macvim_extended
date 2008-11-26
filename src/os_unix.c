@@ -35,10 +35,6 @@
 # include "if_mzsch.h"
 #endif
 
-#ifdef HAVE_FCNTL_H
-# include <fcntl.h>
-#endif
-
 #include "os_unixx.h"	    /* unix includes for os_unix.c only */
 
 #ifdef USE_XSMP
@@ -62,7 +58,9 @@ static int selinux_enabled = -1;
 
 #ifdef __CYGWIN__
 # ifndef WIN32
-#  include <sys/cygwin.h>	/* for cygwin_conv_to_posix_path() */
+#  include <cygwin/version.h>
+#  include <sys/cygwin.h>	/* for cygwin_conv_to_posix_path() and/or
+				 * for cygwin_conv_path() */
 # endif
 #endif
 
@@ -90,6 +88,15 @@ extern int   select __ARGS((int, fd_set *, fd_set *, fd_set *, struct timeval *)
 static void gpm_close __ARGS((void));
 static int gpm_open __ARGS((void));
 static int mch_gpm_process __ARGS((void));
+#endif
+
+#ifdef FEAT_SYSMOUSE
+# include <sys/consio.h>
+# include <sys/fbio.h>
+
+static int sysmouse_open __ARGS((void));
+static void sysmouse_close __ARGS((void));
+static RETSIGTYPE sig_sysmouse __ARGS(SIGPROTOARG);
 #endif
 
 /*
@@ -209,6 +216,7 @@ typedef struct
 {
     SmcConn smcconn;	    /* The SM connection ID */
     IceConn iceconn;	    /* The ICE connection ID */
+    char *clientid;         /* The client ID for the current smc session */
     Bool save_yourself;     /* If we're in the middle of a save_yourself */
     Bool shutdown;	    /* If we're in shutdown mode */
 } xsmp_config_T;
@@ -288,7 +296,8 @@ static struct signalinfo
 #ifdef SIGUSR1
     {SIGUSR1,	    "USR1",	TRUE},
 #endif
-#ifdef SIGUSR2
+#if defined(SIGUSR2) && !defined(FEAT_SYSMOUSE)
+    /* Used for sysmouse handling */
     {SIGUSR2,	    "USR2",	TRUE},
 #endif
 #ifdef SIGINT
@@ -2054,6 +2063,21 @@ vim_is_xterm(name)
 		|| STRCMP(name, "builtin_xterm") == 0);
 }
 
+#if defined(FEAT_MOUSE_XTERM) || defined(PROTO)
+/*
+ * Return TRUE if "name" appears to be that of a terminal
+ * known to support the xterm-style mouse protocol.
+ * Relies on term_is_xterm having been set to its correct value.
+ */
+    int
+use_xterm_like_mouse(name)
+    char_u *name;
+{
+    return (name != NULL
+	    && (term_is_xterm || STRNICMP(name, "screen", 6) == 0));
+}
+#endif
+
 #if defined(FEAT_MOUSE_TTY) || defined(PROTO)
 /*
  * Return non-zero when using an xterm mouse, according to 'ttymouse'.
@@ -2277,6 +2301,10 @@ mch_FullName(fname, buf, len, force)
     char_u	olddir[MAXPATHL];
     char_u	*p;
     int		retval = OK;
+#ifdef __CYGWIN__
+    char_u	posix_fname[MAXPATHL];	/* Cygwin docs mention MAX_PATH, but
+					   it's not always defined */
+#endif
 
 #ifdef VMS
     fname = vms_fixfilename(fname);
@@ -2286,7 +2314,12 @@ mch_FullName(fname, buf, len, force)
     /*
      * This helps for when "/etc/hosts" is a symlink to "c:/something/hosts".
      */
-    cygwin_conv_to_posix_path(fname, fname);
+# if CYGWIN_VERSION_DLL_MAJOR >= 1007
+    cygwin_conv_path(CCP_WIN_A_TO_POSIX, fname, posix_fname, MAXPATHL);
+# else
+    cygwin_conv_to_posix_path(fname, posix_fname);
+# endif
+    fname = posix_fname;
 #endif
 
     /* expand it if forced or not an absolute path */
@@ -2887,16 +2920,28 @@ mch_free_mem()
     if (clip_plus.owned)
 	clip_lose_selection(&clip_plus);
 # endif
-# if (defined(FEAT_X11) && defined(FEAT_XCLIPBOARD)) || defined(PROTO)
+# if defined(FEAT_X11) && defined(FEAT_XCLIPBOARD)
     if (xterm_Shell != (Widget)0)
 	XtDestroyWidget(xterm_Shell);
+#  ifndef LESSTIF_VERSION
+    /* Lesstif crashes here, lose some memory */
     if (xterm_dpy != NULL)
 	XtCloseDisplay(xterm_dpy);
     if (app_context != (XtAppContext)NULL)
+    {
 	XtDestroyApplicationContext(app_context);
+#   ifdef FEAT_X11
+	x11_display = NULL; /* freed by XtDestroyApplicationContext() */
+#   endif
+    }
+#  endif
 # endif
 # ifdef FEAT_X11
-    if (x11_display != NULL && x11_display != xterm_dpy)
+    if (x11_display != NULL
+#  ifdef FEAT_XCLIPBOARD
+	    && x11_display != xterm_dpy
+#  endif
+	    )
 	XCloseDisplay(x11_display);
 # endif
 # if defined(HAVE_SIGALTSTACK) || defined(HAVE_SIGSTACK)
@@ -3237,6 +3282,22 @@ mch_setmouse(on)
     }
 # endif
 
+# ifdef FEAT_SYSMOUSE
+    else
+    {
+	if (on)
+	{
+	    if (sysmouse_open() == OK)
+		ison = TRUE;
+	}
+	else
+	{
+	    sysmouse_close();
+	    ison = FALSE;
+	}
+    }
+# endif
+
 # ifdef FEAT_MOUSE_JSB
     else
     {
@@ -3322,6 +3383,15 @@ check_mouse_termcode()
 #  endif
 	    )
 	set_mouse_termcode(KS_MOUSE, (char_u *)IF_EB("\033MG", ESC_STR "MG"));
+# endif
+
+# ifdef FEAT_SYSMOUSE
+    if (!use_xterm_mouse()
+#  ifdef FEAT_GUI
+	    && !gui.in_use
+#  endif
+	    )
+	set_mouse_termcode(KS_MOUSE, (char_u *)IF_EB("\033MS", ESC_STR "MS"));
 # endif
 
 # ifdef FEAT_MOUSE_JSB
@@ -3874,7 +3944,7 @@ mch_call_shell(cmd, options)
 # ifdef HAVE_SETSID
 		/* Create our own process group, so that the child and all its
 		 * children can be kill()ed.  Don't do this when using pipes,
-		 * because stdin is not a tty, we would loose /dev/tty. */
+		 * because stdin is not a tty, we would lose /dev/tty. */
 		if (p_stmp)
 		    (void)setsid();
 # endif
@@ -3903,7 +3973,7 @@ mch_call_shell(cmd, options)
 # else
 		/*
 		 * Putenv does not copy the string, it has to remain valid.
-		 * Use a static array to avoid loosing allocated memory.
+		 * Use a static array to avoid losing allocated memory.
 		 */
 		putenv("TERM=dumb");
 		sprintf(envbuf_Rows, "ROWS=%ld", Rows);
@@ -4236,7 +4306,7 @@ mch_call_shell(cmd, options)
 			/*
 			 * Write the characters to the child, unless EOF has
 			 * been typed for pipes.  Write one character at a
-			 * time, to avoid loosing too much typeahead.
+			 * time, to avoid losing too much typeahead.
 			 * When writing buffer lines, drop the typed
 			 * characters (only check for CTRL-C).
 			 */
@@ -4368,7 +4438,7 @@ mch_call_shell(cmd, options)
 
 		    /*
 		     * Check if the child still exists, before checking for
-		     * typed characters (otherwise we would loose typeahead).
+		     * typed characters (otherwise we would lose typeahead).
 		     */
 # ifdef __NeXT__
 		    wait_pid = wait4(pid, &status, WNOHANG, (struct rusage *) 0);
@@ -5152,7 +5222,7 @@ mch_expand_wildcards(num_pat, pat, num_file, file, flags)
     static int	did_find_nul = FALSE;
     int		ampersent = FALSE;
 		/* vimglob() function to define for Posix shell */
-    static char *sh_vimglob_func = "vimglob() { while [ $# -ge 1 ]; do echo -n \"$1\"; echo; shift; done }; vimglob >";
+    static char *sh_vimglob_func = "vimglob() { while [ $# -ge 1 ]; do echo \"$1\"; shift; done }; vimglob >";
 
     *num_file = 0;	/* default: no files found */
     *file = NULL;
@@ -5793,7 +5863,6 @@ gpm_open()
 
 /*
  * Closes connection to gpm
- * returns non-zero if connection successfully closed
  */
     static void
 gpm_close()
@@ -5887,6 +5956,114 @@ mch_gpm_process()
     return 6;
 }
 #endif /* FEAT_MOUSE_GPM */
+
+#ifdef FEAT_SYSMOUSE
+/*
+ * Initialize connection with sysmouse.
+ * Let virtual console inform us with SIGUSR2 for pending sysmouse
+ * output, any sysmouse output than will be processed via sig_sysmouse().
+ * Return OK if succeeded, FAIL if failed.
+ */
+    static int
+sysmouse_open()
+{
+    struct mouse_info   mouse;
+
+    mouse.operation = MOUSE_MODE;
+    mouse.u.mode.mode = 0;
+    mouse.u.mode.signal = SIGUSR2;
+    if (ioctl(1, CONS_MOUSECTL, &mouse) != -1)
+    {
+	signal(SIGUSR2, (RETSIGTYPE (*)())sig_sysmouse);
+	mouse.operation = MOUSE_SHOW;
+	ioctl(1, CONS_MOUSECTL, &mouse);
+	return OK;
+    }
+    return FAIL;
+}
+
+/*
+ * Stop processing SIGUSR2 signals, and also make sure that
+ * virtual console do not send us any sysmouse related signal.
+ */
+    static void
+sysmouse_close()
+{
+    struct mouse_info	mouse;
+
+    signal(SIGUSR2, restricted ? SIG_IGN : SIG_DFL);
+    mouse.operation = MOUSE_MODE;
+    mouse.u.mode.mode = 0;
+    mouse.u.mode.signal = 0;
+    ioctl(1, CONS_MOUSECTL, &mouse);
+}
+
+/*
+ * Gets info from sysmouse and adds special keys to input buf.
+ */
+/* ARGSUSED */
+    static RETSIGTYPE
+sig_sysmouse SIGDEFARG(sigarg)
+{
+    struct mouse_info	mouse;
+    struct video_info	video;
+    char_u		string[6];
+    int			row, col;
+    int			button;
+    int			buttons;
+    static int		oldbuttons = 0;
+
+#ifdef FEAT_GUI
+    /* Don't put events in the input queue now. */
+    if (hold_gui_events)
+	return;
+#endif
+
+    mouse.operation = MOUSE_GETINFO;
+    if (ioctl(1, FBIO_GETMODE, &video.vi_mode) != -1
+	    && ioctl(1, FBIO_MODEINFO, &video) != -1
+	    && ioctl(1, CONS_MOUSECTL, &mouse) != -1
+	    && video.vi_cheight > 0 && video.vi_cwidth > 0)
+    {
+	row = mouse.u.data.y / video.vi_cheight;
+	col = mouse.u.data.x / video.vi_cwidth;
+	buttons = mouse.u.data.buttons;
+	string[0] = ESC; /* Our termcode */
+	string[1] = 'M';
+	string[2] = 'S';
+	if (oldbuttons == buttons && buttons != 0)
+	{
+	    button = MOUSE_DRAG;
+	}
+	else
+	{
+	    switch (buttons)
+	    {
+		case 0:
+		    button = MOUSE_RELEASE;
+		    break;
+		case 1:
+		    button = MOUSE_LEFT;
+		    break;
+		case 2:
+		    button = MOUSE_MIDDLE;
+		    break;
+		case 4:
+		    button = MOUSE_RIGHT;
+		    break;
+		default:
+		    return;
+	    }
+	    oldbuttons = buttons;
+	}
+	string[3] = (char_u)(button);
+	string[4] = (char_u)(col + ' ' + 1);
+	string[5] = (char_u)(row + ' ' + 1);
+	add_to_input_buf(string, 6);
+    }
+    return;
+}
+#endif /* FEAT_SYSMOUSE */
 
 #if defined(FEAT_LIBCALL) || defined(PROTO)
 typedef char_u * (*STRPROCSTR)__ARGS((char_u *));
@@ -6290,22 +6467,22 @@ clear_xterm_clip()
     }
     if (xterm_dpy != NULL)
     {
-#if 0
+#  if 0
 	/* Lesstif and Solaris crash here, lose some memory */
 	XtCloseDisplay(xterm_dpy);
-#endif
+#  endif
 	if (x11_display == xterm_dpy)
 	    x11_display = NULL;
 	xterm_dpy = NULL;
     }
-#if 0
+#  if 0
     if (app_context != (XtAppContext)NULL)
     {
 	/* Lesstif and Solaris crash here, lose some memory */
 	XtDestroyApplicationContext(app_context);
 	app_context = (XtAppContext)NULL;
     }
-#endif
+#  endif
 }
 # endif
 
@@ -6557,7 +6734,6 @@ static int dummy;
 xsmp_init(void)
 {
     char		errorstring[80];
-    char		*clientid;
     SmcCallbacks	smcallbacks;
 #if 0
     SmPropValue		smname;
@@ -6599,7 +6775,7 @@ xsmp_init(void)
 		     | SmcSaveCompleteProcMask | SmcShutdownCancelledProcMask,
 	    &smcallbacks,
 	    NULL,
-	    &clientid,
+	    &xsmp.clientid,
 	    sizeof(errorstring),
 	    errorstring);
     if (xsmp.smcconn == NULL)
@@ -6638,6 +6814,8 @@ xsmp_close()
     if (xsmp_icefd != -1)
     {
 	SmcCloseConnection(xsmp.smcconn, 0, NULL);
+	vim_free(xsmp.clientid);
+	xsmp.clientid = NULL;
 	xsmp_icefd = -1;
     }
 }

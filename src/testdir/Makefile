@@ -20,21 +20,23 @@ SCRIPTS = test1.out test2.out test3.out test4.out test5.out test6.out \
 		test48.out test49.out test51.out test52.out test53.out \
 		test54.out test55.out test56.out test57.out test58.out \
 		test59.out test60.out test61.out test62.out test63.out \
-		test64.out
+		test64.out test65.out
 
 SCRIPTS_GUI = test16.out
 
 .SUFFIXES: .in .out
 
-nongui:	nolog $(SCRIPTS)
-	@echo
-	@cat test.log
-	@echo ALL DONE
+nongui:	nolog $(SCRIPTS) report
 
-gui:	nolog $(SCRIPTS) $(SCRIPTS_GUI)
+gui:	nolog $(SCRIPTS) $(SCRIPTS_GUI) report
+
+report:
 	@echo
-	@cat test.log
-	@echo ALL DONE
+	@echo 'Test results:'
+	@/bin/sh -c "if test -f test.log; \
+		then cat test.log; echo TEST FAILURE; exit 1; \
+		else echo ALL DONE; \
+		fi"
 
 $(SCRIPTS) $(SCRIPTS_GUI): $(VIMPROG)
 
@@ -71,4 +73,4 @@ test49.out: test49.vim
 test60.out: test60.vim
 
 nolog:
-	-echo Test results: >test.log
+	-rm -f test.log

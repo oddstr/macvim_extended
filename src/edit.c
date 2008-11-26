@@ -3608,8 +3608,6 @@ ins_compl_prep(c)
 		    inc_cursor();
 	    }
 
-	    auto_format(FALSE, TRUE);
-
 	    /* If the popup menu is displayed pressing CTRL-Y means accepting
 	     * the selection without inserting anything.  When
 	     * compl_enter_selects is set the Enter key does the same. */
@@ -3629,6 +3627,8 @@ ins_compl_prep(c)
 					  + curwin->w_cursor.col - compl_col);
 		retval = TRUE;
 	    }
+
+	    auto_format(FALSE, TRUE);
 
 	    ins_compl_free();
 	    compl_started = FALSE;
@@ -9300,7 +9300,7 @@ ins_tab()
 	    i = cursor->col - fpos.col;
 	    if (i > 0)
 	    {
-		mch_memmove(ptr, ptr + i, STRLEN(ptr + i) + 1);
+		STRMOVE(ptr, ptr + i);
 		/* correct replace stack. */
 		if ((State & REPLACE_FLAG)
 #ifdef FEAT_VREPLACE

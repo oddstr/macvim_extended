@@ -13,10 +13,6 @@
 
 #include "vim.h"
 
-#ifdef HAVE_FCNTL_H
-# include <fcntl.h>	    /* for chdir() */
-#endif
-
 static int	quitmore = 0;
 static int	ex_pressedreturn = FALSE;
 #ifndef FEAT_PRINTER
@@ -1137,7 +1133,7 @@ do_cmdline(cmdline, getline, cookie, flags)
 	{
 	    /* need to copy the command after the '|' to cmdline_copy, for the
 	     * next do_one_cmd() */
-	    mch_memmove(cmdline_copy, next_cmdline, STRLEN(next_cmdline) + 1);
+	    STRMOVE(cmdline_copy, next_cmdline);
 	    next_cmdline = cmdline_copy;
 	}
 
@@ -2147,7 +2143,9 @@ do_one_cmd(cmdlinep, sourcing,
 
 #endif
 
-    if (*p == '!' && ea.cmdidx != CMD_substitute)    /* forced commands */
+    /* forced commands */
+    if (*p == '!' && ea.cmdidx != CMD_substitute
+	    && ea.cmdidx != CMD_smagic && ea.cmdidx != CMD_snomagic)
     {
 	++p;
 	ea.forceit = TRUE;
@@ -2378,7 +2376,7 @@ do_one_cmd(cmdlinep, sourcing,
 	     * Halving the number of backslashes is incompatible with previous
 	     * versions. */
 	    if (*p == '\\' && p[1] == '\n')
-		mch_memmove(p, p + 1, STRLEN(p));
+		STRMOVE(p, p + 1);
 	    else if (*p == '\n')
 	    {
 		ea.nextcmd = p + 1;
@@ -2986,6 +2984,7 @@ static struct cmdmod
     {"keepmarks", 3, FALSE},
     {"leftabove", 5, FALSE},
     {"lockmarks", 3, FALSE},
+    {"noautocmd", 3, FALSE},
     {"rightbelow", 6, FALSE},
     {"sandbox", 3, FALSE},
     {"silent", 3, FALSE},
@@ -4555,7 +4554,7 @@ separate_nextcmd(eap)
 		++p;		/* skip CTRL-V and next char */
 	    else
 				/* remove CTRL-V and skip next char */
-		mch_memmove(p, p + 1, STRLEN(p));
+		STRMOVE(p, p + 1);
 	    if (*p == NUL)		/* stop at NUL after CTRL-V */
 		break;
 	}
@@ -4586,7 +4585,7 @@ separate_nextcmd(eap)
 	    if ((vim_strchr(p_cpo, CPO_BAR) == NULL
 			      || !(eap->argt & USECTRLV)) && *(p - 1) == '\\')
 	    {
-		mch_memmove(p - 1, p, STRLEN(p) + 1);	/* remove the '\' */
+		STRMOVE(p - 1, p);	/* remove the '\' */
 		--p;
 	    }
 	    else
@@ -4644,7 +4643,7 @@ skip_cmd_arg(p, rembs)
 	if (*p == '\\' && p[1] != NUL)
 	{
 	    if (rembs)
-		mch_memmove(p, p + 1, STRLEN(p));
+		STRMOVE(p, p + 1);
 	    else
 		++p;
 	}
@@ -6736,6 +6735,10 @@ handle_drop(filec, filev, split)
     if (curbuf_locked())
 	return;
 #endif
+    /* When the screen is being updated we should not change buffers and
+     * windows structures, it may cause freed memory to be used. */
+    if (updating_screen)
+	return;
 
     /* Check whether the current buffer is changed. If so, we will need
      * to split the current window or data could be lost.
@@ -7067,8 +7070,8 @@ ex_splitview(eap)
 
 # ifdef FEAT_QUICKFIX
     /* A ":split" in the quickfix window works like ":new".  Don't want two
-     * quickfix windows. */
-    if (bt_quickfix(curbuf))
+     * quickfix windows.  But it's OK when doing ":tab split". */
+    if (bt_quickfix(curbuf) && cmdmod.tab == 0)
     {
 	if (eap->cmdidx == CMD_split)
 	    eap->cmdidx = CMD_new;
@@ -7099,10 +7102,11 @@ ex_splitview(eap)
 # endif
 	    && eap->cmdidx != CMD_new)
     {
+# ifdef FEAT_AUTOCMD
 	if (
-# ifdef FEAT_GUI
+#  ifdef FEAT_GUI
 	    !gui.in_use &&
-# endif
+#  endif
 		au_has_group((char_u *)"FileExplorer"))
 	{
 	    /* No browsing supported but we do have the file explorer:
@@ -7111,6 +7115,7 @@ ex_splitview(eap)
 		eap->arg = (char_u *)".";
 	}
 	else
+# endif
 	{
 	    fname = do_browse(0, (char_u *)_("Edit File in new window"),
 					  eap->arg, NULL, NULL, NULL, curbuf);
@@ -7171,7 +7176,6 @@ theend:
 # endif
 }
 
-#if defined(FEAT_MOUSE) || defined(PROTO)
 /*
  * Open a new tab page.
  */
@@ -7186,7 +7190,6 @@ tabpage_new()
     ea.arg = (char_u *)"";
     ex_splitview(&ea);
 }
-#endif
 
 /*
  * :tabnext command
@@ -8917,6 +8920,7 @@ ex_normal(eap)
     tasave_T	tabuf;
     int		save_insertmode = p_im;
     int		save_finish_op = finish_op;
+    int		save_opcount = opcount;
 #ifdef FEAT_MBYTE
     char_u	*arg = NULL;
     int		l;
@@ -9044,6 +9048,7 @@ ex_normal(eap)
     restart_edit = save_restart_edit;
     p_im = save_insertmode;
     finish_op = save_finish_op;
+    opcount = save_opcount;
     msg_didout |= save_msg_didout;	/* don't reset msg_didout now */
 
     /* Restore the state (needed when called from a function executed for
@@ -9306,7 +9311,7 @@ ex_tag_cmd(eap, name)
 		  break;
 	default:			/* ":tag" */
 #ifdef FEAT_CSCOPE
-		  if (p_cst)
+		  if (p_cst && *eap->arg != NUL)
 		  {
 		      do_cstag(eap);
 		      return;
@@ -9328,6 +9333,58 @@ ex_tag_cmd(eap, name)
 
     do_tag(eap->arg, cmd, eap->addr_count > 0 ? (int)eap->line2 : 1,
 							  eap->forceit, TRUE);
+}
+
+/*
+ * Check "str" for starting with a special cmdline variable.
+ * If found return one of the SPEC_ values and set "*usedlen" to the length of
+ * the variable.  Otherwise return -1 and "*usedlen" is unchanged.
+ */
+    int
+find_cmdline_var(src, usedlen)
+    char_u	*src;
+    int		*usedlen;
+{
+    int		len;
+    int		i;
+    static char *(spec_str[]) = {
+		    "%",
+#define SPEC_PERC   0
+		    "#",
+#define SPEC_HASH   1
+		    "<cword>",		/* cursor word */
+#define SPEC_CWORD  2
+		    "<cWORD>",		/* cursor WORD */
+#define SPEC_CCWORD 3
+		    "<cfile>",		/* cursor path name */
+#define SPEC_CFILE  4
+		    "<sfile>",		/* ":so" file name */
+#define SPEC_SFILE  5
+#ifdef FEAT_AUTOCMD
+		    "<afile>",		/* autocommand file name */
+# define SPEC_AFILE 6
+		    "<abuf>",		/* autocommand buffer number */
+# define SPEC_ABUF  7
+		    "<amatch>",		/* autocommand match name */
+# define SPEC_AMATCH 8
+#endif
+#ifdef FEAT_CLIENTSERVER
+		    "<client>"
+# define SPEC_CLIENT 9
+#endif
+    };
+#define SPEC_COUNT  (sizeof(spec_str) / sizeof(char *))
+
+    for (i = 0; i < SPEC_COUNT; ++i)
+    {
+	len = (int)STRLEN(spec_str[i]);
+	if (STRNCMP(src, spec_str[i], len) == 0)
+	{
+	    *usedlen = len;
+	    return i;
+	}
+    }
+    return -1;
 }
 
 /*
@@ -9370,34 +9427,6 @@ eval_vars(src, srcstart, usedlen, lnump, errormsg, escaped)
 #ifdef FEAT_MODIFY_FNAME
     int		skip_mod = FALSE;
 #endif
-    static char *(spec_str[]) =
-	{
-		    "%",
-#define SPEC_PERC   0
-		    "#",
-#define SPEC_HASH   1
-		    "<cword>",		/* cursor word */
-#define SPEC_CWORD  2
-		    "<cWORD>",		/* cursor WORD */
-#define SPEC_CCWORD 3
-		    "<cfile>",		/* cursor path name */
-#define SPEC_CFILE  4
-		    "<sfile>",		/* ":so" file name */
-#define SPEC_SFILE  5
-#ifdef FEAT_AUTOCMD
-		    "<afile>",		/* autocommand file name */
-# define SPEC_AFILE 6
-		    "<abuf>",		/* autocommand buffer number */
-# define SPEC_ABUF  7
-		    "<amatch>",		/* autocommand match name */
-# define SPEC_AMATCH 8
-#endif
-#ifdef FEAT_CLIENTSERVER
-		    "<client>"
-# define SPEC_CLIENT 9
-#endif
-		};
-#define SPEC_COUNT  (sizeof(spec_str) / sizeof(char *))
 
 #if defined(FEAT_AUTOCMD) || defined(FEAT_CLIENTSERVER)
     char_u	strbuf[30];
@@ -9410,13 +9439,8 @@ eval_vars(src, srcstart, usedlen, lnump, errormsg, escaped)
     /*
      * Check if there is something to do.
      */
-    for (spec_idx = 0; spec_idx < SPEC_COUNT; ++spec_idx)
-    {
-	*usedlen = (int)STRLEN(spec_str[spec_idx]);
-	if (STRNCMP(src, spec_str[spec_idx], *usedlen) == 0)
-	    break;
-    }
-    if (spec_idx == SPEC_COUNT)	    /* no match */
+    spec_idx = find_cmdline_var(src, usedlen);
+    if (spec_idx < 0)	/* no match */
     {
 	*usedlen = 1;
 	return NULL;
@@ -9429,7 +9453,7 @@ eval_vars(src, srcstart, usedlen, lnump, errormsg, escaped)
     if (src > srcstart && src[-1] == '\\')
     {
 	*usedlen = 0;
-	mch_memmove(src - 1, src, STRLEN(src) + 1);	/* remove backslash */
+	STRMOVE(src - 1, src);	/* remove backslash */
 	return NULL;
     }
 
@@ -9524,6 +9548,15 @@ eval_vars(src, srcstart, usedlen, lnump, errormsg, escaped)
 #ifdef FEAT_AUTOCMD
 	case SPEC_AFILE:	/* file name for autocommand */
 		result = autocmd_fname;
+		if (result != NULL && !autocmd_fname_full)
+		{
+		    /* Still need to turn the fname into a full path.  It is
+		     * postponed to avoid a delay when <afile> is not used. */
+		    autocmd_fname_full = TRUE;
+		    result = FullName_save(autocmd_fname, FALSE);
+		    vim_free(autocmd_fname);
+		    autocmd_fname = result;
+		}
 		if (result == NULL)
 		{
 		    *errormsg = (char_u *)_("E495: no autocommand file name to substitute for \"<afile>\"");

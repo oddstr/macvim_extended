@@ -1,7 +1,7 @@
 # Slovak translation of vim
 # Lubomir Host 'rajo' <rajo AT platon.sk>
 # 2005 - Platon Group, http://platon.sk/
-# $Revision: 1.4 $
+# $Revision: 1.9 $
 # $LastChangedDate: 2005-10-08 12:00:24 +0200 (Sat, 08 Oct 2005) $
 msgid ""
 msgstr ""
@@ -346,7 +346,7 @@ msgid "E716: Key not present in Dictionary: %s"
 msgstr "E716: kµúè sa v Slovníku (Dictionary) nenachádza: %s"
 
 msgid "E122: Function %s already exists, add ! to replace it"
-msgstr "E112: Funkcia %s u¾ existuje. Pou¾ite ! pre jej nahradenie."
+msgstr "E122: Funkcia %s u¾ existuje. Pou¾ite ! pre jej nahradenie."
 
 msgid "E717: Dictionary entry already exists"
 msgstr "E717: Záznam v Slovníku (Dictionary) u¾ existuje"
@@ -527,7 +527,7 @@ msgid "E241: Unable to send to %s"
 msgstr "E241: Nemô¾em posla» na %s"
 
 msgid "E277: Unable to read a server reply"
-msgstr "E227: Nemô¾em èíta» odpoveï servra"
+msgstr "E277: Nemô¾em èíta» odpoveï servra"
 
 msgid "E655: Too many symbolic links (cycle?)"
 msgstr "E655: Príli¹ mnoho symbolických odkazov (sluèka?)"
@@ -544,13 +544,13 @@ msgstr "(Chybný)"
 msgid "E677: Error writing temp file"
 msgstr "E677: Chyba pri zápise doèasného súboru"
 
-msgid "E703: Using a Funcref as a number"
+msgid "E703: Using a Funcref as a Number"
 msgstr "E703: Pou¾itý odkaz na Funkciu (Funcref) ako èíslo"
 
-msgid "E745: Using a List as a number"
+msgid "E745: Using a List as a Number"
 msgstr "E745: Zoznam (List) pou¾itý ako èíslo"
 
-msgid "E728: Using a Dictionary as a number"
+msgid "E728: Using a Dictionary as a Number"
 msgstr "E728: Slovník (Dictionary) pou¾itý ako èíslo"
 
 msgid "E729: using Funcref as a String"
@@ -866,7 +866,7 @@ msgid "E156: Missing sign name"
 msgstr "E156: Chýba meno pre znaèku"
 
 msgid "E612: Too many signs defined"
-msgstr "E255: Príli¹ mnoho definovaných znaèiek"
+msgstr "E612: Príli¹ mnoho definovaných znaèiek"
 
 #, c-format
 msgid "E239: Invalid sign text: %s"
@@ -1128,7 +1128,7 @@ msgstr "®iadny odkladací súbor"
 msgid "Append File"
 msgstr "Pripoji» súbor"
 
-msgid "E747: Cannot change directory, buffer is modifed (add ! to override)"
+msgid "E747: Cannot change directory, buffer is modified (add ! to override)"
 msgstr "E747: Nemo¾no zmeni» adresár, buffer je modifikovaný (pou¾ite ! pre vynútenie)"
 
 msgid "E186: No previous directory"
@@ -1260,13 +1260,13 @@ msgid "E579: :if nesting too deep"
 msgstr "E579: vnorenie :if je príli¹ hlboké"
 
 msgid "E580: :endif without :if"
-msgstr "E580 :endif bez zodpovedajúceho :if"
+msgstr "E580: :endif bez zodpovedajúceho :if"
 
 msgid "E581: :else without :if"
-msgstr "E581 :else bez zodpovedajúceho :if"
+msgstr "E581: :else bez zodpovedajúceho :if"
 
 msgid "E582: :elseif without :if"
-msgstr "E582 :elseif bez zodpovedajúceho :if"
+msgstr "E582: :elseif bez zodpovedajúceho :if"
 
 msgid "E583: multiple :else"
 msgstr "E583: viacnásobné :else"
@@ -1439,7 +1439,7 @@ msgstr ""
 msgid "E204: Autocommand changed number of lines in unexpected way"
 msgstr "E204: Automatický príkaz neoèakávaným spôsobom zmenil poèet riadkov"
 
-msgid "NetBeans dissallows writes of unmodified buffers"
+msgid "NetBeans disallows writes of unmodified buffers"
 msgstr "NetBeans rozhranie nedovolilo zapísa» nemodifikované buffre"
 
 msgid "Partial writes disallowed for NetBeans buffers"
@@ -4644,7 +4644,7 @@ msgstr "Príli¹ mnoho odlo¾ených prípon"
 msgid "Too many compound flags"
 msgstr "Príli¹ mnoho upravovacích príznakov"
 
-msgid "Too many posponed prefixes and/or compound flags"
+msgid "Too many postponed prefixes and/or compound flags"
 msgstr "Príli¹ mnoho odlo¾ených prípon a/alebo upravovacích príznakov"
 
 #, c-format
@@ -5126,14 +5126,14 @@ msgstr "E440: chýba opravný riadok"
 #. Only MS VC 4.1 and earlier can do Win32s
 msgid ""
 "\n"
-"MS-Windows 16/32 bit GUI version"
+"MS-Windows 16/32-bit GUI version"
 msgstr ""
 "\n"
 "16/32 bitová GUI verzia pre MS Windows"
 
 msgid ""
 "\n"
-"MS-Windows 32 bit GUI version"
+"MS-Windows 32-bit GUI version"
 msgstr ""
 "\n"
 "32 bitová GUI verzia pre MS Windows"
@@ -5146,28 +5146,28 @@ msgstr " s OLE podporou"
 
 msgid ""
 "\n"
-"MS-Windows 32 bit console version"
+"MS-Windows 32-bit console version"
 msgstr ""
 "\n"
 "32 bitová verzia pre MS Windows konzolu"
 
 msgid ""
 "\n"
-"MS-Windows 16 bit version"
+"MS-Windows 16-bit version"
 msgstr ""
 "\n"
 "16 bitová verzia pre MS Windows"
 
 msgid ""
 "\n"
-"32 bit MS-DOS version"
+"32-bit MS-DOS version"
 msgstr ""
 "\n"
 "32 bitová verzia pre MS-DOS"
 
 msgid ""
 "\n"
-"16 bit MS-DOS version"
+"16-bit MS-DOS version"
 msgstr ""
 "\n"
 "16 bitová MS-DOS verzia"

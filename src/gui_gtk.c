@@ -1195,7 +1195,10 @@ gui_mch_destroy_scrollbar(scrollbar_T *sb)
  * Implementation of the file selector related stuff
  */
 #if defined(HAVE_GTK2) && GTK_CHECK_VERSION(2,4,0)
-# define USE_FILE_CHOOSER
+/* This has been disabled, because the GTK library rewrites
+ * ~/.recently-used.xbel every time the main loop is quit.  For Vim that means
+ * on just about any event. */
+/* # define USE_FILE_CHOOSER */
 #endif
 
 #ifndef USE_FILE_CHOOSER
@@ -1510,7 +1513,7 @@ gui_gnome_dialog( int	type,
 	for (next = p; *next; ++next)
 	{
 	    if (*next == DLG_HOTKEY_CHAR)
-		mch_memmove(next, next + 1, STRLEN(next));
+		STRMOVE(next, next + 1);
 	    if (*next == DLG_BUTTON_SEP)
 	    {
 		*next++ = NUL;

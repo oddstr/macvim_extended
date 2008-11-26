@@ -698,7 +698,7 @@ msgstr "E478: 不要驚慌!"
 
 #, c-format
 msgid "E661: Sorry, no '%s' help for %s"
-msgstr "E149: 抱歉, 沒有關於 %s-%s 的說明"
+msgstr "E661: 抱歉, 沒有關於 %s-%s 的說明"
 
 #, c-format
 msgid "E149: Sorry, no help for %s"
@@ -1367,7 +1367,7 @@ msgstr "E203: Autocommand 刪除或釋放了要寫入的緩衝區"
 msgid "E204: Autocommand changed number of lines in unexpected way"
 msgstr "E204: Autocommand 意外地改變了行號"
 
-msgid "NetBeans dissallows writes of unmodified buffers"
+msgid "NetBeans disallows writes of unmodified buffers"
 msgstr "NetBeans 不能寫出未修改的緩衝區"
 
 msgid "Partial writes disallowed for NetBeans buffers"
@@ -1677,7 +1677,7 @@ msgid "E231: 'guifontwide' invalid"
 msgstr "E231: 不正確的 'guifontwide'"
 
 msgid "E599: Value of 'imactivatekey' is invalid"
-msgstr "E559: 'imactivatekey' 的值不正確"
+msgstr "E599: 'imactivatekey' 的值不正確"
 
 #, c-format
 msgid "E254: Cannot allocate color %s"
@@ -4004,7 +4004,7 @@ msgstr "E56: %s* 運算元可以是空的"
 
 #, c-format
 msgid "E57: %s+ operand could be empty"
-msgstr "E56: %s+ 運算元可以是空的"
+msgstr "E57: %s+ 運算元可以是空的"
 
 #, c-format
 msgid "E59: invalid character after %s@"
@@ -4521,14 +4521,14 @@ msgstr "E440: 找不到要 undo 的行 "
 #. Only MS VC 4.1 and earlier can do Win32s
 msgid ""
 "\n"
-"MS-Windows 16/32 bit GUI version"
+"MS-Windows 16/32-bit GUI version"
 msgstr ""
 "\n"
 "MS-Windows 16/32 Bit 圖型界面版本"
 
 msgid ""
 "\n"
-"MS-Windows 32 bit GUI version"
+"MS-Windows 32-bit GUI version"
 msgstr ""
 "\n"
 "MS-Windows 32 Bit 圖型界面版本"
@@ -4541,28 +4541,28 @@ msgstr "支援 OLE"
 
 msgid ""
 "\n"
-"MS-Windows 32 bit console version"
+"MS-Windows 32-bit console version"
 msgstr ""
 "\n"
 "MS-Windows 32 Bit console 版本"
 
 msgid ""
 "\n"
-"MS-Windows 16 bit version"
+"MS-Windows 16-bit version"
 msgstr ""
 "\n"
 "MS-Windows 32 Bit console 版本"
 
 msgid ""
 "\n"
-"32 bit MS-DOS version"
+"32-bit MS-DOS version"
 msgstr ""
 "\n"
 "32 Bit MS-DOS 版本"
 
 msgid ""
 "\n"
-"16 bit MS-DOS version"
+"16-bit MS-DOS version"
 msgstr ""
 "\n"
 "16 Bit MS-DOS 版本"
@@ -4930,7 +4930,7 @@ msgstr "E234: 不正確的字元集 (Fontset): %s"
 
 #, c-format
 msgid "E235: Unknown font: %s"
-msgstr "不正確的字型名稱: %s"
+msgstr "E235: 不正確的字型名稱: %s"
 
 #, c-format
 msgid "E236: Font \"%s\" is not fixed-width"

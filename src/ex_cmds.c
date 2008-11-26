@@ -11,10 +11,11 @@
  * ex_cmds.c: some functions for command line commands
  */
 
-#include "vim.h"
-#ifdef HAVE_FCNTL_H
-# include <fcntl.h>
+#if defined(MSDOS) || defined(WIN16) || defined(WIN32) || defined(_WIN64)
+# include "vimio.h"	/* for mch_open(), must be before vim.h */
 #endif
+
+#include "vim.h"
 #include "version.h"
 
 #ifdef FEAT_EX_EXTRA
@@ -478,10 +479,13 @@ ex_sort(eap)
 	    c = *s2;
 	    (*s2) = 0;
 	    /* Sorting on number: Store the number itself. */
+	    p = s + start_col;
 	    if (sort_hex)
-		s = skiptohex(s + start_col);
+		s = skiptohex(p);
 	    else
-		s = skiptodigit(s + start_col);
+		s = skiptodigit(p);
+	    if (s > p && s[-1] == '-')
+		--s;  /* include preceding negative sign */
 	    vim_str2nr(s, NULL, NULL, sort_oct, sort_hex,
 					&nrs[lnum - eap->line1].start_col_nr, NULL);
 	    (*s2) = c;
@@ -977,7 +981,7 @@ do_bang(addr_count, eap, forceit, do_in, do_out)
 					)
 	    {
 		if (p > newcmd && p[-1] == '\\')
-		    mch_memmove(p - 1, p, (size_t)(STRLEN(p) + 1));
+		    STRMOVE(p - 1, p);
 		else
 		{
 		    trailarg = p;
@@ -3140,10 +3144,11 @@ do_ecmd(fnum, ffname, sfname, eap, newlnum, flags)
 #ifdef FEAT_BROWSE
 	if (cmdmod.browse)
 	{
+# ifdef FEAT_AUTOCMD
 	    if (
-# ifdef FEAT_GUI
+#  ifdef FEAT_GUI
 		!gui.in_use &&
-# endif
+#  endif
 		    au_has_group((char_u *)"FileExplorer"))
 	    {
 		/* No browsing supported but we do have the file explorer:
@@ -3152,6 +3157,7 @@ do_ecmd(fnum, ffname, sfname, eap, newlnum, flags)
 		    ffname = (char_u *)".";
 	    }
 	    else
+# endif
 	    {
 		browse_file = do_browse(0, (char_u *)_("Edit File"), ffname,
 						    NULL, NULL, NULL, curbuf);
@@ -4895,7 +4901,7 @@ do_sub(eap)
 		for (p1 = new_end; *p1; ++p1)
 		{
 		    if (p1[0] == '\\' && p1[1] != NUL)  /* remove backslash */
-			mch_memmove(p1, p1 + 1, STRLEN(p1));
+			STRMOVE(p1, p1 + 1);
 		    else if (*p1 == CAR)
 		    {
 			if (u_inssub(lnum) == OK)   /* prepare for undo */
@@ -4919,7 +4925,7 @@ do_sub(eap)
 			    /* move the cursor to the new line, like Vi */
 			    ++curwin->w_cursor.lnum;
 			    /* copy the rest */
-			    mch_memmove(new_start, p1 + 1, STRLEN(p1 + 1) + 1);
+			    STRMOVE(new_start, p1 + 1);
 			    p1 = new_start - 1;
 			}
 		    }
@@ -5053,6 +5059,7 @@ skip:
 
 	    if (did_sub)
 		++sub_nlines;
+	    vim_free(new_start);	/* for when substitute was cancelled */
 	    vim_free(sub_firstline);	/* free the copy of the original line */
 	    sub_firstline = NULL;
 	}
@@ -5893,10 +5900,15 @@ find_help_tags(arg, num_matches, matches, keep_lang)
 	flags |= TAG_KEEP_LANG;
     if (find_tags(IObuff, num_matches, matches, flags, (int)MAXCOL, NULL) == OK
 	    && *num_matches > 0)
+    {
 	/* Sort the matches found on the heuristic number that is after the
 	 * tag name. */
 	qsort((void *)*matches, (size_t)*num_matches,
 					      sizeof(char_u *), help_compare);
+	/* Delete more than TAG_MANY to reduce the size of the listing. */
+	while (*num_matches > TAG_MANY)
+	    vim_free((*matches)[--*num_matches]);
+    }
     return OK;
 }
 

@@ -951,7 +951,7 @@ skip_regexp(startp, dirc, magic, newp)
 			p = *newp + (p - startp);
 		}
 		if (*newp != NULL)
-		    mch_memmove(p, p + 1, STRLEN(p));
+		    STRMOVE(p, p + 1);
 		else
 		    ++p;
 	    }
@@ -1899,7 +1899,7 @@ regatom(flagp)
 					  br = regnext(br);
 				  }
 			      }
-			      *flagp &= ~HASWIDTH;
+			      *flagp &= ~(HASWIDTH | SIMPLE);
 			      break;
 			  }
 
@@ -3044,6 +3044,7 @@ typedef struct regbehind_S
 {
     regsave_T	save_after;
     regsave_T	save_behind;
+    int		save_need_clear_subexpr;
     save_se_T   save_start[NSUBEXP];
     save_se_T   save_end[NSUBEXP];
 } regbehind_T;
@@ -5858,17 +5859,23 @@ save_subexpr(bp)
 {
     int i;
 
-    for (i = 0; i < NSUBEXP; ++i)
+    /* When "need_clear_subexpr" is set we don't need to save the values, only
+     * remember that this flag needs to be set again when restoring. */
+    bp->save_need_clear_subexpr = need_clear_subexpr;
+    if (!need_clear_subexpr)
     {
-	if (REG_MULTI)
+	for (i = 0; i < NSUBEXP; ++i)
 	{
-	    bp->save_start[i].se_u.pos = reg_startpos[i];
-	    bp->save_end[i].se_u.pos = reg_endpos[i];
-	}
-	else
-	{
-	    bp->save_start[i].se_u.ptr = reg_startp[i];
-	    bp->save_end[i].se_u.ptr = reg_endp[i];
+	    if (REG_MULTI)
+	    {
+		bp->save_start[i].se_u.pos = reg_startpos[i];
+		bp->save_end[i].se_u.pos = reg_endpos[i];
+	    }
+	    else
+	    {
+		bp->save_start[i].se_u.ptr = reg_startp[i];
+		bp->save_end[i].se_u.ptr = reg_endp[i];
+	    }
 	}
     }
 }
@@ -5882,17 +5889,22 @@ restore_subexpr(bp)
 {
     int i;
 
-    for (i = 0; i < NSUBEXP; ++i)
+    /* Only need to restore saved values when they are not to be cleared. */
+    need_clear_subexpr = bp->save_need_clear_subexpr;
+    if (!need_clear_subexpr)
     {
-	if (REG_MULTI)
+	for (i = 0; i < NSUBEXP; ++i)
 	{
-	    reg_startpos[i] = bp->save_start[i].se_u.pos;
-	    reg_endpos[i] = bp->save_end[i].se_u.pos;
-	}
-	else
-	{
-	    reg_startp[i] = bp->save_start[i].se_u.ptr;
-	    reg_endp[i] = bp->save_end[i].se_u.ptr;
+	    if (REG_MULTI)
+	    {
+		reg_startpos[i] = bp->save_start[i].se_u.pos;
+		reg_endpos[i] = bp->save_end[i].se_u.pos;
+	    }
+	    else
+	    {
+		reg_startp[i] = bp->save_start[i].se_u.ptr;
+		reg_endp[i] = bp->save_end[i].se_u.ptr;
+	    }
 	}
     }
 }
@@ -6769,9 +6781,9 @@ regtilde(source, magic)
 		}
 	    }
 	    else if (magic)
-		mch_memmove(p, p + 1, STRLEN(p));	/* remove '~' */
+		STRMOVE(p, p + 1);	/* remove '~' */
 	    else
-		mch_memmove(p, p + 2, STRLEN(p) - 1);	/* remove '\~' */
+		STRMOVE(p, p + 2);	/* remove '\~' */
 	    --p;
 	}
 	else

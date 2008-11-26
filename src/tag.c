@@ -11,15 +11,11 @@
  * Code to handle tags and the tag stack
  */
 
-#if defined MSDOS || defined WIN32 || defined(_WIN64)
+#if defined(MSDOS) || defined(WIN16) || defined(WIN32) || defined(_WIN64)
 # include "vimio.h"	/* for lseek(), must be before vim.h */
 #endif
 
 #include "vim.h"
-
-#ifdef HAVE_FCNTL_H
-# include <fcntl.h>	/* for lseek() */
-#endif
 
 /*
  * Structure to hold pointers to various items in a tag line.
@@ -2664,7 +2660,7 @@ get_tagfname(tnp, first, buf)
 	    /* move the filename one char forward and truncate the
 	     * filepath with a NUL */
 	    filename = gettail(buf);
-	    mch_memmove(filename + 1, filename, STRLEN(filename) + 1);
+	    STRMOVE(filename + 1, filename);
 	    *filename++ = NUL;
 
 	    tnp->tn_search_ctx = vim_findfile_init(buf, filename,
@@ -3392,13 +3388,6 @@ expand_tag_fname(fname, tag_fname, expand)
 }
 
 /*
- * Moves the tail part of the path (including the terminating NUL) pointed to
- * by "tail" to the new location pointed to by "here". This should accomodate
- * an overlapping move.
- */
-#define movetail(here, tail)  mch_memmove(here, tail, STRLEN(tail) + (size_t)1)
-
-/*
  * Converts a file name into a canonical form. It simplifies a file name into
  * its simplest form by stripping out unneeded components, if any.  The
  * resulting file name is simplified in place and will either be the same
@@ -3451,7 +3440,7 @@ simplify_filename(filename)
 	else
 #endif
 	  if (vim_ispathsep(*p))
-	    movetail(p, p + 1);		/* remove duplicate "/" */
+	    STRMOVE(p, p + 1);		/* remove duplicate "/" */
 	else if (p[0] == '.' && (vim_ispathsep(p[1]) || p[1] == NUL))
 	{
 	    if (p == start && relative)
@@ -3468,7 +3457,7 @@ simplify_filename(filename)
 			mb_ptr_adv(tail);
 		else if (p > start)
 		    --p;		/* strip preceding path separator */
-		movetail(p, tail);
+		STRMOVE(p, tail);
 	    }
 	}
 	else if (p[0] == '.' && p[1] == '.' &&
@@ -3584,19 +3573,19 @@ simplify_filename(filename)
 		    {
 			if (p > start && tail[-1] == '.')
 			    --p;
-			movetail(p, tail);	/* strip previous component */
+			STRMOVE(p, tail);	/* strip previous component */
 		    }
 
 		    --components;
 		}
 	    }
 	    else if (p == start && !relative)	/* leading "/.." or "/../" */
-		movetail(p, tail);		/* strip ".." or "../" */
+		STRMOVE(p, tail);		/* strip ".." or "../" */
 	    else
 	    {
 		if (p == start + 2 && p[-2] == '.')	/* leading "./../" */
 		{
-		    movetail(p - 2, p);			/* strip leading "./" */
+		    STRMOVE(p - 2, p);			/* strip leading "./" */
 		    tail -= 2;
 		}
 		p = tail;		/* skip to char after ".." or "../" */
@@ -3865,6 +3854,8 @@ get_tags(list, pat)
 			    /* Skip field without colon. */
 			    while (*p != NUL && *p >= ' ')
 				++p;
+			if (*p == NUL)
+			    break;
 		    }
 		}
 	    }

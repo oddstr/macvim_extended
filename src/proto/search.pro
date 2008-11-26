@@ -14,6 +14,7 @@ int searchit __ARGS((win_T *win, buf_T *buf, pos_T *pos, int dir, char_u *pat, l
 int migemo_enabled __ARGS((void));
 void reset_migemo __ARGS((int lastcall));
 char_u* query_migemo __ARGS((char_u* str));
+void set_search_direction __ARGS((int cdir));
 int do_search __ARGS((oparg_T *oap, int dirc, char_u *pat, long count, int options, proftime_T *tm));
 int search_for_exact_line __ARGS((buf_T *buf, pos_T *pos, int dir, char_u *pat));
 int searchc __ARGS((cmdarg_T *cap, int t_cmd));

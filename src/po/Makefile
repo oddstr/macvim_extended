@@ -10,7 +10,9 @@ LANGUAGES = \
 		cs \
 		de \
 		en_GB \
+		eo \
 		es \
+		fi \
 		fr \
 		ga \
 		it \
@@ -18,6 +20,7 @@ LANGUAGES = \
 		ko \
 		no \
 		pl \
+		pt_BR \
 		ru \
 		sk \
 		sv \
@@ -34,7 +37,9 @@ MOFILES = \
 		cs.mo \
 		de.mo \
 		en_GB.mo \
+		eo.mo \
 		es.mo \
+		fi.mo \
 		fr.mo \
 		ga.mo \
 		it.mo \
@@ -42,6 +47,7 @@ MOFILES = \
 		ko.mo \
 		no.mo \
 		pl.mo \
+		pt_BR.mo \
 		ru.mo \
 		sk.mo \
 		sv.mo \
@@ -68,7 +74,9 @@ CHECKFILES = \
 		cs.ck \
 		de.ck \
 		en_GB.ck \
+		eo.ck \
 		es.ck \
+		fi.ck \
 		fr.ck \
 		ga.ck \
 		it.ck \
@@ -76,6 +84,7 @@ CHECKFILES = \
 		ko.ck \
 		no.ck \
 		pl.ck \
+		pt_BR.ck \
 		ru.ck \
 		sk.ck \
 		sv.ck \
@@ -108,7 +117,7 @@ MSGMERGE = OLD_PO_FILE_INPUT=yes OLD_PO_FILE_OUTPUT=yes msgmerge
 
 .SUFFIXES:
 .SUFFIXES: .po .mo .pot .ck
-.PHONY: all install uninstall prefixcheck check clean distclean $(LANGUAGES)
+.PHONY: all install uninstall prefixcheck converted check clean checkclean distclean update-po $(LANGUAGES)
 
 .po.mo:
 	$(MSGFMT) -o $@ $<
@@ -199,8 +208,8 @@ ru.cp1251.po: ru.po
 # Convert uk.po to create uk.cp1251.po.
 uk.cp1251.po: uk.po
 	rm -f uk.cp1251.po
-	iconv -f koi8-u -t cp1251 uk.po | \
-		sed -e 's/charset=koi8-u/charset=cp1251/' -e 's/# Original translations/# Generated from uk.po, DO NOT EDIT/' > uk.cp1251.po
+	iconv -f utf-8 -t cp1251 uk.po | \
+		sed -e 's/charset=utf-8/charset=cp1251/' -e 's/# Original translations/# Generated from uk.po, DO NOT EDIT/' > uk.cp1251.po
 
 prefixcheck:
 	@if test "x" = "x$(prefix)"; then \
@@ -227,6 +236,8 @@ $(PACKAGE).pot: ../*.c ../if_perl.xs ../GvimExt/gvimext.cpp ../globals.h
 		--add-comments --keyword=_ --keyword=N_ \
 		*.c if_perl.xs GvimExt/gvimext.cpp globals.h
 	mv -f ../$(PACKAGE).po $(PACKAGE).pot
+
+update-po: $(LANGUAGES)
 
 # Don't add a dependency here, we only want to update the .po files manually
 $(LANGUAGES):

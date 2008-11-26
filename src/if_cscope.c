@@ -23,7 +23,6 @@
 #else
     /* not UNIX, must be WIN32 */
 # include "vimio.h"
-# include <fcntl.h>
 #endif
 #include "if_cscope.h"
 
@@ -75,7 +74,7 @@ static cscmd_T	    cs_cmds[] =
     { "add",	cs_add,
 		N_("Add a new database"),     "add file|dir [pre-path] [flags]", 0 },
     { "find",	cs_find,
-		N_("Query for a pattern"),    FIND_USAGE, 1 },
+		N_("Query for a pattern"),    "find c|d|e|f|g|i|s|t name", 1 },
     { "help",	cs_help,
 		N_("Show this message"),      "help", 0 },
     { "kill",	cs_kill,
@@ -171,7 +170,7 @@ do_cstag(eap)
 
     cs_init();
 
-    if (eap->arg == NULL || strlen((const char *)(eap->arg)) == 0)
+    if (*eap->arg == NUL)
     {
 	(void)EMSG(_("E562: Usage: cstag <ident>"));
 	return;
@@ -1181,7 +1180,16 @@ cs_help(eap)
 	(void)smsg((char_u *)_("%-5s: %-30s (Usage: %s)"),
 				      cmdp->name, _(cmdp->help), cmdp->usage);
 	if (strcmp(cmdp->name, "find") == 0)
-	    MSG_PUTS(FIND_HELP);
+	    MSG_PUTS(_("\n"
+		       "       c: Find functions calling this function\n"
+		       "       d: Find functions called by this function\n"
+		       "       e: Find this egrep pattern\n"
+		       "       f: Find this file\n"
+		       "       g: Find this definition\n"
+		       "       i: Find files #including this file\n"
+		       "       s: Find this C symbol\n"
+		       "       t: Find assignments to\n"));
+
 	cmdp++;
     }
 
@@ -1225,7 +1233,7 @@ clear_csinfo(i)
     csinfo[i].nIndexHigh = 0;
     csinfo[i].nIndexLow = 0;
 #endif
-    csinfo[i].pid    = -1;
+    csinfo[i].pid    = 0;
     csinfo[i].fr_fp  = NULL;
     csinfo[i].to_fp  = NULL;
 #if defined(WIN32)

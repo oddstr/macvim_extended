@@ -14,6 +14,7 @@ See INSTALLami.txt              for Amiga
 See INSTALLmac.txt              for Macintosh
 See INSTALLpc.txt               for PC (MS-DOS, Windows 95/98/NT/XP)
 See INSTALLvms.txt              for VMS
+See INSTALLx.txt		for cross-compiling on Unix
 See ../runtime/doc/os_390.txt   for OS/390 Unix
 See ../runtime/doc/os_beos.txt  for BeBox
 
@@ -161,6 +162,16 @@ Add the "-posix" argument to the compiler by using one of these commands:
 	setenv CC 'cc -posix' (csh)
 	export CC='cc -posix' (sh)
 And run configure with "--disable-motif-check".
+
+Unix: LOCAL HEADERS AND LIBRARIES NOT IN /usr/local
+
+Sometimes it is necessary to search different path than /usr/local for locally
+installed headers (/usr/local/include) and libraries (/usr/local/lib).
+To search /stranger/include and /stranger/lib for locally installed
+headers and libraries, use:
+	./configure --with-local-dir=/stranger
+And to not search for locally installed headers and libraries at all, use:
+	./configure --without-local-dir
 
 
 3. RISC OS

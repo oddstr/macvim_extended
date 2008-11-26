@@ -1,7 +1,7 @@
 " Vim syntax file
 " Language:         AutoHotkey script file
 " Maintainer:       Nikolai Weibull <now@bitwi.se>
-" Latest Revision:  2007-05-09
+" Latest Revision:  2008-06-22
 
 if exists("b:current_syntax")
   finish
@@ -242,6 +242,19 @@ syn keyword autohotkeyType
       \ local
       \ global
 
+syn keyword autohotkeyBoolean
+      \ true
+      \ false
+
+" TODO: Shouldn't we look for g:, b:,  variables before defaulting to
+" something?
+if exists("g:autohotkey_syntax_sync_minlines")
+  let b:autohotkey_syntax_sync_minlines = g:autohotkey_syntax_sync_minlines
+else
+  let b:autohotkey_syntax_sync_minlines = 50
+endif
+exec "syn sync ccomment autohotkeyComment minlines=" . b:autohotkey_syntax_sync_minlines
+
 hi def link autohotkeyTodo                Todo
 hi def link autohotkeyComment             Comment
 hi def link autohotkeyCommentStart        autohotkeyComment
@@ -271,6 +284,7 @@ hi def link autohotkeyNumber              Number
 hi def link autohotkeyInteger             autohotkeyNumber
 hi def link autohotkeyFloat               autohotkeyNumber
 hi def link autohotkeyType                Type
+hi def link autohotkeyBoolean             Boolean
 
 let b:current_syntax = "autohotkey"
 

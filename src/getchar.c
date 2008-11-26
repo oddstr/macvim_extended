@@ -221,7 +221,7 @@ get_recorded()
     char_u *
 get_inserted()
 {
-    return(get_buffcont(&redobuff, FALSE));
+    return get_buffcont(&redobuff, FALSE);
 }
 
 /*
@@ -2233,6 +2233,8 @@ vgetorpeek(advance)
 		    if ((mp == NULL || max_mlen >= mp_match_len)
 						     && keylen != KL_PART_MAP)
 		    {
+			int	save_keylen = keylen;
+
 			/*
 			 * When no matching mapping found or found a
 			 * non-matching mapping that matches at least what the
@@ -2251,6 +2253,12 @@ vgetorpeek(advance)
 				&& !timedout)
 			{
 			    keylen = check_termcode(max_mlen + 1, NULL, 0);
+
+			    /* If no termcode matched but 'pastetoggle'
+			     * matched partially it's like an incomplete key
+			     * sequence. */
+			    if (keylen == 0 && save_keylen == KL_PART_KEY)
+				keylen = KL_PART_KEY;
 
 			    /*
 			     * When getting a partial match, but the last
@@ -2293,7 +2301,9 @@ vgetorpeek(advance)
 #endif
 			      /* When there was a matching mapping and no
 			       * termcode could be replaced after another one,
-			       * use that mapping. */
+			       * use that mapping (loop around). If there was
+			       * no mapping use the character from the
+			       * typeahead buffer right here. */
 			      if (mp == NULL)
 			      {
 /*
@@ -2883,6 +2893,12 @@ inchar(buf, maxlen, wait_time, tb_change_cnt)
 #endif
 	    )
     {
+
+#if defined(FEAT_NETBEANS_INTG)
+	/* Process the queued netbeans messages. */
+	netbeans_parse_messages();
+#endif
+
 	if (got_int || (script_char = getc(scriptin[curscript])) < 0)
 	{
 	    /* Reached EOF.
@@ -3847,7 +3863,7 @@ showmap(mp, local)
     while (++len <= 3)
 	msg_putchar(' ');
 
-    /* Get length of what we write */
+    /* Display the LHS.  Get length of what we write. */
     len = msg_outtrans_special(mp->m_keys, TRUE);
     do
     {
@@ -4523,7 +4539,7 @@ makemap(fd, buf)
     buf_T	*buf;	    /* buffer for local mappings or NULL */
 {
     mapblock_T	*mp;
-    char_u	c1, c2;
+    char_u	c1, c2, c3;
     char_u	*p;
     char	*cmd;
     int		abbr;
@@ -4576,8 +4592,12 @@ makemap(fd, buf)
 		if (*p != NUL)
 		    continue;
 
+		/* It's possible to create a mapping and then ":unmap" certain
+		 * modes.  We recreate this here by mapping the individual
+		 * modes, which requires up to three of them. */
 		c1 = NUL;
 		c2 = NUL;
+		c3 = NUL;
 		if (abbr)
 		    cmd = "abbr";
 		else
@@ -4589,9 +4609,6 @@ makemap(fd, buf)
 		    case NORMAL:
 			c1 = 'n';
 			break;
-		    case VISUAL + SELECTMODE:
-			c1 = 'v';
-			break;
 		    case VISUAL:
 			c1 = 'x';
 			break;
@@ -4601,16 +4618,45 @@ makemap(fd, buf)
 		    case OP_PENDING:
 			c1 = 'o';
 			break;
+		    case NORMAL + VISUAL:
+			c1 = 'n';
+			c2 = 'x';
+			break;
+		    case NORMAL + SELECTMODE:
+			c1 = 'n';
+			c2 = 's';
+			break;
+		    case NORMAL + OP_PENDING:
+			c1 = 'n';
+			c2 = 'o';
+			break;
+		    case VISUAL + SELECTMODE:
+			c1 = 'v';
+			break;
+		    case VISUAL + OP_PENDING:
+			c1 = 'x';
+			c2 = 'o';
+			break;
+		    case SELECTMODE + OP_PENDING:
+			c1 = 's';
+			c2 = 'o';
+			break;
 		    case NORMAL + VISUAL + SELECTMODE:
 			c1 = 'n';
 			c2 = 'v';
 			break;
+		    case NORMAL + VISUAL + OP_PENDING:
+			c1 = 'n';
+			c2 = 'x';
+			c3 = 'o';
+			break;
+		    case NORMAL + SELECTMODE + OP_PENDING:
+			c1 = 'n';
+			c2 = 's';
+			c3 = 'o';
+			break;
 		    case VISUAL + SELECTMODE + OP_PENDING:
 			c1 = 'v';
-			c2 = 'o';
-			break;
-		    case NORMAL + OP_PENDING:
-			c1 = 'n';
 			c2 = 'o';
 			break;
 		    case CMDLINE + INSERT:
@@ -4630,7 +4676,7 @@ makemap(fd, buf)
 			EMSG(_("E228: makemap: Illegal mode"));
 			return FAIL;
 		}
-		do	/* may do this twice if c2 is set */
+		do	/* do this twice if c2 is set, 3 times with c3 */
 		{
 		    /* When outputting <> form, need to make sure that 'cpo'
 		     * is set to the Vim default. */
@@ -4677,9 +4723,9 @@ makemap(fd, buf)
 			    || put_eol(fd) < 0)
 			return FAIL;
 		    c1 = c2;
-		    c2 = NUL;
-		}
-		while (c1);
+		    c2 = c3;
+		    c3 = NUL;
+		} while (c1 != NUL);
 	    }
 	}
 

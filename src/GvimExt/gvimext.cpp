@@ -229,13 +229,13 @@ null_libintl_gettext(const char *msgid)
 }
 
     static char *
-null_libintl_bindtextdomain(const char *domainname, const char *dirname)
+null_libintl_bindtextdomain(const char * /* domainname */, const char * /* dirname */)
 {
     return NULL;
 }
 
     static char *
-null_libintl_textdomain(const char* domainname)
+null_libintl_textdomain(const char*  /* domainname */)
 {
     return NULL;
 }
@@ -332,7 +332,7 @@ HINSTANCE g_hmodThisDll = NULL;	// Handle to this DLL itself.
 // DllMain
 //---------------------------------------------------------------------------
 extern "C" int APIENTRY
-DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpReserved)
+DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID  /* lpReserved */)
 {
     switch (dwReason)
     {
@@ -462,7 +462,7 @@ STDMETHODIMP CShellExtClassFactory::CreateInstance(LPUNKNOWN pUnkOuter,
 }
 
 
-STDMETHODIMP CShellExtClassFactory::LockServer(BOOL fLock)
+STDMETHODIMP CShellExtClassFactory::LockServer(BOOL  /* fLock */)
 {
     return NOERROR;
 }
@@ -544,9 +544,9 @@ STDMETHODIMP_(ULONG) CShellExt::Release()
 //		It could be a context menu or a property sheet.
 //
 
-STDMETHODIMP CShellExt::Initialize(LPCITEMIDLIST pIDFolder,
+STDMETHODIMP CShellExt::Initialize(LPCITEMIDLIST  /* pIDFolder */,
 				   LPDATAOBJECT pDataObj,
-				   HKEY hRegKey)
+				   HKEY  /* hRegKey */)
 {
     // Initialize can be called more than once
     if (m_pDataObj)
@@ -586,8 +586,8 @@ STDMETHODIMP CShellExt::Initialize(LPCITEMIDLIST pIDFolder,
 STDMETHODIMP CShellExt::QueryContextMenu(HMENU hMenu,
 					 UINT indexMenu,
 					 UINT idCmdFirst,
-					 UINT idCmdLast,
-					 UINT uFlags)
+					 UINT  /* idCmdLast */,
+					 UINT  /* uFlags */)
 {
     UINT idCmd = idCmdFirst;
 
@@ -742,11 +742,11 @@ STDMETHODIMP CShellExt::InvokeCommand(LPCMINVOKECOMMANDINFO lpcmi)
     return hr;
 }
 
-STDMETHODIMP CShellExt::PushToWindow(HWND hParent,
-				   LPCSTR pszWorkingDir,
-				   LPCSTR pszCmd,
-				   LPCSTR pszParam,
-				   int iShowCmd,
+STDMETHODIMP CShellExt::PushToWindow(HWND  /* hParent */,
+				   LPCSTR  /* pszWorkingDir */,
+				   LPCSTR  /* pszCmd */,
+				   LPCSTR  /* pszParam */,
+				   int  /* iShowCmd */,
 				   int idHWnd)
 {
     HWND hWnd = m_hWnd[idHWnd];
@@ -764,9 +764,9 @@ STDMETHODIMP CShellExt::PushToWindow(HWND hParent,
     return NOERROR;
 }
 
-STDMETHODIMP CShellExt::GetCommandString(UINT_PTR idCmd,
+STDMETHODIMP CShellExt::GetCommandString(UINT_PTR  /* idCmd */,
 					 UINT uFlags,
-					 UINT FAR *reserved,
+					 UINT FAR * /* reserved */,
 					 LPSTR pszName,
 					 UINT cchMax)
 {
@@ -865,10 +865,10 @@ searchpath(char *name)
 #endif
 
 STDMETHODIMP CShellExt::InvokeGvim(HWND hParent,
-				   LPCSTR pszWorkingDir,
-				   LPCSTR pszCmd,
-				   LPCSTR pszParam,
-				   int iShowCmd)
+				   LPCSTR  /* pszWorkingDir */,
+				   LPCSTR  /* pszCmd */,
+				   LPCSTR  /* pszParam */,
+				   int  /* iShowCmd */)
 {
     char m_szFileUserClickedOn[BUFSIZE];
     char cmdStr[BUFSIZE];
@@ -935,10 +935,10 @@ STDMETHODIMP CShellExt::InvokeGvim(HWND hParent,
 
 
 STDMETHODIMP CShellExt::InvokeSingleGvim(HWND hParent,
-				   LPCSTR pszWorkingDir,
-				   LPCSTR pszCmd,
-				   LPCSTR pszParam,
-				   int iShowCmd,
+				   LPCSTR  /* pszWorkingDir */,
+				   LPCSTR  /* pszCmd */,
+				   LPCSTR  /* pszParam */,
+				   int  /* iShowCmd */,
 				   int useDiff)
 {
     char	m_szFileUserClickedOn[BUFSIZE];

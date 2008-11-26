@@ -12,7 +12,9 @@ LANGUAGES = \
 		cs \
 		de \
 		en_GB \
+		eo \
 		es \
+		fi \
 		fr \
 		ga \
 		it \
@@ -20,6 +22,7 @@ LANGUAGES = \
 		ko \
 		no \
 		pl \
+		pt_BR \
 		ru \
 		sk \
 		sv \
@@ -36,7 +39,9 @@ MOFILES = \
 		cs.mo \
 		de.mo \
 		en_GB.mo \
+		eo.mo \
 		es.mo \
+		fi.mo \
 		fr.mo \
 		ga.mo \
 		it.mo \
@@ -44,6 +49,7 @@ MOFILES = \
 		ko.mo \
 		no.mo \
 		pl.mo \
+		pt_BR.mo \
 		ru.mo \
 		sk.mo \
 		sv.mo \

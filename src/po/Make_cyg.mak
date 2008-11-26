@@ -18,7 +18,9 @@ LANGUAGES =	af \
 		cs.cp1250 \
 		de \
 		en_GB \
+		eo \
 		es \
+		fi \
 		fr \
 		ga \
 		it \
@@ -28,6 +30,7 @@ LANGUAGES =	af \
 		no \
 		pl \
 		pl.cp1250 \
+		pt_BR \
 		ru \
 		ru.cp1251 \
 		sk \
@@ -48,7 +51,9 @@ MOFILES =	af.mo \
 		cs.mo \
 		de.mo \
 		en_GB.mo \
+		eo.mo \
 		es.mo \
+		fi.mo \
 		fr.mo \
 		ga.mo \
 		it.mo \
@@ -58,6 +63,7 @@ MOFILES =	af.mo \
 		no.mo \
 		pl.cp1250.mo \
 		pl.mo \
+		pt_BR.mo \
 		ru.cp1251.mo \
 		ru.mo \
 		sk.cp1250.mo \

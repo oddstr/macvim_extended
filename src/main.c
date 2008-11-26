@@ -7,7 +7,7 @@
  * See README.txt for an overview of the Vim source code.
  */
 
-#if defined(MSDOS) || defined(WIN32) || defined(_WIN64)
+#if defined(MSDOS) || defined(WIN16) || defined(WIN32) || defined(_WIN64)
 # include "vimio.h"		/* for close() and dup() */
 #endif
 
@@ -18,13 +18,11 @@
 # include <spawno.h>		/* special MS-DOS swapping library */
 #endif
 
-#ifdef HAVE_FCNTL_H
-# include <fcntl.h>
-#endif
-
 #ifdef __CYGWIN__
 # ifndef WIN32
-#  include <sys/cygwin.h>	/* for cygwin_conv_to_posix_path() */
+#  include <cygwin/version.h>
+#  include <sys/cygwin.h>	/* for cygwin_conv_to_posix_path() and/or
+				 * cygwin_conv_path() */
 # endif
 # include <limits.h>
 #endif
@@ -1375,6 +1373,12 @@ get_number_arg(p, idx, def)
 init_locale()
 {
     setlocale(LC_ALL, "");
+
+# if defined(FEAT_FLOAT) && defined(LC_NUMERIC)
+    /* Make sure strtod() uses a decimal point, not a comma. */
+    setlocale(LC_NUMERIC, "C");
+# endif
+
 # ifdef WIN32
     /* Apparently MS-Windows printf() may cause a crash when we give it 8-bit
      * text while it's expecting text in the current locale.  This call avoids
@@ -1460,7 +1464,8 @@ parse_command_name(parmp)
 	++initstr;
     }
 
-    if (TOLOWER_ASC(initstr[0]) == 'g' || initstr[0] == 'k')
+    /* "gvim" starts the GUI.  Also accept "Gvim" for MS-Windows. */
+    if (TOLOWER_ASC(initstr[0]) == 'g')
     {
 	main_start_gui();
 #ifdef FEAT_GUI
@@ -2218,7 +2223,11 @@ scripterror:
 	    {
 		char posix_path[PATH_MAX];
 
+# if CYGWIN_VERSION_DLL_MAJOR >= 1007
+		cygwin_conv_path(CCP_WIN_A_TO_POSIX, p, posix_path, PATH_MAX);
+# else
 		cygwin_conv_to_posix_path(p, posix_path);
+# endif
 		vim_free(p);
 		p = vim_strsave(posix_path);
 		if (p == NULL)
@@ -2244,7 +2253,12 @@ scripterror:
 		/* Remember this argument has been added to the argument list.
 		 * Needed when 'encoding' is changed. */
 		used_file_arg(argv[0], parmp->literal, parmp->full_path,
-							    parmp->diff_mode);
+# ifdef FEAT_DIFF
+							    parmp->diff_mode
+# else
+							    FALSE
+# endif
+							    );
 	    }
 #endif
 	}
@@ -2523,7 +2537,6 @@ edit_buffers(parmp)
     int		arg_idx;		/* index in argument list */
     int		i;
     int		advance = TRUE;
-    buf_T	*old_curbuf;
 
 # ifdef FEAT_AUTOCMD
     /*
@@ -2576,21 +2589,26 @@ edit_buffers(parmp)
 	    curwin->w_arg_idx = arg_idx;
 	    /* Edit file from arg list, if there is one.  When "Quit" selected
 	     * at the ATTENTION prompt close the window. */
-	    old_curbuf = curbuf;
+# ifdef HAS_SWAP_EXISTS_ACTION
+	    swap_exists_did_quit = FALSE;
+# endif
 	    (void)do_ecmd(0, arg_idx < GARGCOUNT
 			  ? alist_name(&GARGLIST[arg_idx]) : NULL,
 			  NULL, NULL, ECMD_LASTL, ECMD_HIDE);
-	    if (curbuf == old_curbuf)
+# ifdef HAS_SWAP_EXISTS_ACTION
+	    if (swap_exists_did_quit)
 	    {
+		/* abort or quit selected */
 		if (got_int || only_one_window())
 		{
-		    /* abort selected or quit and only one window */
+		    /* abort selected and only one window */
 		    did_emsg = FALSE;   /* avoid hit-enter prompt */
 		    getout(1);
 		}
 		win_close(curwin, TRUE);
 		advance = FALSE;
 	    }
+# endif
 	    if (arg_idx == GARGCOUNT - 1)
 		arg_had_last = TRUE;
 	    ++arg_idx;

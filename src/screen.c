@@ -2439,9 +2439,17 @@ fold_line(wp, fold_count, foldinfo, lnum, row)
 
 #ifdef FEAT_SYN_HL
     /* Show 'cursorcolumn' in the fold line. */
-    if (wp->w_p_cuc && (int)wp->w_virtcol + txtcol < W_WIDTH(wp))
-	ScreenAttrs[off + wp->w_virtcol + txtcol] = hl_combine_attr(
-		 ScreenAttrs[off + wp->w_virtcol + txtcol], hl_attr(HLF_CUC));
+    if (wp->w_p_cuc)
+    {
+	txtcol += wp->w_virtcol;
+	if (wp->w_p_wrap)
+	    txtcol -= wp->w_skipcol;
+	else
+	    txtcol -= wp->w_leftcol;
+	if (txtcol >= 0 && txtcol < W_WIDTH(wp))
+	    ScreenAttrs[off + txtcol] = hl_combine_attr(
+				 ScreenAttrs[off + txtcol], hl_attr(HLF_CUC));
+    }
 #endif
 
     SCREEN_LINE(row + W_WINROW(wp), W_WINCOL(wp), (int)W_WIDTH(wp),
@@ -2952,8 +2960,7 @@ win_line(wp, lnum, startrow, endrow, nochange)
 		 * next line. */
 		nextlinecol = 0;
 		mch_memmove(nextline, line, (size_t)v);
-		mch_memmove(nextline + v, nextline + SPWORDLEN,
-					    STRLEN(nextline + SPWORDLEN) + 1);
+		STRMOVE(nextline + v, nextline + SPWORDLEN);
 		nextline_idx = v + 1;
 	    }
 	    else
@@ -4863,6 +4870,7 @@ comp_char_differs(off_from, off_to)
  * - the (first byte of the) character is different
  * - the attributes are different
  * - the character is multi-byte and the next byte is different
+ * - the character is two cells wide and the second cell differs.
  */
     static int
 char_needs_redraw(off_from, off_to, cols)
@@ -4884,7 +4892,9 @@ char_needs_redraw(off_from, off_to, cols)
 		|| (enc_utf8
 		    && (ScreenLinesUC[off_from] != ScreenLinesUC[off_to]
 			|| (ScreenLinesUC[off_from] != 0
-			    && comp_char_differs(off_from, off_to))))
+			    && comp_char_differs(off_from, off_to))
+			|| (cols > 1 && ScreenLines[off_from + 1]
+						 != ScreenLines[off_to + 1])))
 #endif
 	       ))
 	return TRUE;
@@ -5445,8 +5455,7 @@ status_match_len(xp, s)
 
     while (*s != NUL)
     {
-	if (skip_status_match_char(xp, s))
-	    ++s;
+	s += skip_status_match_char(xp, s);
 	len += ptr2cells(s);
 	mb_ptr_adv(s);
     }
@@ -5455,7 +5464,7 @@ status_match_len(xp, s)
 }
 
 /*
- * Return TRUE for characters that are not displayed in a status match.
+ * Return the number of characters that should be skipped in a status match.
  * These are backslashes used for escaping.  Do show backslashes in help tags.
  */
     static int
@@ -5463,13 +5472,21 @@ skip_status_match_char(xp, s)
     expand_T	*xp;
     char_u	*s;
 {
-    return ((rem_backslash(s) && xp->xp_context != EXPAND_HELP)
+    if ((rem_backslash(s) && xp->xp_context != EXPAND_HELP)
 #ifdef FEAT_MENU
 	    || ((xp->xp_context == EXPAND_MENUS
 		    || xp->xp_context == EXPAND_MENUNAMES)
 			  && (s[0] == '\t' || (s[0] == '\\' && s[1] != NUL)))
 #endif
-	   );
+	   )
+    {
+#ifndef BACKSLASH_IN_FILENAME
+	if (xp->xp_shell && csh_like_shell() && s[1] == '\\' && s[2] == '!')
+	    return 2;
+#endif
+	return 1;
+    }
+    return 0;
 }
 
 /*
@@ -5607,8 +5624,7 @@ win_redr_status_matches(xp, num_matches, matches, match, showtail)
 #endif
 	    for ( ; *s != NUL; ++s)
 	{
-	    if (skip_status_match_char(xp, s))
-		++s;
+	    s += skip_status_match_char(xp, s);
 	    clen += ptr2cells(s);
 #ifdef FEAT_MBYTE
 	    if (has_mbyte && (l = (*mb_ptr2len)(s)) > 1)
@@ -6258,6 +6274,17 @@ screen_puts_len(text, len, row, col, attr)
 
     if (ScreenLines == NULL || row >= screen_Rows)	/* safety check */
 	return;
+
+#ifdef FEAT_MBYTE
+    /* When drawing over the right halve of a double-wide char clear out the
+     * left halve.  Only needed in a terminal. */
+    if (has_mbyte && col > 0 && col < screen_Columns
+# ifdef FEAT_GUI
+	    && !gui.in_use
+# endif
+	    && mb_fix_col(col, row) != col)
+	screen_puts_len((char_u *)" ", 1, row, col - 1, 0);
+#endif
 
     off = LineOffset[row] + col;
 #ifdef FEAT_MBYTE
@@ -7114,6 +7141,23 @@ screen_fill(start_row, end_row, start_col, end_col, c1, c2, attr)
 			    t_colors <= 1);
     for (row = start_row; row < end_row; ++row)
     {
+#ifdef FEAT_MBYTE
+	if (has_mbyte
+# ifdef FEAT_GUI
+		&& !gui.in_use
+# endif
+	   )
+	{
+	    /* When drawing over the right halve of a double-wide char clear
+	     * out the left halve.  When drawing over the left halve of a
+	     * double wide-char clear out the right halve.  Only needed in a
+	     * terminal. */
+	    if (start_col > 0 && mb_fix_col(start_col, row) != start_col)
+		screen_puts_len((char_u *)" ", 1, row, start_col - 1, 0);
+	    if (end_col < screen_Columns && mb_fix_col(end_col, row) != end_col)
+		screen_puts_len((char_u *)" ", 1, row, end_col, 0);
+	}
+#endif
 	/*
 	 * Try to use delete-line termcap code, when no attributes or in a
 	 * "normal" terminal, where a bold/italic space is just a
@@ -8853,8 +8897,18 @@ showmode()
 	{
 	    MSG_PUTS_ATTR("--", attr);
 #if defined(FEAT_XIM)
+# if 0  /* old version, changed by SungHyun Nam July 2008 */
 	    if (xic != NULL && im_get_status() && !p_imdisable
 					&& curbuf->b_p_iminsert == B_IMODE_IM)
+# else
+	    if (
+#  ifdef HAVE_GTK2
+		    preedit_get_status()
+#  else
+		    im_get_status()
+#  endif
+	       )
+# endif
 # ifdef HAVE_GTK2 /* most of the time, it's not XIM being used */
 		MSG_PUTS_ATTR(" IM", attr);
 # else

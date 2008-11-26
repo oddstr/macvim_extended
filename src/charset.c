@@ -449,13 +449,15 @@ str_foldcase(str, orglen, buf, buflen)
 	{
 	    if (enc_utf8)
 	    {
-		int	c, lc;
+		int	c = utf_ptr2char(STR_PTR(i));
+		int	ol = utf_ptr2len(STR_PTR(i));
+		int	lc = utf_tolower(c);
 
-		c = utf_ptr2char(STR_PTR(i));
-		lc = utf_tolower(c);
-		if (c != lc)
+		/* Only replace the character when it is not an invalid
+		 * sequence (ASCII character or more than one byte) and
+		 * utf_tolower() doesn't return the original character. */
+		if ((c < 0x80 || ol > 1) && c != lc)
 		{
-		    int	    ol = utf_char2len(c);
 		    int	    nl = utf_char2len(lc);
 
 		    /* If the byte length changes need to shift the following
@@ -476,14 +478,12 @@ str_foldcase(str, orglen, buf, buflen)
 			{
 			    if (buf == NULL)
 			    {
-				mch_memmove(GA_PTR(i) + nl, GA_PTR(i) + ol,
-						  STRLEN(GA_PTR(i) + ol) + 1);
+				STRMOVE(GA_PTR(i) + nl, GA_PTR(i) + ol);
 				ga.ga_len += nl - ol;
 			    }
 			    else
 			    {
-				mch_memmove(buf + i + nl, buf + i + ol,
-						    STRLEN(buf + i + ol) + 1);
+				STRMOVE(buf + i + nl, buf + i + ol);
 				len += nl - ol;
 			    }
 			}
@@ -1466,9 +1466,11 @@ getvcols(wp, pos1, pos2, left, right)
  * skipwhite: skip over ' ' and '\t'.
  */
     char_u *
-skipwhite(p)
-    char_u	*p;
+skipwhite(q)
+    char_u	*q;
 {
+    char_u	*p = q;
+
     while (vim_iswhite(*p)) /* skip to next non-white */
 	++p;
     return p;
@@ -1478,9 +1480,11 @@ skipwhite(p)
  * skip over digits
  */
     char_u *
-skipdigits(p)
-    char_u	*p;
+skipdigits(q)
+    char_u	*q;
 {
+    char_u	*p = q;
+
     while (VIM_ISDIGIT(*p))	/* skip to next non-digit */
 	++p;
     return p;
@@ -1491,9 +1495,11 @@ skipdigits(p)
  * skip over digits and hex characters
  */
     char_u *
-skiphex(p)
-    char_u	*p;
+skiphex(q)
+    char_u	*q;
 {
+    char_u	*p = q;
+
     while (vim_isxdigit(*p))	/* skip to next non-digit */
 	++p;
     return p;
@@ -1505,9 +1511,11 @@ skiphex(p)
  * skip to digit (or NUL after the string)
  */
     char_u *
-skiptodigit(p)
-    char_u	*p;
+skiptodigit(q)
+    char_u	*q;
 {
+    char_u	*p = q;
+
     while (*p != NUL && !VIM_ISDIGIT(*p))	/* skip to next digit */
 	++p;
     return p;
@@ -1517,9 +1525,11 @@ skiptodigit(p)
  * skip to hex character (or NUL after the string)
  */
     char_u *
-skiptohex(p)
-    char_u	*p;
+skiptohex(q)
+    char_u	*q;
 {
+    char_u	*p = q;
+
     while (*p != NUL && !vim_isxdigit(*p))	/* skip to next digit */
 	++p;
     return p;
@@ -1744,7 +1754,6 @@ vim_isblankline(lbuf)
  * If "len" is not NULL, the length of the number in characters is returned.
  * If "nptr" is not NULL, the signed result is returned in it.
  * If "unptr" is not NULL, the unsigned result is returned in it.
- * If "unptr" is not NULL, the unsigned result is returned in it.
  * If "dooct" is non-zero recognize octal numbers, when > 1 always assume
  * octal number.
  * If "dohex" is non-zero recognize hex numbers, when > 1 always assume
@@ -1919,7 +1928,7 @@ backslash_halve(p)
 {
     for ( ; *p; ++p)
 	if (rem_backslash(p))
-	    mch_memmove(p, p + 1, STRLEN(p));
+	    STRMOVE(p, p + 1);
 }
 
 /*

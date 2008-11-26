@@ -137,6 +137,7 @@ SRC_UNIX =	\
 		pixmaps/gen-inline-pixbufs.sh \
 		pixmaps/stock_icons.h \
 		src/INSTALL \
+		src/INSTALLx.txt \
 		src/Makefile \
 		src/auto/configure \
 		src/config.aap.in \
@@ -250,6 +251,7 @@ SRC_DOS =	\
 		src/Make_w16.mak \
 		src/bigvim.bat \
 		src/msvcsetup.bat \
+		src/msvc2008.bat \
 		src/dimm.idl \
 		src/dlldata.c \
 		src/dosinst.c \
@@ -283,6 +285,7 @@ SRC_DOS =	\
 		src/proto/os_win32.pro \
 		src/proto/os_mswin.pro \
 		src/testdir/Make_dos.mak \
+		src/testdir/Make_ming.mak \
 		src/testdir/dos.vim \
 		src/uninstal.c \
 		src/vim.def \
@@ -514,6 +517,7 @@ RT_SCRIPTS =	\
 		runtime/indent/*.vim \
 		runtime/indent/README.txt \
 		runtime/ftplugin/*.vim \
+		runtime/ftplugin/logtalk.dict \
 		runtime/ftplugin/README.txt \
 		runtime/plugin/*.vim \
 		runtime/plugin/README.txt \
@@ -671,17 +675,9 @@ LANG_GEN = \
 		runtime/keymap/*.vim \
 		runtime/tutor/README.*.txt \
 		runtime/tutor/Makefile \
+		runtime/tutor/tutor.utf-8 \
 		runtime/tutor/tutor.?? \
-		runtime/tutor/tutor.cs.* \
-		runtime/tutor/tutor.gr.* \
-		runtime/tutor/tutor.hu.* \
-		runtime/tutor/tutor.ja.* \
-		runtime/tutor/tutor.ko.* \
-		runtime/tutor/tutor.pl.* \
-		runtime/tutor/tutor.ru.* \
-		runtime/tutor/tutor.sk.* \
-		runtime/tutor/tutor.tr.* \
-		runtime/tutor/tutor.zh.* \
+		runtime/tutor/tutor.??.* \
 		runtime/spell/README.txt \
 		runtime/spell/??/*.diff \
 		runtime/spell/??/main.aap \

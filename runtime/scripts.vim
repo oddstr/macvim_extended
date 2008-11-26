@@ -1,7 +1,7 @@
 " Vim support file to detect file types in scripts
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last change:	2007 Apr 29
+" Last change:	2008 Aug 09
 
 " This file is called by an autocommand for every file that has just been
 " loaded into a buffer.  It checks if the type of file can be recognized by
@@ -168,7 +168,7 @@ else
     set ft=zsh
 
   " ELM Mail files
-  elseif s:line1 =~ '^From [a-zA-Z][a-zA-Z_0-9\.=-]*\(@[^ ]*\)\= .*[12][09]\d\d$'
+  elseif s:line1 =~ '^From \([a-zA-Z][a-zA-Z_0-9\.=-]*\(@[^ ]*\)\=\|-\) .* \(19\|20\)\d\d$'
     set ft=mail
 
     " Mason
@@ -234,6 +234,14 @@ else
   elseif s:line1 =~ '\<DTD\s\+XHTML\s'
     set ft=xhtml
 
+    " HTML (e.g.: <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN")
+  elseif s:line1 =~? '\<DOCTYPE\s\+html\>'
+    set ft=html
+
+    " PDF
+  elseif s:line1 =~ '^%PDF-'
+    set ft=pdf
+
     " XXD output
   elseif s:line1 =~ '^\x\{7}: \x\{2} \=\x\{2} \=\x\{2} \=\x\{2} '
     set ft=xxd
@@ -271,7 +279,7 @@ else
     set ft=virata
 
     " Strace
-  elseif s:line1 =~ '^[0-9]* *execve('
+  elseif s:line1 =~ '^\(\[pid \d\+\] \)\=[0-9:.]* *execve(' || s:line1 =~ '^__libc_start_main'
     set ft=strace
 
     " VSE JCL
@@ -308,6 +316,10 @@ else
   " Scheme scripts
   elseif s:line1 =~ 'exec\s\+\S*scheme' || s:line2 =~ 'exec\s\+\S*scheme'
     set ft=scheme
+
+  " Git output
+  elseif s:line1 =~ '^\(commit\|tree\|object\) \x\{40\}$\|^tag \S\+$'
+    set ft=git
 
   " CVS diff
   else

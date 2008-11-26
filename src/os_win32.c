@@ -27,9 +27,6 @@
 # include "if_mzsch.h"
 #endif
 
-#ifdef HAVE_FCNTL_H
-# include <fcntl.h>
-#endif
 #include <sys/types.h>
 #include <errno.h>
 #include <signal.h>
@@ -4686,7 +4683,7 @@ mch_fopen(char *name, char *mode)
 # endif
        )
     {
-# if defined(DEBUG) && _MSC_VER > 1200
+# if defined(DEBUG) && _MSC_VER >= 1400
 	/* Work around an annoying assertion in the Microsoft debug CRT
 	 * when mode's text/binary setting doesn't match _get_fmode(). */
 	char newMode = mode[strlen(mode) - 1];
@@ -4705,7 +4702,7 @@ mch_fopen(char *name, char *mode)
 	vim_free(wn);
 	vim_free(wm);
 
-# if defined(DEBUG) && _MSC_VER > 1200
+# if defined(DEBUG) && _MSC_VER >= 1400
 	_set_fmode(oldMode);
 # endif
 

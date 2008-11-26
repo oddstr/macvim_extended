@@ -774,7 +774,7 @@ restofline:
 		    *namebuf = NUL;
 		    if (tail && *tail)
 		    {
-			STRCPY(IObuff, skipwhite(tail));
+			STRMOVE(IObuff, skipwhite(tail));
 			multiscan = TRUE;
 			goto restofline;
 		    }
@@ -1415,6 +1415,7 @@ qf_jump(qi, dir, errornr, forceit)
     char_u		*line;
 #ifdef FEAT_WINDOWS
     char_u		*old_swb = p_swb;
+    unsigned		old_swb_flags = swb_flags;
     int			opened_window = FALSE;
     win_T		*win;
     win_T		*altwin;
@@ -1594,10 +1595,10 @@ qf_jump(qi, dir, errornr, forceit)
 	    }
 
 	/*
-	 * If no usable window is found and 'switchbuf' is set to 'usetab'
+	 * If no usable window is found and 'switchbuf' contains "usetab"
 	 * then search in other tabs.
 	 */
-	if (!usable_win && vim_strchr(p_swb, 'a') != NULL)
+	if (!usable_win && (swb_flags & SWB_USETAB))
 	{
 	    tabpage_T	*tp;
 	    win_T	*wp;
@@ -1625,6 +1626,7 @@ qf_jump(qi, dir, errornr, forceit)
 		goto failed;		/* not enough room for window */
 	    opened_window = TRUE;	/* close it when fail */
 	    p_swb = empty_option;	/* don't split again */
+	    swb_flags = 0;
 # ifdef FEAT_SCROLLBIND
 	    curwin->w_p_scb = FALSE;
 # endif
@@ -1866,7 +1868,10 @@ theend:
 	/* Restore old 'switchbuf' value, but not when an autocommand or
 	 * modeline has changed the value. */
 	if (p_swb == empty_option)
+	{
 	    p_swb = old_swb;
+	    swb_flags = old_swb_flags;
+	}
 	else
 	    free_string_option(old_swb);
     }
@@ -2994,14 +2999,14 @@ ex_vimgrep(eap)
     char_u	*save_ei = NULL;
 #endif
     aco_save_T	aco;
-#ifdef FEAT_AUTOCMD
-    char_u	*au_name =  NULL;
     int		flags = 0;
     colnr_T	col;
     long	tomatch;
     char_u	dirname_start[MAXPATHL];
     char_u	dirname_now[MAXPATHL];
     char_u	*target_dir = NULL;
+#ifdef FEAT_AUTOCMD
+    char_u	*au_name =  NULL;
 
     switch (eap->cmdidx)
     {
@@ -3774,7 +3779,7 @@ ex_helpgrep(eap)
 
     /* Make 'cpoptions' empty, the 'l' flag should not be used here. */
     save_cpo = p_cpo;
-    p_cpo = (char_u *)"";
+    p_cpo = empty_option;
 
 #ifdef FEAT_MULTI_LANG
     /* Check for a specified language */
@@ -3884,7 +3889,11 @@ ex_helpgrep(eap)
 	qi->qf_lists[qi->qf_curlist].qf_index = 1;
     }
 
-    p_cpo = save_cpo;
+    if (p_cpo == empty_option)
+	p_cpo = save_cpo;
+    else
+	/* Darn, some plugin changed the value. */
+	free_string_option(save_cpo);
 
 #ifdef FEAT_WINDOWS
     qf_update_buffer(qi);

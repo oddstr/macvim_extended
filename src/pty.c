@@ -37,13 +37,9 @@
  * 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA
  */
 
-/* RCS_ID("$Id: pty.c,v 1.6 2007/05/12 15:29:30 vimboss Exp $ FAU") */
+/* RCS_ID("$Id: pty.c,v 1.12 2008/08/17 21:03:18 vimboss Exp $ FAU") */
 
 #include "vim.h"
-
-#ifdef HAVE_FCNTL_H
-# include <fcntl.h>
-#endif
 
 #include <signal.h>
 
@@ -274,9 +270,10 @@ OpenPTY(ttyn)
 }
 #endif
 
-#if defined(HAVE_SVR4_PTYS) && !defined(PTY_DONE) && !defined(hpux)
+#if defined(HAVE_SVR4_PTYS) && !defined(PTY_DONE) && !defined(hpux) && !defined(MACOS_X)
 
-/* NOTE: Even though HPUX can have /dev/ptmx, the code below doesn't work! */
+/* NOTE: Even though HPUX can have /dev/ptmx, the code below doesn't work!
+ * Same for Mac OS X Leopard. */
 #define PTY_DONE
     int
 OpenPTY(ttyn)

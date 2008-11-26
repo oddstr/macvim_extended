@@ -49,7 +49,9 @@
 #	- Uncomment the line with --disable-acl to disable ACL support even
 #	  though your system supports it.
 #	- Uncomment the line with --disable-gpm to disable gpm support
-#	  even though you have gpm libraries and includes
+#	  even though you have gpm libraries and includes.
+#	- Uncomment the line with --disable-sysmouse to disable sysmouse
+#	  support even though you have /dev/sysmouse and includes.
 #	- Uncomment one of the lines with CFLAGS and/or CC if you have
 #	  something very special or want to tune the optimizer.
 #	- Search for the name of your system to see if it needs anything
@@ -309,6 +311,8 @@ CClink = $(CC)
 #CONF_ARGS = --exec-prefix=/usr
 #CONF_ARGS = --with-vim-name=vim7 --with-ex-name=ex7 --with-view-name=view7
 #CONF_ARGS = --with-global-runtime=/etc/vim
+#CONF_ARGS = --with-local-dir=/usr/share
+#CONF_ARGS = --without-local-dir
 
 # Use this one if you distribute a modified version of Vim.
 #CONF_ARGS = --with-modified-by="John Doe"
@@ -452,8 +456,13 @@ CClink = $(CC)
 
 # gpm - For mouse support on Linux console via gpm
 # Uncomment this when you do not want to include gpm support, even
-# though you have gpm libraries and includes
+# though you have gpm libraries and includes.
 #CONF_OPT_GPM = --disable-gpm
+
+# sysmouse - For mouse support on FreeBSD and DragonFly console via sysmouse
+# Uncomment this when you do not want do include sysmouse support, even
+# though you have /dev/sysmouse and includes.
+#CONF_OPT_SYSMOUSE = --disable-sysmouse
 
 # FEATURES - For creating Vim with more or less features
 # Uncomment one of these lines when you want to include few to many features.
@@ -540,6 +549,10 @@ CClink = $(CC)
 
 # PURIFY - remove the # to use the "purify" program (hoi Nia++!)
 #PURIFY = purify
+
+# NBDEBUG - debugging the netbeans interface.
+#EXTRA_DEFS = -DNBDEBUG
+
 # }}}
 
 # LINT - for running lint
@@ -785,6 +798,8 @@ LINT_OPTIONS = -beprxzF
 # 1) make config
 # 2) edit auto/config.mk, add -n32 to LDFLAGS
 # 3) make
+#
+#Alternatively: use -o32 instead of -n32.
 ###
 
 ### (C)  On SCO Unix v3.2.5 (and probably other versions) the termcap library,
@@ -891,7 +906,7 @@ MAN1DIR = /man1
 
 ### Vim version (adjusted by a script)
 VIMMAJOR = 7
-VIMMINOR = 1
+VIMMINOR = 2
 
 ### Location of Vim files (should not need to be changed, and  {{{1
 ### some things might not work when they are changed!)
@@ -1079,7 +1094,7 @@ PRINTSOURCE = ../runtime/print
 # default vi editor, it will create a link from vi to Vim when doing
 # "make install".  An existing file will be overwritten!
 # When not using it, some make programs can't handle an undefined $(LINKIT).
-#LINKIT = -ln -f -s $(BINDIR)/$(VIMTARGET) /usr/bin/vi
+#LINKIT = ln -f -s $(DEST_BIN)/$(VIMTARGET) $(DESTDIR)/usr/bin/vi
 LINKIT = @echo >/dev/null
 
 ###
@@ -1116,7 +1131,7 @@ GTK_IPATH	= $(GUI_INC_LOC)
 GTK_LIBS_DIR	= $(GUI_LIB_LOC)
 GTK_LIBS1	=
 GTK_LIBS2	= $(GTK_LIBNAME)
-GTK_INSTALL     = install_normal
+GTK_INSTALL     = install_normal install_gui_extra
 GTK_TARGETS	= installglinks
 GTK_MAN_TARGETS = yes
 GTK_TESTTARGET  = gui
@@ -1133,7 +1148,7 @@ MOTIF_IPATH	= $(GUI_INC_LOC)
 MOTIF_LIBS_DIR	= $(GUI_LIB_LOC)
 MOTIF_LIBS1	=
 MOTIF_LIBS2	= $(MOTIF_LIBNAME) -lXt
-MOTIF_INSTALL   = install_normal
+MOTIF_INSTALL   = install_normal install_gui_extra
 MOTIF_TARGETS	= installglinks
 MOTIF_MAN_TARGETS = yes
 MOTIF_TESTTARGET = gui
@@ -1163,7 +1178,7 @@ ATHENA_IPATH	= $(GUI_INC_LOC)
 ATHENA_LIBS_DIR = $(GUI_LIB_LOC)
 ATHENA_LIBS1	= $(XAW_LIB)
 ATHENA_LIBS2	= -lXt
-ATHENA_INSTALL  = install_normal
+ATHENA_INSTALL  = install_normal install_gui_extra
 ATHENA_TARGETS	= installglinks
 ATHENA_MAN_TARGETS = yes
 ATHENA_TESTTARGET = gui
@@ -1181,7 +1196,7 @@ NEXTAW_IPATH	= $(GUI_INC_LOC)
 NEXTAW_LIBS_DIR = $(GUI_LIB_LOC)
 NEXTAW_LIBS1	= $(NEXTAW_LIB)
 NEXTAW_LIBS2	= -lXt
-NEXTAW_INSTALL  =  install_normal
+NEXTAW_INSTALL  =  install_normal install_gui_extra
 NEXTAW_TARGETS	=  installglinks
 NEXTAW_MAN_TARGETS = yes
 NEXTAW_TESTTARGET = gui
@@ -1206,7 +1221,7 @@ PHOTONGUI_IPATH	=
 PHOTONGUI_LIBS_DIR =
 PHOTONGUI_LIBS1	= -lph -lphexlib
 PHOTONGUI_LIBS2	=
-PHOTONGUI_INSTALL = install_normal
+PHOTONGUI_INSTALL = install_normal install_gui_extra
 PHOTONGUI_TARGETS = installglinks
 PHOTONGUI_MAN_TARGETS = yes
 PHOTONGUI_TESTTARGET = gui
@@ -1295,6 +1310,9 @@ LINT_EXTRA = -DUSE_SNIFF -DHANGUL_INPUT -D"__attribute__(x)="
 
 DEPEND_CFLAGS = -DPROTO -DDEPEND -DFEAT_GUI $(LINT_CFLAGS)
 
+# If you have problems with flags that cproto doesn't support, and you are
+# using GNU make, you can try using the other line to filter out arguments.
+#PFLAGS = $(PROTO_FLAGS) -DPROTO $(filter -D% -I%, $(LINT_CFLAGS))
 PFLAGS = $(PROTO_FLAGS) -DPROTO $(LINT_CFLAGS)
 
 ALL_LIB_DIRS = $(GUI_LIBS_DIR) $(X_LIBS_DIR)
@@ -1571,7 +1589,8 @@ config auto/config.mk: auto/configure config.mk.in config.h.in
 		$(CONF_OPT_SNIFF) $(CONF_OPT_FEAT) $(CONF_TERM_LIB) \
 		$(CONF_OPT_COMPBY) $(CONF_OPT_ACL)  $(CONF_OPT_NETBEANS) \
 		$(CONF_ARGS) $(CONF_OPT_MZSCHEME) $(CONF_OPT_PLTHOME) \
-		$(CONF_OPT_SPIDERMONKEY)
+		$(CONF_OPT_SPIDERMONKEY) \
+		$(CONF_OPT_SYSMOUSE)
 
 # Use "make reconfig" to rerun configure without cached values.
 # When config.h changes, most things will be recompiled automatically.
@@ -1735,7 +1754,7 @@ test check:
 	-if test -n "$(MAKEMO)" -a -f $(PODIR)/Makefile; then \
 		cd $(PODIR); $(MAKE) -f Makefile check VIM=../$(VIMTARGET); \
 	fi
-	-if test $(VIMTARGET) != vim -a ! -e vim; then \
+	-if test $(VIMTARGET) != vim -a ! -r vim; then \
 		ln -s $(VIMTARGET) vim; \
 	fi
 	cd testdir; $(MAKE) -f Makefile $(GUI_TESTTARGET) VIMPROG=../$(VIMTARGET) $(GUI_TESTARG)
@@ -1746,6 +1765,15 @@ testclean:
 		cd $(PODIR); $(MAKE) checkclean; \
 	fi
 
+install: $(GUI_INSTALL)
+
+install_normal: installvim installtools $(INSTALL_LANGS) install-icons
+
+install_gui_extra: installgtutorbin
+
+installvim: installvimbin installtutorbin \
+		installruntime installlinks installmanlinks
+
 #
 # Avoid overwriting an existing executable, somebody might be running it and
 # overwriting it could cause it to crash.  Deleting it is OK, it won't be
@@ -1755,13 +1783,6 @@ testclean:
 # If you want to keep an older version, rename it before running "make
 # install".
 #
-install: $(GUI_INSTALL)
-
-install_normal: installvim installtools $(INSTALL_LANGS) install-icons
-
-installvim: installvimbin installtutorbin \
-		installruntime installlinks installmanlinks
-
 installvimbin: $(VIMTARGET) $(DESTDIR)$(exec_prefix) $(DEST_BIN)
 	-if test -f $(DEST_BIN)/$(VIMTARGET); then \
 	  mv -f $(DEST_BIN)/$(VIMTARGET) $(DEST_BIN)/$(VIMNAME).rm; \
@@ -1877,6 +1898,8 @@ installmacros: $(DEST_VIM) $(DEST_RT) $(DEST_MACRO)
 installtutorbin: $(DEST_VIM)
 	$(INSTALL_DATA) vimtutor $(DEST_BIN)/$(VIMNAME)tutor
 	chmod $(SCRIPTMOD) $(DEST_BIN)/$(VIMNAME)tutor
+
+installgtutorbin: $(DEST_VIM)
 	$(INSTALL_DATA) gvimtutor $(DEST_BIN)/$(GVIMNAME)tutor
 	chmod $(SCRIPTMOD) $(DEST_BIN)/$(GVIMNAME)tutor
 
@@ -2184,7 +2207,7 @@ SHADOWDIR = shadow
 
 shadow:	runtime pixmaps
 	mkdir $(SHADOWDIR)
-	cd $(SHADOWDIR); ln -s ../*.[ch] ../*.in ../*.sh ../*.xs ../*.xbm ../toolcheck ../proto ../vimtutor ../gvimtutor ../mkinstalldirs .
+	cd $(SHADOWDIR); ln -s ../*.[ch] ../*.in ../*.sh ../*.xs ../*.xbm ../toolcheck ../proto ../po ../vimtutor ../gvimtutor ../mkinstalldirs .
 	mkdir $(SHADOWDIR)/auto
 	cd $(SHADOWDIR)/auto; ln -s ../../auto/configure .
 	cd $(SHADOWDIR); rm -f auto/link.sed
@@ -2203,7 +2226,7 @@ shadow:	runtime pixmaps
 	cd $(SHADOWDIR)/testdir; ln -s ../../testdir/Makefile \
 				 ../../testdir/vimrc.unix \
 				 ../../testdir/*.in \
-				 ../../testdir/unix.vim \
+				 ../../testdir/*.vim \
 				 ../../testdir/*.ok .
 
 # Link needed for doing "make install" in a shadow directory.
@@ -2584,7 +2607,7 @@ install_macosx: gui_bundle
 	ln -s `pwd`/../runtime $(RESDIR)/vim
 # Copy rgb.txt, Mac doesn't always have X11
 	$(INSTALL_DATA) $(SCRIPTSOURCE)/rgb.txt $(DESTDIR)$(prefix)/$(RESDIR)/vim/runtime
-# TODO: Create the vimtutor application.
+# TODO: Create the vimtutor and/or gvimtutor application.
 
 gui_bundle: $(RESDIR) bundle-dir bundle-executable bundle-info bundle-resource \
 	bundle-language
@@ -2763,7 +2786,7 @@ objects/option.o: option.c vim.h auto/config.h feature.h os_unix.h auto/osdef.h 
 objects/os_unix.o: os_unix.c vim.h auto/config.h feature.h os_unix.h auto/osdef.h \
   ascii.h keymap.h term.h macros.h option.h structs.h regexp.h gui.h \
   gui_beval.h proto/gui_beval.pro ex_cmds.h proto.h globals.h farsi.h \
-  arabic.h if_mzsch.h os_unixx.h
+  arabic.h os_unixx.h
 objects/pathdef.o: auto/pathdef.c ./vim.h ./auto/config.h ./feature.h ./os_unix.h \
   ./auto/osdef.h ./ascii.h ./keymap.h ./term.h ./macros.h ./option.h \
   ./structs.h ./regexp.h ./gui.h ./gui_beval.h proto/gui_beval.pro \

@@ -201,10 +201,6 @@ CPU = i386
 CPU = i386
 !endif # !PROCESSOR_ARCHITECTURE
 
-!if ("$(CPU)" == "AMD64") || ("$(CPU)" == "IA64")
-DEFINES=$(DEFINES) /Wp64
-!endif
-
 # Build a retail version by default
 
 !if "$(DEBUG)" != "yes"
@@ -219,6 +215,11 @@ MAKEFLAGS_GVIMEXT = DEBUG=yes
 
 !include <Win32.mak>
 
+# Turn on Win64 compatibility warnings for VC7.x and VC8.
+# (/Wp64 is deprecated in VC9 and generates an obnoxious warning.)
+!if ("$(MSVCVER)" == "7.0") || ("$(MSVCVER)" == "7.1") || ("$(MSVCVER)" == "8.0") 
+DEFINES=$(DEFINES) /Wp64
+!endif
 
 #>>>>> path of the compiler and linker; name of include and lib directories
 # PATH = c:\msvc20\bin;$(PATH)
@@ -356,6 +357,9 @@ MSVCVER = 8.0
 MSVCVER = 8.0
 !endif
 !if "$(_NMAKE_VER)" == "9.00.20706.01"
+MSVCVER = 9.0
+!endif
+!if "$(_NMAKE_VER)" == "9.00.21022.08"
 MSVCVER = 9.0
 !endif
 !endif

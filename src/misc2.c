@@ -12,10 +12,6 @@
  */
 #include "vim.h"
 
-#ifdef HAVE_FCNTL_H
-# include <fcntl.h>	    /* for chdir() */
-#endif
-
 static char_u	*username = NULL; /* cached result of mch_get_user_name() */
 
 static char_u	*ff_expand_buffer = NULL; /* used for expanding filenames */
@@ -347,13 +343,7 @@ coladvance2(pos, addspaces, finetune, wcol)
 }
 
 /*
- * inc(p)
- *
- * Increment the line pointer 'p' crossing line boundaries as necessary.
- * Return 1 when going to the next line.
- * Return 2 when moving forward onto a NUL at the end of the line).
- * Return -1 when at the end of file.
- * Return 0 otherwise.
+ * Increment the cursor position.  See inc() for return values.
  */
     int
 inc_cursor()
@@ -361,6 +351,13 @@ inc_cursor()
     return inc(&curwin->w_cursor);
 }
 
+/*
+ * Increment the line pointer "lp" crossing line boundaries as necessary.
+ * Return 1 when going to the next line.
+ * Return 2 when moving forward onto a NUL at the end of the line).
+ * Return -1 when at the end of file.
+ * Return 0 otherwise.
+ */
     int
 inc(lp)
     pos_T  *lp;
@@ -1268,21 +1265,41 @@ vim_strsave_escaped_ext(string, esc_chars, cc, bsl)
     return escaped_string;
 }
 
-#if defined(FEAT_EVAL) || defined(PROTO)
+/*
+ * Return TRUE when 'shell' has "csh" in the tail.
+ */
+    int
+csh_like_shell()
+{
+    return (strstr((char *)gettail(p_sh), "csh") != NULL);
+}
+
 /*
  * Escape "string" for use as a shell argument with system().
  * This uses single quotes, except when we know we need to use double qoutes
  * (MS-DOS and MS-Windows without 'shellslash' set).
+ * Escape a newline, depending on the 'shell' option.
+ * When "do_special" is TRUE also replace "!", "%", "#" and things starting
+ * with "<" like "<cfile>".
  * Returns the result in allocated memory, NULL if we have run out.
  */
     char_u *
-vim_strsave_shellescape(string)
+vim_strsave_shellescape(string, do_special)
     char_u	*string;
+    int		do_special;
 {
     unsigned	length;
     char_u	*p;
     char_u	*d;
     char_u	*escaped_string;
+    int		l;
+    int		csh_like;
+
+    /* Only csh and similar shells expand '!' within single quotes.  For sh and
+     * the like we must not put a backslash before it, it will be taken
+     * literally.  If do_special is set the '!' will be escaped twice.
+     * Csh also needs to have "\n" escaped twice when do_special is set. */
+    csh_like = csh_like_shell();
 
     /* First count the number of extra bytes required. */
     length = (unsigned)STRLEN(string) + 3;  /* two quotes and a trailing NUL */
@@ -1298,6 +1315,17 @@ vim_strsave_shellescape(string)
 # endif
 	if (*p == '\'')
 	    length += 3;		/* ' => '\'' */
+	if (*p == '\n' || (*p == '!' && (csh_like || do_special)))
+	{
+	    ++length;			/* insert backslash */
+	    if (csh_like && do_special)
+		++length;		/* insert backslash */
+	}
+	if (do_special && find_cmdline_var(p, &l) >= 0)
+	{
+	    ++length;			/* insert backslash */
+	    p += l - 1;
+	}
     }
 
     /* Allocate memory for the result and fill it. */
@@ -1331,12 +1359,26 @@ vim_strsave_shellescape(string)
 # endif
 	    if (*p == '\'')
 	    {
-		*d++='\'';
-		*d++='\\';
-		*d++='\'';
-		*d++='\'';
+		*d++ = '\'';
+		*d++ = '\\';
+		*d++ = '\'';
+		*d++ = '\'';
 		++p;
 		continue;
+	    }
+	    if (*p == '\n' || (*p == '!' && (csh_like || do_special)))
+	    {
+		*d++ = '\\';
+		if (csh_like && do_special)
+		    *d++ = '\\';
+		*d++ = *p++;
+		continue;
+	    }
+	    if (do_special && find_cmdline_var(p, &l) >= 0)
+	    {
+		*d++ = '\\';		/* insert backslash */
+		while (--l >= 0)	/* copy the var */
+		    *d++ = *p++;
 	    }
 
 	    MB_COPY_CHAR(p, d);
@@ -1354,7 +1396,6 @@ vim_strsave_shellescape(string)
 
     return escaped_string;
 }
-#endif
 
 /*
  * Like vim_strsave(), but make all characters uppercase.
@@ -2768,7 +2809,7 @@ get_special_key_code(name)
     return 0;
 }
 
-#ifdef FEAT_CMDL_COMPL
+#if defined(FEAT_CMDL_COMPL) || defined(PROTO)
     char_u *
 get_key_name(i)
     int	    i;
@@ -2779,7 +2820,7 @@ get_key_name(i)
 }
 #endif
 
-#ifdef FEAT_MOUSE
+#if defined(FEAT_MOUSE) || defined(PROTO)
 /*
  * Look up the given mouse code to return the relevant information in the other
  * arguments.  Return which button is down or was released.
@@ -4291,7 +4332,7 @@ vim_findfile_stopdir(buf)
 	    /* overwrite the escape char,
 	     * use STRLEN(r_ptr) to move the trailing '\0'
 	     */
-	    mch_memmove(r_ptr, r_ptr + 1, STRLEN(r_ptr));
+	    STRMOVE(r_ptr, r_ptr + 1);
 	    r_ptr++;
 	}
 	r_ptr++;
@@ -4503,9 +4544,7 @@ vim_findfile(search_ctx_arg)
 			if (*p == 0)
 			{
 			    /* remove '**<numb> from wildcards */
-			    mch_memmove(rest_of_wildcards,
-				    rest_of_wildcards + 3,
-				    STRLEN(rest_of_wildcards + 3) + 1);
+			    STRMOVE(rest_of_wildcards, rest_of_wildcards + 3);
 			}
 			else
 			    rest_of_wildcards += 3;
@@ -4651,8 +4690,7 @@ vim_findfile(search_ctx_arg)
 				    p = shorten_fname(file_path,
 							    ff_expand_buffer);
 				    if (p != NULL)
-					mch_memmove(file_path, p,
-							       STRLEN(p) + 1);
+					STRMOVE(file_path, p);
 				}
 #ifdef FF_VERBOSE
 				if (p_verbose >= 5)

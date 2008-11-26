@@ -177,6 +177,9 @@
 # ifdef FEAT_X11
 #  undef FEAT_X11
 # endif
+# ifdef FEAT_GUI_X11
+#  undef FEAT_GUI_X11
+# endif
 # ifdef FEAT_XCLIPBOARD
 #  undef FEAT_XCLIPBOARD
 # endif
@@ -352,8 +355,8 @@ typedef unsigned char	char_u;
 typedef unsigned short	short_u;
 typedef unsigned int	int_u;
 /* Make sure long_u is big enough to hold a pointer.
- * On Win64 longs are 32 bit and pointers 64 bit.
- * For printf() and scanf() we need to take care of long_u specifically. */
+ * On Win64, longs are 32 bits and pointers are 64 bits.
+ * For printf() and scanf(), we need to take care of long_u specifically. */
 #ifdef _WIN64
 typedef unsigned __int64        long_u;
 typedef		 __int64        long_i;
@@ -361,8 +364,16 @@ typedef		 __int64        long_i;
 # define SCANF_DECIMAL_LONG_U   "%Iu"
 # define PRINTF_HEX_LONG_U      "0x%Ix"
 #else
-typedef unsigned long	        long_u;
-typedef		 long	        long_i;
+  /* Microsoft-specific. The __w64 keyword should be specified on any typedefs
+   * that change size between 32-bit and 64-bit platforms.  For any such type,
+   * __w64 should appear only on the 32-bit definition of the typedef.
+   * Define __w64 as an empty token for everything but MSVC 7.x or later.
+   */
+# if !defined(_MSC_VER)	|| (_MSC_VER < 1300)
+#  define __w64 
+# endif
+typedef unsigned long __w64	long_u;
+typedef		 long __w64     long_i;
 # define SCANF_HEX_LONG_U       "%lx"
 # define SCANF_DECIMAL_LONG_U   "%lu"
 # define PRINTF_HEX_LONG_U      "0x%lx"
@@ -1024,7 +1035,7 @@ extern char *(*dyn_libintl_textdomain)(const char *domainname);
 #define TAG_INS_COMP	64	/* Currently doing insert completion */
 #define TAG_KEEP_LANG	128	/* keep current language */
 
-#define TAG_MANY	200	/* When finding many tags (for completion),
+#define TAG_MANY	300	/* When finding many tags (for completion),
 				   find up to this many tags */
 
 /*
@@ -1345,6 +1356,10 @@ typedef enum
  */
 #define MAXMAPLEN   50
 
+#ifdef HAVE_FCNTL_H
+# include <fcntl.h>
+#endif
+
 #ifdef BINARY_FILE_IO
 # define WRITEBIN   "wb"	/* no CR-LF translation */
 # define READBIN    "rb"
@@ -1394,6 +1409,9 @@ typedef enum
 #  define STRICMP(d, s)	    vim_stricmp((char *)(d), (char *)(s))
 # endif
 #endif
+
+/* Like strcpy() but allows overlapped source and destination. */
+#define STRMOVE(d, s)	    mch_memmove((d), (s), STRLEN(s) + 1)
 
 #ifdef HAVE_STRNCASECMP
 # define STRNICMP(d, s, n)  strncasecmp((char *)(d), (char *)(s), (size_t)(n))
@@ -1725,7 +1743,8 @@ typedef int proftime_T;	    /* dummy for function prototypes */
 #define VV_MOUSE_LNUM   50
 #define VV_MOUSE_COL	51
 #define VV_OP		52
-#define VV_LEN		53	/* number of v: vars */
+#define VV_SEARCHFORWARD 53
+#define VV_LEN		54	/* number of v: vars */
 
 #ifdef FEAT_CLIPBOARD
 
@@ -2014,8 +2033,9 @@ typedef int VimClipboard;	/* This is required for the prototypes. */
 # ifdef instr
 #  undef instr
 # endif
-  /* bool causes trouble on MACOS but is required on a few other systems */
-# if defined(bool) && defined(MACOS)
+  /* bool may cause trouble on MACOS but is required on a few other systems
+   * and for Perl */
+# if defined(bool) && defined(MACOS) && !defined(FEAT_PERL)
 #  undef bool
 # endif
 

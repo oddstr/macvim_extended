@@ -21,10 +21,6 @@
 
 #include "vim.h"
 
-#ifdef HAVE_FCNTL_H
-# include <fcntl.h>
-#endif
-
 #ifdef __TANDEM
 # include <limits.h>		/* for SSIZE_MAX */
 #endif
@@ -1532,12 +1528,49 @@ retry:
 #ifdef FEAT_MBYTE
 		    else if (conv_restlen > 0)
 		    {
-			/* Reached end-of-file but some trailing bytes could
-			 * not be converted.  Truncated file? */
-			if (conv_error == 0)
-			    conv_error = linecnt;
-			if (bad_char_behavior != BAD_DROP)
+			/*
+			 * Reached end-of-file but some trailing bytes could
+			 * not be converted.  Truncated file?
+			 */
+
+			/* When we did a conversion report an error. */
+			if (fio_flags != 0
+# ifdef USE_ICONV
+				|| iconv_fd != (iconv_t)-1
+# endif
+			   )
 			{
+			    if (conv_error == 0)
+				conv_error = curbuf->b_ml.ml_line_count
+								- linecnt + 1;
+			}
+			/* Remember the first linenr with an illegal byte */
+			else if (illegal_byte == 0)
+			    illegal_byte = curbuf->b_ml.ml_line_count
+								- linecnt + 1;
+			if (bad_char_behavior == BAD_DROP)
+			{
+			    *(ptr - conv_restlen) = NUL;
+			    conv_restlen = 0;
+			}
+			else
+			{
+			    /* Replace the trailing bytes with the replacement
+			     * character if we were converting; if we weren't,
+			     * leave the UTF8 checking code to do it, as it
+			     * works slightly differently. */
+			    if (bad_char_behavior != BAD_KEEP && (fio_flags != 0
+# ifdef USE_ICONV
+				    || iconv_fd != (iconv_t)-1
+# endif
+			       ))
+			    {
+				while (conv_restlen > 0)
+				{
+				    *(--ptr) = bad_char_behavior;
+				    --conv_restlen;
+				}
+			    }
 			    fio_flags = 0;	/* don't convert this */
 # ifdef USE_ICONV
 			    if (iconv_fd != (iconv_t)-1)
@@ -1546,20 +1579,6 @@ retry:
 				iconv_fd = (iconv_t)-1;
 			    }
 # endif
-			    if (bad_char_behavior == BAD_KEEP)
-			    {
-				/* Keep the trailing bytes as-is. */
-				size = conv_restlen;
-				ptr -= conv_restlen;
-			    }
-			    else
-			    {
-				/* Replace the trailing bytes with the
-				 * replacement character. */
-				size = 1;
-				*--ptr = bad_char_behavior;
-			    }
-			    conv_restlen = 0;
 			}
 		    }
 #endif
@@ -1641,6 +1660,11 @@ retry:
 		    goto retry;
 		}
 	    }
+
+	    /* Include not converted bytes. */
+	    ptr -= conv_restlen;
+	    size += conv_restlen;
+	    conv_restlen = 0;
 #endif
 	    /*
 	     * Break here for a read error or end-of-file.
@@ -1649,11 +1673,6 @@ retry:
 		break;
 
 #ifdef FEAT_MBYTE
-
-	    /* Include not converted bytes. */
-	    ptr -= conv_restlen;
-	    size += conv_restlen;
-	    conv_restlen = 0;
 
 # ifdef USE_ICONV
 	    if (iconv_fd != (iconv_t)-1)
@@ -2116,12 +2135,12 @@ retry:
 		size = (long)((ptr + real_size) - dest);
 		ptr = dest;
 	    }
-	    else if (enc_utf8 && conv_error == 0 && !curbuf->b_p_bin)
+	    else if (enc_utf8 && !curbuf->b_p_bin)
 	    {
-		/* Reading UTF-8: Check if the bytes are valid UTF-8.
-		 * Need to start before "ptr" when part of the character was
-		 * read in the previous read() call. */
-		for (p = ptr - utf_head_off(buffer, ptr); ; ++p)
+		int  incomplete_tail = FALSE;
+
+		/* Reading UTF-8: Check if the bytes are valid UTF-8. */
+		for (p = ptr; ; ++p)
 		{
 		    int	 todo = (int)((ptr + size) - p);
 		    int	 l;
@@ -2135,43 +2154,56 @@ retry:
 			 * read() will get the next bytes, we'll check it
 			 * then. */
 			l = utf_ptr2len_len(p, todo);
-			if (l > todo)
+			if (l > todo && !incomplete_tail)
 			{
-			    /* Incomplete byte sequence, the next read()
-			     * should get them and check the bytes. */
-			    p += todo;
-			    break;
+			    /* Avoid retrying with a different encoding when
+			     * a truncated file is more likely, or attempting
+			     * to read the rest of an incomplete sequence when
+			     * we have already done so. */
+			    if (p > ptr || filesize > 0)
+				incomplete_tail = TRUE;
+			    /* Incomplete byte sequence, move it to conv_rest[]
+			     * and try to read the rest of it, unless we've
+			     * already done so. */
+			    if (p > ptr)
+			    {
+				conv_restlen = todo;
+				mch_memmove(conv_rest, p, conv_restlen);
+				size -= conv_restlen;
+				break;
+			    }
 			}
-			if (l == 1)
+			if (l == 1 || l > todo)
 			{
 			    /* Illegal byte.  If we can try another encoding
-			     * do that. */
-			    if (can_retry)
+			     * do that, unless at EOF where a truncated
+			     * file is more likely than a conversion error. */
+			    if (can_retry && !incomplete_tail)
 				break;
-
-			    /* Remember the first linenr with an illegal byte */
-			    if (illegal_byte == 0)
-				illegal_byte = readfile_linenr(linecnt, ptr, p);
 # ifdef USE_ICONV
 			    /* When we did a conversion report an error. */
 			    if (iconv_fd != (iconv_t)-1 && conv_error == 0)
 				conv_error = readfile_linenr(linecnt, ptr, p);
 # endif
+			    /* Remember the first linenr with an illegal byte */
+			    if (conv_error == 0 && illegal_byte == 0)
+				illegal_byte = readfile_linenr(linecnt, ptr, p);
 
 			    /* Drop, keep or replace the bad byte. */
 			    if (bad_char_behavior == BAD_DROP)
 			    {
-				mch_memmove(p, p+1, todo - 1);
+				mch_memmove(p, p + 1, todo - 1);
 				--p;
 				--size;
 			    }
 			    else if (bad_char_behavior != BAD_KEEP)
 				*p = bad_char_behavior;
 			}
-			p += l - 1;
+			else
+			    p += l - 1;
 		    }
 		}
-		if (p < ptr + size)
+		if (p < ptr + size && !incomplete_tail)
 		{
 		    /* Detected a UTF-8 error. */
 rewind_retry:
@@ -2668,7 +2700,7 @@ failed:
 	/*
 	 * Work around a weird problem: When a file has two links (only
 	 * possible on NTFS) and we write through one link, then stat() it
-	 * throught the other link, the timestamp information may be wrong.
+	 * through the other link, the timestamp information may be wrong.
 	 * It's correct again after reading the file, thus reset the timestamp
 	 * here.
 	 */
@@ -3059,7 +3091,7 @@ check_file_readonly(fname, perm)
  *
  * If "forceit" is true, we don't care for errors when attempting backups.
  * In case of an error everything possible is done to restore the original
- * file.  But when "forceit" is TRUE, we risk loosing it.
+ * file.  But when "forceit" is TRUE, we risk losing it.
  *
  * When "reset_changed" is TRUE and "append" == FALSE and "start" == 1 and
  * "end" == curbuf->b_ml.ml_line_count, reset curbuf->b_changed.
@@ -3417,7 +3449,7 @@ buf_write(buf, fname, sfname, start, end, eap, append, forceit,
 	    else
 	    {
 		errnum = (char_u *)"E656: ";
-		errmsg = (char_u *)_("NetBeans dissallows writes of unmodified buffers");
+		errmsg = (char_u *)_("NetBeans disallows writes of unmodified buffers");
 		buffer = NULL;
 		goto fail;
 	    }
@@ -4120,7 +4152,7 @@ buf_write(buf, fname, sfname, start, end, eap, append, forceit,
 #ifdef VMS
     vms_remove_version(fname); /* remove version */
 #endif
-    /* Default: write the the file directly.  May write to a temp file for
+    /* Default: write the file directly.  May write to a temp file for
      * multi-byte conversion. */
     wfname = fname;
 
@@ -4656,7 +4688,7 @@ restore_backup:
 
 	/*
 	 * If we have a backup file, try to put it in place of the new file,
-	 * because the new file is probably corrupt.  This avoids loosing the
+	 * because the new file is probably corrupt.  This avoids losing the
 	 * original file when trying to make a backup when writing the file a
 	 * second time.
 	 * When "backup_copy" is set we need to copy the backup over the new
@@ -4912,7 +4944,7 @@ nofail:
 	 * front of the file name. */
 	if (errnum != NULL)
 	{
-	    mch_memmove(IObuff + numlen, IObuff, STRLEN(IObuff) + 1);
+	    STRMOVE(IObuff + numlen, IObuff);
 	    mch_memmove(IObuff, errnum, (size_t)numlen);
 	}
 	STRCAT(IObuff, errmsg);
@@ -5751,7 +5783,7 @@ check_for_bom(p, size, lenp, flags)
     int		len = 2;
 
     if (p[0] == 0xef && p[1] == 0xbb && size >= 3 && p[2] == 0xbf
-	    && (flags == FIO_ALL || flags == 0))
+	    && (flags == FIO_ALL || flags == FIO_UTF8 || flags == 0))
     {
 	name = "utf-8";		/* EF BB BF */
 	len = 3;
@@ -5984,7 +6016,7 @@ shorten_filenames(fnames, count)
 #endif
 
 /*
- * add extention to file name - change path/fo.o.h to path/fo.o.h.ext or
+ * add extension to file name - change path/fo.o.h to path/fo.o.h.ext or
  * fo_o_h.ext for MSDOS or when shortname option set.
  *
  * Assumed that fname is a valid name found in the filesystem we assure that
@@ -6166,7 +6198,7 @@ buf_modname(shortname, fname, ext, prepend_dot)
 #endif
 
     /*
-     * Append the extention.
+     * Append the extension.
      * ext can start with '.' and cannot exceed 3 more characters.
      */
     STRCPY(s, ext);
@@ -6186,7 +6218,7 @@ buf_modname(shortname, fname, ext, prepend_dot)
 #endif
 				)
     {
-	mch_memmove(e + 1, e, STRLEN(e) + 1);
+	STRMOVE(e + 1, e);
 #ifdef RISCOS
 	*e = '/';
 #else
@@ -6378,7 +6410,12 @@ vim_rename(from, to)
 #endif
     fd_in = mch_open((char *)from, O_RDONLY|O_EXTRA, 0);
     if (fd_in == -1)
+    {
+#ifdef HAVE_ACL
+	mch_free_acl(acl);
+#endif
 	return -1;
+    }
 
     /* Create the new file with same permissions as the original. */
     fd_out = mch_open((char *)to,
@@ -6386,14 +6423,20 @@ vim_rename(from, to)
     if (fd_out == -1)
     {
 	close(fd_in);
+#ifdef HAVE_ACL
+	mch_free_acl(acl);
+#endif
 	return -1;
     }
 
     buffer = (char *)alloc(BUFSIZE);
     if (buffer == NULL)
     {
-	close(fd_in);
 	close(fd_out);
+	close(fd_in);
+#ifdef HAVE_ACL
+	mch_free_acl(acl);
+#endif
 	return -1;
     }
 
@@ -6418,6 +6461,7 @@ vim_rename(from, to)
 #endif
 #ifdef HAVE_ACL
     mch_set_acl(to, acl);
+    mch_free_acl(acl);
 #endif
     if (errmsg != NULL)
     {
@@ -6803,7 +6847,8 @@ buf_check_timestamp(buf, focus)
 	buf_reload(buf, orig_mode);
 
 #ifdef FEAT_AUTOCMD
-    if (buf_valid(buf))
+    /* Trigger FileChangedShell when the file was changed in any way. */
+    if (buf_valid(buf) && retval != 0)
 	(void)apply_autocmds(EVENT_FILECHANGEDSHELLPOST,
 				      buf->b_fname, buf->b_fname, FALSE, buf);
 #endif
@@ -8436,7 +8481,7 @@ ex_doautoall(eap)
      */
     for (buf = firstbuf; buf != NULL; buf = buf->b_next)
     {
-	if (curbuf->b_ml.ml_mfp != NULL)
+	if (buf->b_ml.ml_mfp != NULL)
 	{
 	    /* find a window for this buffer and save some values */
 	    aucmd_prepbuf(&aco, buf);
@@ -8724,6 +8769,7 @@ apply_autocmds_group(event, fname, fname_io, force, group, buf, eap)
     char_u	*save_sourcing_name;
     linenr_T	save_sourcing_lnum;
     char_u	*save_autocmd_fname;
+    int		save_autocmd_fname_full;
     int		save_autocmd_bufnr;
     char_u	*save_autocmd_match;
     int		save_autocmd_busy;
@@ -8802,6 +8848,7 @@ apply_autocmds_group(event, fname, fname_io, force, group, buf, eap)
      * Save the autocmd_* variables and info about the current buffer.
      */
     save_autocmd_fname = autocmd_fname;
+    save_autocmd_fname_full = autocmd_fname_full;
     save_autocmd_bufnr = autocmd_bufnr;
     save_autocmd_match = autocmd_match;
     save_autocmd_busy = autocmd_busy;
@@ -8819,14 +8866,15 @@ apply_autocmds_group(event, fname, fname_io, force, group, buf, eap)
 	if (fname != NULL && *fname != NUL)
 	    autocmd_fname = fname;
 	else if (buf != NULL)
-	    autocmd_fname = buf->b_fname;
+	    autocmd_fname = buf->b_ffname;
 	else
 	    autocmd_fname = NULL;
     }
     else
 	autocmd_fname = fname_io;
     if (autocmd_fname != NULL)
-	autocmd_fname = FullName_save(autocmd_fname, FALSE);
+	autocmd_fname = vim_strsave(autocmd_fname);
+    autocmd_fname_full = FALSE; /* call FullName_save() later */
 
     /*
      * Set the buffer number to be used for <abuf>.
@@ -9011,6 +9059,7 @@ apply_autocmds_group(event, fname, fname_io, force, group, buf, eap)
     sourcing_lnum = save_sourcing_lnum;
     vim_free(autocmd_fname);
     autocmd_fname = save_autocmd_fname;
+    autocmd_fname_full = save_autocmd_fname_full;
     autocmd_bufnr = save_autocmd_bufnr;
     autocmd_match = save_autocmd_match;
 #ifdef FEAT_EVAL
@@ -9119,7 +9168,7 @@ auto_next_pat(apc, stop_at_last)
     {
 	apc->curpat = NULL;
 
-	/* only use a pattern when it has not been removed, has commands and
+	/* Only use a pattern when it has not been removed, has commands and
 	 * the group matches. For buffer-local autocommands only check the
 	 * buffer number. */
 	if (ap->pat != NULL && ap->cmds != NULL

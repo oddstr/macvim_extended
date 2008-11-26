@@ -152,7 +152,7 @@ ex_menu(eap)
 	while (*arg != NUL && *arg != ' ')
 	{
 	    if (*arg == '\\')
-		mch_memmove(arg, arg + 1, STRLEN(arg));
+		STRMOVE(arg, arg + 1);
 	    mb_ptr_adv(arg);
 	}
 	if (*arg != NUL)
@@ -300,7 +300,7 @@ ex_menu(eap)
 	else if (STRNICMP(arg, "<TAB>", 5) == 0)
 	{
 	    *arg = TAB;
-	    mch_memmove(arg + 1, arg + 5, STRLEN(arg + 4));
+	    STRMOVE(arg + 1, arg + 5);
 	}
 	arg++;
     }
@@ -1120,6 +1120,7 @@ show_menus(path_name, modes)
 	parent = menu;
 	menu = menu->children;
     }
+    vim_free(path_name);
 
     /* Now we have found the matching menu, and we list the mappings */
 						    /* Highlight title */
@@ -1442,7 +1443,7 @@ menu_name_skip(name)
     {
 	if (*p == '\\' || *p == Ctrl_V)
 	{
-	    mch_memmove(p, p + 1, STRLEN(p));
+	    STRMOVE(p, p + 1);
 	    if (*p == NUL)
 		break;
 	}
@@ -1659,7 +1660,7 @@ menu_text(str, mnemonic, actext)
 		*mnemonic = c;
 	    }
 #endif
-	    mch_memmove(p, p + 1, STRLEN(p));
+	    STRMOVE(p, p + 1);
 	    p = p + 1;
 	}
     }

@@ -168,6 +168,8 @@ EXTERN int	emsg_off INIT(= 0);	    /* don't display errors for now,
 EXTERN int	info_message INIT(= FALSE); /* printing informative message */
 EXTERN int      msg_hist_off INIT(= FALSE); /* don't add messages to history */
 #ifdef FEAT_EVAL
+EXTERN int	need_clr_eos INIT(= FALSE); /* need to clear text before
+					       displaying a message. */
 EXTERN int	emsg_skip INIT(= 0);	    /* don't display errors for
 					       expression that is skipped */
 EXTERN int	emsg_severe INIT(= FALSE);   /* use message of next of several
@@ -866,6 +868,7 @@ EXTERN int	State INIT(= NORMAL);	/* This is the current state of the
 					 * command interpreter. */
 
 EXTERN int	finish_op INIT(= FALSE);/* TRUE while an operator is pending */
+EXTERN int	opcount INIT(= 0);	/* count for pending operator */
 
 /*
  * ex mode (Q) state
@@ -1019,6 +1022,7 @@ EXTERN char_u	*new_last_cmdline INIT(= NULL);	/* new value for last_cmdline */
 #endif
 #ifdef FEAT_AUTOCMD
 EXTERN char_u	*autocmd_fname INIT(= NULL); /* fname for <afile> on cmdline */
+EXTERN int	autocmd_fname_full;	     /* autocmd_fname is full path */
 EXTERN int	autocmd_bufnr INIT(= 0);     /* fnum for <abuf> on cmdline */
 EXTERN char_u	*autocmd_match INIT(= NULL); /* name for <amatch> on cmdline */
 EXTERN int	did_cursorhold INIT(= FALSE); /* set when CursorHold t'gerd */
@@ -1172,7 +1176,7 @@ EXTERN int      stl_syntax INIT(= 0);
 EXTERN int	no_hlsearch INIT(= FALSE);
 #endif
 
-#ifdef FEAT_BEVAL
+#if defined(FEAT_BEVAL) && !defined(NO_X11_INCLUDES)
 EXTERN BalloonEval	*balloonEval INIT(= NULL);
 # if defined(FEAT_NETBEANS_INTG) || defined(FEAT_SUN_WORKSHOP)
 EXTERN int bevalServers INIT(= 0);

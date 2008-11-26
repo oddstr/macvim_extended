@@ -62,6 +62,7 @@ SInt32 gMacSystemVersion;
 
 static int im_is_active = FALSE;
 #if 0
+    /* TODO: Implement me! */
 static int im_start_row = 0;
 static int im_start_col = 0;
 #endif
@@ -484,7 +485,7 @@ menu_title_removing_mnemonic(vimmenu_T *menu)
     CFMutableStringRef	cleanedName;
 
     menuTitleLen = STRLEN(menu->dname);
-    name = mac_enc_to_cfstring(menu->dname, menuTitleLen);
+    name = (CFStringRef) mac_enc_to_cfstring(menu->dname, menuTitleLen);
 
     if (name)
     {
@@ -2543,7 +2544,6 @@ gui_mac_doMouseUpEvent(EventRecord *theEvent)
 gui_mac_mouse_wheel(EventHandlerCallRef nextHandler, EventRef theEvent,
 								   void *data)
 {
-    EventRef	bogusEvent;
     Point	point;
     Rect	bounds;
     UInt32	mod;
@@ -2574,16 +2574,6 @@ gui_mac_mouse_wheel(EventHandlerCallRef nextHandler, EventRef theEvent,
     if (mod & optionKey)
 	vim_mod |= MOUSE_ALT;
 
-    /* post a bogus event to wake up WaitNextEvent */
-    if (noErr != CreateEvent(NULL, kEventClassMouse, kEventMouseMoved, 0,
-					    kEventAttributeNone, &bogusEvent))
-	goto bail;
-    if (noErr != PostEventToQueue(GetMainEventQueue(), bogusEvent,
-							   kEventPriorityLow))
-	goto bail;
-
-    ReleaseEvent(bogusEvent);
-
     if (noErr == GetWindowBounds(gui.VimWindow, kWindowContentRgn, &bounds))
     {
 	point.h -= bounds.left;
@@ -2592,6 +2582,9 @@ gui_mac_mouse_wheel(EventHandlerCallRef nextHandler, EventRef theEvent,
 
     gui_send_mouse_event((delta > 0) ? MOUSE_4 : MOUSE_5,
 					    point.h, point.v, FALSE, vim_mod);
+
+    /* post a bogus event to wake up WaitNextEvent */
+    PostEvent(keyUp, 0);
 
     return noErr;
 
@@ -6073,7 +6066,7 @@ gui_mch_settitle(char_u *title, char_u *icon)
 
 #ifdef MACOS_CONVERT
     windowTitleLen = STRLEN(title);
-    windowTitle  = mac_enc_to_cfstring(title, windowTitleLen);
+    windowTitle  = (CFStringRef)mac_enc_to_cfstring(title, windowTitleLen);
 
     if (windowTitle)
     {
@@ -6520,7 +6513,7 @@ getTabLabel(tabpage_T *page)
 {
     get_tabline_label(page, FALSE);
 #ifdef MACOS_CONVERT
-    return mac_enc_to_cfstring(NameBuff, STRLEN(NameBuff));
+    return (CFStringRef)mac_enc_to_cfstring(NameBuff, STRLEN(NameBuff));
 #else
     // TODO: check internal encoding?
     return CFStringCreateWithCString(kCFAllocatorDefault, (char *)NameBuff,

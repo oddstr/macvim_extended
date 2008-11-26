@@ -1,14 +1,14 @@
 "------------------------------------------------------------------------------
 "  Description: Vim Ada/Dec Ada compiler file
 "     Language: Ada (Dec Ada)
-"          $Id: decada.vim,v 1.4 2007/05/12 13:30:23 vimboss Exp $
+"          $Id: decada.vim,v 1.9 2008/08/09 17:42:39 vimboss Exp $
 "    Copyright: Copyright (C) 2006 Martin Krischik
-"   Maintainer:	Martin Krischik
+"   Maintainer:	Martin Krischik <krischik@users.sourceforge.net>
 "      $Author: vimboss $
-"        $Date: 2007/05/12 13:30:23 $
-"      Version: 4.2
-"    $Revision: 1.4 $
-"     $HeadURL: https://svn.sourceforge.net/svnroot/gnuada/trunk/tools/vim/autoload/decada.vim $
+"        $Date: 2008/08/09 17:42:39 $
+"      Version: 4.6      
+"    $Revision: 1.9 $
+"     $HeadURL: https://gnuada.svn.sourceforge.net/svnroot/gnuada/trunk/tools/vim/autoload/decada.vim $
 "      History: 21.07.2006 MK New Dec Ada
 "               15.10.2006 MK Bram's suggestion for runtime integration
 "               05.11.2006 MK Bram suggested not to use include protection for
@@ -45,7 +45,7 @@ function decada#Set_Session (...) dict				     " {{{1
       call ada#Switch_Session (a:1)
    elseif argc() == 0 && strlen (v:servername) > 0
       call ada#Switch_Session (
-	 \ expand('~')[0:-2] . ".vimfiles.session]" .
+	 \ expand('~')[0:-2] . ".vimfiles.session]decada_" .
 	 \ v:servername . ".vim")
    endif
    return

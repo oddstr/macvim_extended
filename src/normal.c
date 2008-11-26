@@ -565,7 +565,6 @@ normal_cmd(oap, toplevel)
     oparg_T	*oap;
     int		toplevel;		/* TRUE when called from main() */
 {
-    static long	opcount = 0;		/* ca.opcount saved here */
     cmdarg_T	ca;			/* command arguments */
     int		c;
     int		ctrl_w = FALSE;		/* got CTRL-W command */
@@ -582,6 +581,10 @@ normal_cmd(oap, toplevel)
 
     vim_memset(&ca, 0, sizeof(ca));	/* also resets ca.retval */
     ca.oap = oap;
+
+    /* Use a count remembered from before entering an operator.  After typing
+     * "3d" we return from normal_cmd() and come back here, the "3" is
+     * remembered in "opcount". */
     ca.opcount = opcount;
 
 #ifdef FEAT_SNIFF
@@ -607,8 +610,23 @@ normal_cmd(oap, toplevel)
     }
 #endif
 
+    /* When not finishing an operator and no register name typed, reset the
+     * count. */
     if (!finish_op && !oap->regname)
 	ca.opcount = 0;
+
+#ifdef FEAT_AUTOCMD
+    /* Restore counts from before receiving K_CURSORHOLD.  This means after
+     * typing "3", handling K_CURSORHOLD and then typing "2" we get "32", not
+     * "3 * 2". */
+    if (oap->prev_opcount > 0 || oap->prev_count0 > 0)
+    {
+	ca.opcount = oap->prev_opcount;
+	ca.count0 = oap->prev_count0;
+	oap->prev_opcount = 0;
+	oap->prev_count0 = 0;
+    }
+#endif
 
 #ifdef FEAT_VISUAL
     mapped_len = typebuf_maplen();
@@ -745,16 +763,27 @@ getcount:
 	}
     }
 
-    /*
-     * If we're in the middle of an operator (including after entering a yank
-     * buffer with '"') AND we had a count before the operator, then that
-     * count overrides the current value of ca.count0.
-     * What this means effectively, is that commands like "3dw" get turned
-     * into "d3w" which makes things fall into place pretty neatly.
-     * If you give a count before AND after the operator, they are multiplied.
-     */
-    if (ca.opcount != 0)
+#ifdef FEAT_AUTOCMD
+    if (c == K_CURSORHOLD)
     {
+	/* Save the count values so that ca.opcount and ca.count0 are exactly
+	 * the same when coming back here after handling K_CURSORHOLD. */
+	oap->prev_opcount = ca.opcount;
+	oap->prev_count0 = ca.count0;
+    }
+    else
+#endif
+	if (ca.opcount != 0)
+    {
+	/*
+	 * If we're in the middle of an operator (including after entering a
+	 * yank buffer with '"') AND we had a count before the operator, then
+	 * that count overrides the current value of ca.count0.
+	 * What this means effectively, is that commands like "3dw" get turned
+	 * into "d3w" which makes things fall into place pretty neatly.
+	 * If you give a count before AND after the operator, they are
+	 * multiplied.
+	 */
 	if (ca.count0)
 	    ca.count0 *= ca.opcount;
 	else
@@ -799,7 +828,7 @@ getcount:
 
     if (text_locked() && (nv_cmds[idx].cmd_flags & NV_NCW))
     {
-	/* This command is not allowed wile editing a ccmdline: beep. */
+	/* This command is not allowed while editing a ccmdline: beep. */
 	clearopbeep(oap);
 	text_locked_msg();
 	goto normal_end;
@@ -1103,7 +1132,8 @@ getcount:
 	out_flush();
 #endif
 #ifdef FEAT_AUTOCMD
-    did_cursorhold = FALSE;
+    if (ca.cmdchar != K_IGNORE)
+	did_cursorhold = FALSE;
 #endif
 
     State = NORMAL;
@@ -1275,7 +1305,11 @@ normal_end:
 #endif
 
 #ifdef FEAT_CMDL_INFO
-    if (oap->op_type == OP_NOP && oap->regname == 0)
+    if (oap->op_type == OP_NOP && oap->regname == 0
+# ifdef FEAT_AUTOCMD
+	    && ca.cmdchar != K_CURSORHOLD
+# endif
+	    )
 	clear_showcmd();
 #endif
 
@@ -2464,6 +2498,8 @@ do_mouse(oap, c, dir, count, fixindent)
     /* Check for clicking in the tab page line. */
     if (mouse_row == 0 && firstwin->w_winrow > 0)
     {
+	if (is_drag)
+	    return FALSE;
 	got_click = FALSE;	/* ignore mouse-up and drag events */
 
 	/* click in a tab selects that tab page */
@@ -5434,6 +5470,11 @@ nv_ident(cap)
 		STRCPY(buf, "he! ");
 	    else
 	    {
+		/* An external command will probably use an argument starting
+		 * with "-" as an option.  To avoid trouble we skip the "-". */
+		while (*ptr == '-')
+		    ++ptr;
+
 		/* When a count is given, turn it into a range.  Is this
 		 * really what we want? */
 		isman = (STRCMP(kp, "man") == 0);
@@ -5476,37 +5517,57 @@ nv_ident(cap)
     /*
      * Now grab the chars in the identifier
      */
-    if (cmdchar == '*')
-	aux_ptr = (char_u *)(p_magic ? "/.*~[^$\\" : "/^$\\");
-    else if (cmdchar == '#')
-	aux_ptr = (char_u *)(p_magic ? "/?.*~[^$\\" : "/?^$\\");
-    else if (cmdchar == 'K' && !kp_help)
-	aux_ptr = (char_u *)" \t\\\"|!";
-    else
-	/* Don't escape spaces and Tabs in a tag with a backslash */
-	aux_ptr = (char_u *)"\\|\"";
-
-    p = buf + STRLEN(buf);
-    while (n-- > 0)
+    if (cmdchar == 'K' && !kp_help)
     {
-	/* put a backslash before \ and some others */
-	if (vim_strchr(aux_ptr, *ptr) != NULL)
-	    *p++ = '\\';
-#ifdef FEAT_MBYTE
-	/* When current byte is a part of multibyte character, copy all bytes
-	 * of that character. */
-	if (has_mbyte)
+	/* Escape the argument properly for a shell command */
+	p = vim_strsave_shellescape(ptr, TRUE);
+	if (p == NULL)
 	{
-	    int i;
-	    int len = (*mb_ptr2len)(ptr) - 1;
-
-	    for (i = 0; i < len && n >= 1; ++i, --n)
-		*p++ = *ptr++;
+	    vim_free(buf);
+	    return;
 	}
-#endif
-	*p++ = *ptr++;
+	buf = (char_u *)vim_realloc(buf, STRLEN(buf) + STRLEN(p) + 1);
+	if (buf == NULL)
+	{
+	    vim_free(buf);
+	    vim_free(p);
+	    return;
+	}
+	STRCAT(buf, p);
+	vim_free(p);
     }
-    *p = NUL;
+    else
+    {
+	if (cmdchar == '*')
+	    aux_ptr = (char_u *)(p_magic ? "/.*~[^$\\" : "/^$\\");
+	else if (cmdchar == '#')
+	    aux_ptr = (char_u *)(p_magic ? "/?.*~[^$\\" : "/?^$\\");
+	else
+	    /* Don't escape spaces and Tabs in a tag with a backslash */
+	    aux_ptr = (char_u *)"\\|\"\n*?[";
+
+	p = buf + STRLEN(buf);
+	while (n-- > 0)
+	{
+	    /* put a backslash before \ and some others */
+	    if (vim_strchr(aux_ptr, *ptr) != NULL)
+		*p++ = '\\';
+#ifdef FEAT_MBYTE
+	    /* When current byte is a part of multibyte character, copy all
+	     * bytes of that character. */
+	    if (has_mbyte)
+	    {
+		int i;
+		int len = (*mb_ptr2len)(ptr) - 1;
+
+		for (i = 0; i < len && n >= 1; ++i, --n)
+		    *p++ = *ptr++;
+	    }
+#endif
+	    *p++ = *ptr++;
+	}
+	*p = NUL;
+    }
 
     /*
      * Execute the command.
