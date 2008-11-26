@@ -301,6 +301,9 @@
 /* Define if you want to include the Tcl interpreter. */
 #undef FEAT_TCL
 
+/* Define if you want to include the SpiderMonkey interpreter. */
+#undef FEAT_SPIDERMONKEY
+
 /* Define if you want to include the Sniff interface. */
 #undef FEAT_SNIFF
 

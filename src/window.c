@@ -4264,6 +4264,10 @@ win_free(wp, tp)
     ruby_window_free(wp);
 #endif
 
+#ifdef FEAT_SPIDERMONKEY
+    spidermonkey_window_free(wp);
+#endif
+
     clear_winopt(&wp->w_onebuf_opt);
     clear_winopt(&wp->w_allbuf_opt);
 
