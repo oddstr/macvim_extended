@@ -2575,7 +2575,12 @@ findsent(dir, count)
 	/* go back to the previous non-blank char */
 	found_dot = FALSE;
 	while ((c = gchar_pos(&pos)) == ' ' || c == '\t' ||
-	     (dir == BACKWARD && vim_strchr((char_u *)".!?)]\"'", c) != NULL))
+	     (dir == BACKWARD && vim_strchr((char_u *)".!?)]\"'", c) != NULL)
+#ifdef FEAT_MBYTE
+	     || (dir == BACKWARD && (*mb_char2len)(c) > 1
+		 && mb_get_class(ml_get_pos(&pos)) == 1)
+#endif
+	     )
 	{
 	    if (vim_strchr((char_u *)".!?", c) != NULL)
 	    {
@@ -2625,6 +2630,24 @@ findsent(dir, count)
 		    break;
 		}
 	    }
+#ifdef FEAT_MBYTE
+	    if (has_mbyte && (*mb_char2len)(c) > 1
+		    && mb_get_class(ml_get_pos(&pos)) == 1)
+	    {
+		tpos = pos;
+		for (;;)
+		{
+		    c = inc(&tpos);
+		    if (c == -1 || (*mb_char2len)(c) <= 1
+			    || mb_get_class(ml_get_pos(&tpos)) != 1)
+			break;
+		}
+		pos = tpos;
+		if (gchar_pos(&pos) == NUL)
+		    inc(&pos);
+		break;
+	    }
+#endif
 	    if ((*func)(&pos) == -1)
 	    {
 		if (count)

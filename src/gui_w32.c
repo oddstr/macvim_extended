@@ -4802,3 +4802,54 @@ netbeans_draw_multisign_indicator(int row)
     SetPixel(s_hdc, x+2, y, gui.currFgColor);
 }
 #endif
+
+#ifdef USE_AMBIWIDTH_AUTO
+#define CHARWIDE_CACHESIZE 65536
+static GuiFont last_font = 0;
+
+    int
+gui_mch_get_charwidth(int c)
+{
+    static char cache[CHARWIDE_CACHESIZE];
+    GuiFont usingfont = gui.wide_font ? gui.wide_font : gui.norm_font;
+
+    /* Check validity of charwide cache */
+    if (last_font != usingfont)
+    {
+	/* Update cache. -1 is mark for uninitialized cell */
+	TRACE("Charwide cache will be updated (base=%d)\n", gui.char_width);
+	last_font = usingfont;
+	memset(cache, -1, sizeof(cache));
+    }
+    if (usingfont && 0 <= c && c < CHARWIDE_CACHESIZE)
+    {
+	if (cache[c] >= 0)
+	    return cache[c]; /* Use cached value */
+	else
+	{
+	    /* 
+	     * Get true character width in dot, convert to cells and save
+	     * it.
+	     */
+	    int	    len;
+	    ABC	    fontABC;
+	    HFONT   hfntOld = SelectFont(s_hdc, usingfont);
+
+	    if (!GetCharABCWidthsW(s_hdc, c, c, &fontABC) ||
+		    (len = fontABC.abcA + fontABC.abcB + fontABC.abcC) <= 0)
+	    {
+		TRACE("GetCharABCWidthsW() failed for %08X\n", c);
+		cache[c] = 0;
+	    }
+	    else
+		cache[c] = (char)((len + (gui.char_width >> 1))
+			/ gui.char_width);
+	    SelectFont(s_hdc, hfntOld);
+
+	    return cache[c];
+	}
+    }
+    else
+	return 0;
+}
+#endif

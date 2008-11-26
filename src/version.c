@@ -245,6 +245,7 @@ static char *(features[]) =
 #else
 	"-gettext",
 #endif
+	"+guess_encode",
 #ifdef FEAT_HANGULIN
 	"+hangul_input",
 #else
