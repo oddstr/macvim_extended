@@ -951,6 +951,60 @@ AC_SUBST(RUBY_PRO)
 AC_SUBST(RUBY_CFLAGS)
 AC_SUBST(RUBY_LIBS)
 
+AC_MSG_CHECKING(--enable-spidermonkeyinterp argument)
+AC_ARG_ENABLE(spidermonkeyinterp,
+	[  --enable-spidermonkeyinterp   Include SpiderMonkey Interpreter.], ,
+	[enable_spidermonkeyinterp="no"])
+AC_MSG_RESULT($enable_spidermonkeyinterp)
+if test "$enable_spidermonkeyinterp" = "yes"; then
+
+  # Must define one of XP_BEOS, XP_MAC, XP_OS2, XP_WIN or XP_UNIX
+  AC_MSG_CHECKING(for OS definition)
+  if test "$BEOS" = "yes"; then
+    spidermonkey_cflags="-DXP_BEOS"
+  elif test "$MACOSX" = "yes"; then
+    spidermonkey_cflags="-DXP_MAC"
+  else
+    spidermonkey_cflags="-DXP_UNIX"
+  fi
+  AC_MSG_RESULT("$spidermonkey_cflags")
+
+  save_cflags="$CFLAGS"
+  save_libs="$LIBS"
+  CFLAGS="$CFLAGS $spidermonkey_cflags"
+  LIBS="$LIBS -ljs"
+
+  AC_MSG_CHECKING(whether SpiderMonkey library is usable)
+  AC_TRY_LINK([
+#include <jsapi.h>
+    ], [JS_NewRuntime(1024);],
+    AC_MSG_RESULT(yes),
+    AC_MSG_RESULT(no); AC_MSG_ERROR(can not use SpiderMonkey library))
+
+  AC_MSG_CHECKING(whether SpiderMonkey was compiled with JS_THREADSAFE flag)
+  AC_TRY_LINK([
+#define JS_THREADSAFE
+#include <jsapi.h>
+    ], [JS_GetContextThread(NULL);],
+    AC_MSG_RESULT(yes); spidermonkey_cflags="$spidermonkey_cflags -DJS_THREADSAFE",
+    AC_MSG_RESULT(no))
+
+  SPIDERMONKEY_SRC="if_spidermonkey.c"
+  SPIDERMONKEY_OBJ="objects/if_spidermonkey.o"
+  SPIDERMONKEY_PRO="if_spidermonkey.pro"
+  SPIDERMONKEY_CFLAGS="$spidermonkey_cflags"
+  SPIDERMONKEY_LIBS="-ljs"
+  AC_DEFINE(FEAT_SPIDERMONKEY)
+
+  CFLAGS="$save_cflags"
+  LIBS="$save_libs"
+fi
+AC_SUBST(SPIDERMONKEY_SRC)
+AC_SUBST(SPIDERMONKEY_OBJ)
+AC_SUBST(SPIDERMONKEY_PRO)
+AC_SUBST(SPIDERMONKEY_CFLAGS)
+AC_SUBST(SPIDERMONKEY_LIBS)
+
 AC_MSG_CHECKING(--enable-cscope argument)
 AC_ARG_ENABLE(cscope,
 	[  --enable-cscope         Include cscope interface.], ,

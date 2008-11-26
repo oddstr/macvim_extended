@@ -222,6 +222,19 @@ endif
 
 endif # RUBY
 
+# TODO
+ifdef SPIDERMONKEY
+ifndef DYNAMIC_SPIDERMONKEY
+DYNAMIC_SPIDERMONKEY=yes
+endif
+SPIDERMONKEYINC = 
+ifeq (no, $(DYNAMIC_SPIDERMONKEY))
+SPIDERMONKEYLIB = -ljs
+else
+DYNAMIC_SPIDERMONKEY_DLL = \"js3250.dll\"
+endif
+endif # SPIDERMONKEY
+
 # See feature.h for a list of options.
 # Any other defines can be included here.
 DEF_GUI=-DFEAT_GUI_W32 -DFEAT_CLIPBOARD
@@ -302,6 +315,13 @@ ifdef TCL
 CFLAGS += -DFEAT_TCL $(TCLINC)
 ifeq (yes, $(DYNAMIC_TCL))
 CFLAGS += -DDYNAMIC_TCL -DDYNAMIC_TCL_DLL=\"tcl$(TCL_VER).dll\"
+endif
+endif
+
+ifdef SPIDERMONKEY
+CFLAGS += -DFEAT_SPIDERMONKEY $(SPIDERMONKEYINC)
+ifeq (yes, $(DYNAMIC_SPIDERMONKEY))
+CFLAGS += -DDYNAMIC_SPIDERMONKEY -DDYNAMIC_SPIDERMONKEY_DLL=$(DYNAMIC_SPIDERMONKEY_DLL)
 endif
 endif
 
@@ -420,6 +440,9 @@ endif
 ifdef TCL
 OBJ += $(OUTDIR)/if_tcl.o
 endif
+ifdef SPIDERMONKEY
+OBJ += $(OUTDIR)/if_spidermonkey.o
+endif
 ifeq ($(CSCOPE),yes)
 OBJ += $(OUTDIR)/if_cscope.o
 endif
@@ -522,7 +545,7 @@ uninstal.exe: uninstal.c
 	$(CC) $(CFLAGS) -o uninstal.exe uninstal.c $(LIB)
 
 $(TARGET): $(OUTDIR) $(OBJ)
-	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $(OBJ) $(LIB) -lole32 -luuid $(MZSCHEME_LIBDIR) $(MZSCHEME_LIB) $(PYTHONLIB) $(RUBYLIB)
+	$(CC) $(CFLAGS) $(LFLAGS) -o $@ $(OBJ) $(LIB) -lole32 -luuid $(MZSCHEME_LIBDIR) $(MZSCHEME_LIB) $(PYTHONLIB) $(RUBYLIB) $(SPIDERMONKEYLIB)
 
 upx: exes
 	upx gvim.exe
@@ -580,6 +603,9 @@ $(OUTDIR)/if_ruby.o: if_ruby.c $(INCL)
 ifeq (16, $(RUBY))
 	$(CC) $(CFLAGS) -U_WIN32 -c -o $(OUTDIR)/if_ruby.o if_ruby.c
 endif
+
+$(OUTDIR)/if_spidermonkey.o: if_spidermonkey.c $(INCL)
+	$(CC) $(CFLAGS) -c -o $(OUTDIR)/if_spidermonkey.o if_spidermonkey.c
 
 if_perl.c: if_perl.xs typemap
 	perl $(PERLLIB)/ExtUtils/xsubpp -prototypes -typemap \

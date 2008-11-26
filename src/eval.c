@@ -11076,6 +11076,9 @@ f_has(argvars, rettv)
 #ifdef FEAT_SNIFF
 	"sniff",
 #endif
+#if defined(FEAT_SPIDERMONKEY) && !defined(DYNAMIC_SPIDERMONKEY)
+	"spidermonkey",
+#endif
 #ifdef FEAT_STL_OPT
 	"statusline",
 #endif
@@ -11228,6 +11231,10 @@ f_has(argvars, rettv)
 #ifdef DYNAMIC_PERL
 	else if (STRICMP(name, "perl") == 0)
 	    n = perl_enabled(FALSE);
+#endif
+#ifdef DYNAMIC_SPIDERMONKEY
+	else if (STRICMP(name, "spidermonkey") == 0)
+	    n = spidermonkey_enabled(FALSE);
 #endif
 #ifdef FEAT_GUI
 	else if (STRICMP(name, "gui_running") == 0)
@@ -19201,6 +19208,8 @@ ex_function(eap)
 				    && (!ASCII_ISALPHA(p[3]) || p[3] == 'y'))
 			|| (p[0] == 'm' && p[1] == 'z'
 				    && (!ASCII_ISALPHA(p[2]) || p[2] == 's'))
+			|| (p[0] == 's' && p[1] == 'p' && p[2] == 'i'
+				    && (!ASCII_ISALPHA(p[3]) || p[3] == 'd'))
 			))
 	    {
 		/* ":python <<" continues until a dot, like ":append" */

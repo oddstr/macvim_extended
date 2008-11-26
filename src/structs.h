@@ -1517,6 +1517,10 @@ struct file_buffer
     void	*b_ruby_ref;
 #endif
 
+#ifdef FEAT_SPIDERMONKEY
+    void	*b_spidermonkey_ref;
+#endif
+
 #ifdef FEAT_SYN_HL
     hashtab_T	b_keywtab;		/* syntax keywords hash table */
     hashtab_T	b_keywtab_ic;		/* idem, ignore case */
@@ -2039,6 +2043,10 @@ struct window_S
 
 #ifdef FEAT_RUBY
     void	*w_ruby_ref;
+#endif
+
+#ifdef FEAT_SPIDERMONKEY
+    void	*w_spidermonkey_ref;
 #endif
 };
 

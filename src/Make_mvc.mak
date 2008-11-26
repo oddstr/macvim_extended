@@ -53,6 +53,11 @@
 #	  RUBY_VER_LONG=[Ruby version, eg 1.6, 1.7] (default is 1.8)
 #	    You must set RUBY_VER_LONG when change RUBY_VER.
 #
+#	SpiderMonkey (JavaScript) interface:
+#	  SPIDERMONKEY=[Path to SpiderMonkey directory]
+#	  DYNAMIC_SPIDERMONKEY=yes (to load the SpiderMonkey DLL dynamically)
+#	  DYNAMIC_SPIDERMONKEY_DLL=[DLL name]
+#
 #	Tcl interface:
 #	  TCL=[Path to Tcl directory]
 #	  DYNAMIC_TCL=yes (to load the Tcl DLL dynamically)
@@ -165,6 +170,9 @@ OBJDIR = $(OBJDIR)R
 !endif
 !ifdef MZSCHEME
 OBJDIR = $(OBJDIR)Z
+!endif
+!ifdef SPIDERMONKEY
+OBJDIR = $(OBJDIR)S
 !endif
 !if "$(DEBUG)" == "yes"
 OBJDIR = $(OBJDIR)d
@@ -716,6 +724,25 @@ CFLAGS = $(CFLAGS) -DDYNAMIC_RUBY -DDYNAMIC_RUBY_VER=$(RUBY_VER) \
 !endif # RUBY
 
 #
+# Support SpiderMonkey (JavaScript) interface
+#
+!ifdef SPIDERMONKEY
+!message SpiderMonkey requested - root dir is "$(SPIDERMONKEY)"
+CFLAGS = $(CFLAGS) -DFEAT_SPIDERMONKEY
+SPIDERMONKEY_OBJ = $(OUTDIR)\if_spidermonkey.obj
+SPIDERMONKEY_INC = /I "$(SPIDERMONKEY)\src"
+SPIDERMONKEY_LIB = "$(SPIDERMONKEY)\src\Release\js32.lib"
+!if "$(DYNAMIC_SPIDERMONKEY)" == "yes"
+!message SpiderMonkey DLL will be loaded dynamically
+!ifndef DYNAMIC_SPIDERMONKEY_DLL
+DYNAMIC_SPIDERMONKEY_DLL=js3250.dll
+!endif
+CFLAGS = $(CFLAGS) -DDYNAMIC_SPIDERMONKEY -DDYNAMIC_SPIDERMONKEY_DLL=\"$(DYNAMIC_SPIDERMONKEY_DLL)\"
+!undef SPIDERMONKEY_LIB
+!endif
+!endif # SPIDERMONKEY
+
+#
 # Support PostScript printing
 #
 !if "$(POSTSCRIPT)" == "yes"
@@ -759,6 +786,7 @@ conflags = $(conflags) /map /mapinfo:lines
 LINKARGS1 = $(linkdebug) $(conflags)
 LINKARGS2 = $(CON_LIB) $(GUI_LIB) $(LIBC) $(OLE_LIB)  user32.lib $(SNIFF_LIB) \
 		$(MZSCHEME_LIB) $(PERL_LIB) $(PYTHON_LIB) $(RUBY_LIB) \
+		$(SPIDERMONKEY_LIB) \
 		$(TCL_LIB) $(NETBEANS_LIB) $(XPM_LIB) $(LINK_PDB)
 
 # Report link time code generation progress if used. 
@@ -775,11 +803,13 @@ all:	$(VIM).exe vimrun.exe install.exe uninstal.exe xxd/xxd.exe \
 
 $(VIM).exe: $(OUTDIR) $(OBJ) $(GUI_OBJ) $(OLE_OBJ) $(OLE_IDL) $(MZSCHEME_OBJ) \
 		$(PERL_OBJ) $(PYTHON_OBJ) $(RUBY_OBJ) $(TCL_OBJ) $(SNIFF_OBJ) \
+		$(SPIDERMONKEY_OBJ) \
 		$(CSCOPE_OBJ) $(NETBEANS_OBJ) $(XPM_OBJ) version.c version.h
 	$(CC) $(CFLAGS) version.c
 	$(link) $(LINKARGS1) -out:$(VIM).exe $(OBJ) $(GUI_OBJ) $(OLE_OBJ) \
 		$(MZSCHEME_OBJ) $(PERL_OBJ) $(PYTHON_OBJ) $(RUBY_OBJ) \
 		$(TCL_OBJ) $(SNIFF_OBJ) $(CSCOPE_OBJ) $(NETBEANS_OBJ) \
+		$(SPIDERMONKEY_OBJ) \
 		$(XPM_OBJ) $(OUTDIR)\version.obj $(LINKARGS2)
 
 $(VIM): $(VIM).exe
@@ -934,6 +964,9 @@ $(OUTDIR)/if_ole.obj: $(OUTDIR) if_ole.cpp  $(INCL) if_ole.h
 
 $(OUTDIR)/if_ruby.obj: $(OUTDIR) if_ruby.c  $(INCL)
 	$(CC) $(CFLAGS) $(RUBY_INC) if_ruby.c
+
+$(OUTDIR)/if_spidermonkey.obj: $(OUTDIR) if_spidermonkey.c $(INCL)
+	$(CC) $(CFLAGS) $(SPIDERMONKEY_INC) if_spidermonkey.c
 
 $(OUTDIR)/if_sniff.obj:	$(OUTDIR) if_sniff.c  $(INCL)
 	$(CC) $(CFLAGS) if_sniff.c

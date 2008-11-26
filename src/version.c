@@ -484,6 +484,15 @@ static char *(features[]) =
 #else
 	"-sniff",
 #endif
+#ifdef FEAT_SPIDERMONKEY
+# ifdef DYNAMIC_SPIDERMONKEY
+	"+spidermonkey/dyn",
+# else
+	"+spydermonkey",
+#endif
+#else
+	"-spidermonkey",
+#endif
 #ifdef FEAT_STL_OPT
 	"+statusline",
 #else
