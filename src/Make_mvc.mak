@@ -489,6 +489,16 @@ OBJ = \
 	$(OUTDIR)\window.obj \
 	$(OUTDIR)\vim.res
 
+# Add a heap memory debugging module.
+# To use this, get memwatch.c and memwatch.h from below URL and place it in
+# src/ directory.  Then make with option MEMWATCH=yes.
+# - memwatch
+#   http://www.linkdata.se/sourcecode.html
+!if "$(MEMWATCH)" == "yes"
+OBJ = $(OBJ) $(OUTDIR)\memwatch.obj
+CFLAGS = $(CFLAGS) -DMEMWATCH -DMW_STDIO
+!endif
+
 !if "$(OLE)" == "yes"
 CFLAGS = $(CFLAGS) -DFEAT_OLE
 RCFLAGS = $(RCFLAGS) -DFEAT_OLE
@@ -960,6 +970,8 @@ $(OUTDIR)/mark.obj:	$(OUTDIR) mark.c  $(INCL)
 $(OUTDIR)/memfile.obj:	$(OUTDIR) memfile.c  $(INCL)
 
 $(OUTDIR)/memline.obj:	$(OUTDIR) memline.c  $(INCL)
+
+$(OUTDIR)/memwatch.obj:	$(OUTDIR) memwatch.c  $(INCL)
 
 $(OUTDIR)/menu.obj:	$(OUTDIR) menu.c  $(INCL)
 

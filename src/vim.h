@@ -467,6 +467,10 @@ typedef unsigned long u8char_T;	    /* long should be 32 bits or more */
 # include <stdarg.h>
 #endif
 
+#ifdef MEMWATCH
+# include <memwatch.h>
+#endif
+
 /* ================ end of the header file puzzle =============== */
 
 /*
@@ -2080,5 +2084,16 @@ typedef int VimClipboard;	/* This is required for the prototypes. */
 #define VIF_WANT_MARKS		2	/* load file marks */
 #define VIF_FORCEIT		4	/* overwrite info already read */
 #define VIF_GET_OLDFILES	8	/* load v:oldfiles */
+
+#ifdef MEMWATCH
+# ifdef vim_realloc
+#  undef vim_realloc
+# endif
+# define alloc(n)	mwMalloc((n),__FILE__,__LINE__)
+# define alloc_clear(n)	mwCalloc(1,(n),__FILE__,__LINE__)
+# define lalloc(n,b)	mwMalloc((n),__FILE__,__LINE__)
+# define lalloc_clear(n,b) mwCalloc(1,(n),__FILE__,__LINE__)
+# define vim_realloc(p,n) mwRealloc((p),(n),__FILE__,__LINE__)
+#endif
 
 #endif /* VIM__H */

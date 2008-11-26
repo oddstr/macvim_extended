@@ -174,6 +174,10 @@ main
     mparm_T	params;			/* various parameters passed between
 					 * main() and other functions. */
 
+#ifdef MEMWATCH
+    mwStatistics(MW_STAT_LINE);
+#endif
+
     /*
      * Do any system-specific initialisations.  These can NOT use IObuff or
      * NameBuff.  Thus emsg2() cannot be called!

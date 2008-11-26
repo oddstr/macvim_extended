@@ -2819,11 +2819,13 @@ prep_exarg(eap, buf)
     exarg_T	*eap;
     buf_T	*buf;
 {
-    eap->cmd = alloc((unsigned)(STRLEN(buf->b_p_ff)
+    int	    size;
+    size = STRLEN(buf->b_p_ff)
 #ifdef FEAT_MBYTE
-		+ STRLEN(buf->b_p_fenc)
+	+ STRLEN(buf->b_p_fenc)
 #endif
-						 + 15));
+	+ 15;
+    eap->cmd = alloc(size);
     if (eap->cmd == NULL)
 	return FAIL;
 

@@ -60,6 +60,13 @@
 # include <errno.h>
 #endif
 
+#ifdef MEMWATCH
+# ifdef CHECK
+#  undef CHECK
+#  define CHECK(c,s)
+# endif
+#endif
+
 typedef struct block0		ZERO_BL;    /* contents of the first block */
 typedef struct pointer_block	PTR_BL;	    /* contents of a pointer block */
 typedef struct data_block	DATA_BL;    /* contents of a data block */
