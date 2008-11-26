@@ -750,6 +750,7 @@ vim_mem_profile_dump()
 # define KEEP_ROOM (2 * 8192L)
 #endif
 
+#ifndef MEMWATCH
 /*
  * Note: if unsigned is 16 bits we can only allocate up to 64K with alloc().
  * Use lalloc for larger blocks.
@@ -760,7 +761,9 @@ alloc(size)
 {
     return (lalloc((long_u)size, TRUE));
 }
+#endif
 
+#ifndef MEMWATCH
 /*
  * Allocate memory and set all bytes to zero.
  */
@@ -775,6 +778,7 @@ alloc_clear(size)
 	(void)vim_memset(p, 0, (size_t)size);
     return p;
 }
+#endif
 
 /*
  * alloc() with check for maximum line length
@@ -795,6 +799,7 @@ alloc_check(size)
     return (lalloc((long_u)size, TRUE));
 }
 
+#ifndef MEMWATCH
 /*
  * Allocate memory like lalloc() and set all bytes to zero.
  */
@@ -810,7 +815,9 @@ lalloc_clear(size, message)
 	(void)vim_memset(p, 0, (size_t)size);
     return p;
 }
+#endif
 
+#ifndef MEMWATCH
 /*
  * Low level memory allocation function.
  * This is used often, KEEP IT FAST!
@@ -911,6 +918,7 @@ theend:
 #endif
     return p;
 }
+#endif
 
 #if defined(MEM_PROFILE) || defined(PROTO)
 /*
