@@ -182,6 +182,7 @@ filemess(buf, name, s, attr)
     msg_scrolled_ign = FALSE;
 }
 
+#ifdef FEAT_GUESS_ENCODE_JP
 typedef struct encode_state encode_state;
 typedef int (*encode_check)(encode_state* state, char_u d);
 struct encode_state
@@ -190,7 +191,7 @@ struct encode_state
     int	    enable;
     int	    score;
     int	    mode;
-    encode_check check;
+    encode_check enccheck;
 };
 
     static int
@@ -324,7 +325,7 @@ guess_encode(char_u** fenc, int* fenc_alloced, char_u* fname)
     /* open a file. */
     if (!fname)
 	return 0; /* not support to read from stdin. */
-    fp = mch_fopen(fname, "r");
+    fp = mch_fopen((char*)fname, "r");
     if (!fp)
 	return 0; /* raise an error when failed to open file. */
 
@@ -354,9 +355,9 @@ guess_encode(char_u** fenc, int* fenc_alloced, char_u* fname)
 	    for (j = 0; enc_available > 1 && j < enc_count; ++j)
 	    {
 		pstate = &enc_table[j];
-		if (!pstate->enable || !pstate->check)
+		if (!pstate->enable || !pstate->enccheck)
 		    continue;
-		switch (pstate->check(pstate, d))
+		switch (pstate->enccheck(pstate, d))
 		{
 		    case 0: /* keep "alive" state */
 			break;
@@ -384,7 +385,7 @@ guess_encode(char_u** fenc, int* fenc_alloced, char_u* fname)
 	    if (p_verbose >= 1)
 	    {
 		verbose_enter();
-		smsg("    check: name=%s enable=%d score=%d\n",
+		smsg((char_u*)"    check: name=%s enable=%d score=%d\n",
 			pstate->name, pstate->enable, pstate->score);
 		verbose_leave();
 	    }
@@ -405,7 +406,7 @@ guess_encode(char_u** fenc, int* fenc_alloced, char_u* fname)
 	if (p_verbose >= 1)
 	{
 	    verbose_enter();
-	    smsg("    result: newenc=%s\n", newenc);
+	    smsg((char_u*)"    result: newenc=%s\n", newenc);
 	    verbose_leave();
 	}
 	if (*fenc_alloced)
@@ -415,6 +416,7 @@ guess_encode(char_u** fenc, int* fenc_alloced, char_u* fname)
     }
     return 1;
 }
+#endif /* FEAT_GUESS_ENCODE_JP */
 
 /*
  * Read lines from file "fname" into the buffer after line "from".
@@ -1229,11 +1231,13 @@ retry:
 	}
     }
 
+#ifdef FEAT_GUESS_ENCODE_JP
     /*
      * Try to guess encoding of the file.
      */
     if (STRICMP(fenc, "guess") == 0)
 	guess_encode(&fenc, &fenc_alloced, fname);
+#endif
 
     /*
      * Conversion is required when the encoding of the file is different
