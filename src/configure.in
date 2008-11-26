@@ -972,7 +972,7 @@ if test "$enable_spidermonkeyinterp" = "yes"; then
   save_cflags="$CFLAGS"
   save_libs="$LIBS"
   CFLAGS="$CFLAGS $spidermonkey_cflags"
-  LIBS="$LIBS -ljs"
+  LIBS="$LIBS -lmozjs"
 
   AC_MSG_CHECKING(whether SpiderMonkey library is usable)
   AC_TRY_LINK([
@@ -993,7 +993,7 @@ if test "$enable_spidermonkeyinterp" = "yes"; then
   SPIDERMONKEY_OBJ="objects/if_spidermonkey.o"
   SPIDERMONKEY_PRO="if_spidermonkey.pro"
   SPIDERMONKEY_CFLAGS="$spidermonkey_cflags"
-  SPIDERMONKEY_LIBS="-ljs"
+  SPIDERMONKEY_LIBS="-lmozjs"
   AC_DEFINE(FEAT_SPIDERMONKEY)
 
   CFLAGS="$save_cflags"
