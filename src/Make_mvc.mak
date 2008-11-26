@@ -144,9 +144,9 @@ TARGETOS = BOTH
 # interfaces.
 # If you change something else, do "make clean" first!
 !if "$(GUI)" == "yes"
-OBJDIR = .\ObjG
+OBJDIR = .\Obj\G
 !else
-OBJDIR = .\ObjC
+OBJDIR = .\Obj\C
 !endif
 !if "$(OLE)" == "yes"
 OBJDIR = $(OBJDIR)O

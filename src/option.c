@@ -2524,6 +2524,11 @@ static struct vimoption
 			    (char_u *)&p_tbis, PV_NONE,
 			    {(char_u *)"small", (char_u *)0L}},
 #endif
+#ifdef USE_TRANSPARENCY
+    {"transparency", "tra", P_NUM|P_VI_DEF,
+			    (char_u *)&p_transparency, PV_NONE,
+			    {(char_u *)255L, (char_u *)0L}},
+#endif
     {"ttimeout",    NULL,   P_BOOL|P_VI_DEF|P_VIM,
 			    (char_u *)&p_ttimeout, PV_NONE,
 			    {(char_u *)FALSE, (char_u *)0L}},
@@ -7773,6 +7778,15 @@ set_num_option(opt_idx, varp, value, errbuf, errbuflen, opt_flags)
 	else if (p_mco < 0)
 	    p_mco = 0;
 	screenclear();	    /* will re-allocate the screen */
+    }
+#endif
+
+#ifdef USE_TRANSPARENCY
+    else if ((long *)varp == &p_transparency)
+    {
+	if (p_transparency < 1 || p_transparency > 255)
+	    p_transparency = 255;
+	gui_mch_set_transparency(p_transparency);
     }
 #endif
 
