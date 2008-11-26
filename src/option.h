@@ -366,6 +366,9 @@ EXTERN int	p_deco;		/* 'delcombine' */
 EXTERN char_u	*p_ccv;		/* 'charconvert' */
 # endif
 #endif
+#ifdef FEAT_GUI
+EXTERN long	p_charspace;	/* 'charspace' */
+#endif
 #ifdef FEAT_CMDWIN
 EXTERN char_u	*p_cedit;	/* 'cedit' */
 EXTERN long	p_cwh;		/* 'cmdwinheight' */
