@@ -471,6 +471,14 @@ typedef unsigned long u8char_T;	    /* long should be 32 bits or more */
 #endif
 
 /*
+ * Whether 'ambiwidth' supports "auto".  Currently, only for Win32.
+ */
+#if defined(FEAT_MBYTE) && defined(FEAT_GUI) && \
+    (defined(FEAT_GUI_W32))
+# define USE_AMBIWIDTH_AUTO
+#endif
+
+/*
  * For dynamically loaded gettext library.  Currently, only for Win32.
  */
 #ifdef DYNAMIC_GETTEXT

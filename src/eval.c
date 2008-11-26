@@ -10904,6 +10904,7 @@ f_has(argvars, rettv)
 #ifdef FEAT_GETTEXT
 	"gettext",
 #endif
+	"guess_encode",
 #ifdef FEAT_GUI
 	"gui",
 #endif
