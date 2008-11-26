@@ -563,6 +563,14 @@ GETTEXT = yes
 CFLAGS = $(CFLAGS) -DDYNAMIC_GETTEXT
 !endif
 
+#
+# Support Migemo
+#
+!ifdef MIGEMO
+!message Migemo supported - will be dynamic linked.
+CFLAGS = $(CFLAGS) -DDYNAMIC_MIGEMO
+!endif
+
 # TCL interface
 !ifdef TCL
 !ifndef TCL_VER

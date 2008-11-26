@@ -148,6 +148,7 @@
 #undef HAVE_LSTAT
 #undef HAVE_MEMCMP
 #undef HAVE_MEMSET
+#undef HAVE_MIGEMO
 #undef HAVE_NANOSLEEP
 #undef HAVE_OPENDIR
 #undef HAVE_PUTENV
@@ -200,6 +201,7 @@
 #undef HAVE_LIBGEN_H
 #undef HAVE_LIBINTL_H
 #undef HAVE_LOCALE_H
+#undef HAVE_MIGEMO_H
 #undef HAVE_NDIR_H
 #undef HAVE_POLL_H
 #undef HAVE_PTHREAD_NP_H
