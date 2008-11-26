@@ -1045,6 +1045,15 @@ if test "$enable_multibyte" = "yes"; then
   AC_DEFINE(FEAT_MBYTE)
 fi
 
+AC_MSG_CHECKING(--enable-guess-encode argument)
+AC_ARG_ENABLE(guess-encode,
+	[  --enable-guess-encode   Include Japanese encoding autodetection.], ,
+	[enable_guess_encode="no"])
+AC_MSG_RESULT($enable_guess_encode)
+if test "$enable_guess_encode" = "yes"; then
+  AC_DEFINE(FEAT_GUESS_ENCODE_JP)
+fi
+
 AC_MSG_CHECKING(--enable-hangulinput argument)
 AC_ARG_ENABLE(hangulinput,
 	[  --enable-hangulinput    Include Hangul input support.], ,

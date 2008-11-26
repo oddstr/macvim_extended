@@ -316,6 +316,7 @@ N  *+folding*		|folding|
    *+footer*		|gui-footer|
    *+fork*		Unix only: |fork| shell commands
 N  *+gettext*		message translations |multi-lang|
+B  *+guess_encode*	Compiled with Japanese encodeing autodetection.
    *+GUI_Athena*	Unix only: Athena |GUI|
    *+GUI_neXtaw*	Unix only: neXtaw |GUI|
    *+GUI_GTK*		Unix only: GTK+ |GUI|

@@ -643,6 +643,18 @@
 # define FEAT_MBYTE
 #endif
 
+/*
+ * +guess_encode	autodetect encoding of japanese file
+ */
+#if defined(FEAT_BIG) && defined(FEAT_MBYTE) && !defined(FEAT_MBYTE_IME)
+#define FEAT_GUESS_ENCODE_JP
+# endif
+
+#if defined(FEAT_GUESS_ENCODE_JP) && !defined(FEAT_MBYTE)
+# define FEAT_MBYTE
+#endif
+
+/* multi-byte requires 32bit int */
 #if defined(FEAT_MBYTE) && SIZEOF_INT < 4 && !defined(PROTO)
 	Error: Can only handle multi-byte feature with 32 bit int or larger
 #endif

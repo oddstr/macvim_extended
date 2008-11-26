@@ -2023,8 +2023,8 @@ char2nr({expr})						*char2nr()*
 			char2nr(" ")		returns 32
 			char2nr("ABC")		returns 65
 <		The current 'encoding' is used.  Example for "utf-8": >
-			char2nr("á")		returns 225
-			char2nr("á"[0])		returns 195
+			char2nr("?")		returns 225
+			char2nr("?"[0])		returns 195
 <		nr2char() does the opposite.
 
 cindent({lnum})						*cindent()*
@@ -5396,6 +5396,7 @@ folding			Compiled with |folding| support.
 footer			Compiled with GUI footer support. |gui-footer|
 fork			Compiled to use fork()/exec() instead of system().
 gettext			Compiled with message translation |multi-lang|
+guess_encode		Compiled with Japanese encodeing autodetection.
 gui			Compiled with GUI enabled.
 gui_athena		Compiled with Athena GUI.
 gui_gtk			Compiled with GTK+ GUI (any version).

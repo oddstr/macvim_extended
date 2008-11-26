@@ -373,3 +373,6 @@
 
 /* Define if you want XSMP interaction as well as vanilla swapfile safety */
 #undef USE_XSMP_INTERACT
+
+/* Define if you want to include japanese encoding autodetection. */
+#undef FEAT_GUESS_ENCODE_JP
