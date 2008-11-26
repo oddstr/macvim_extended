@@ -1390,6 +1390,9 @@ struct file_buffer
     int		b_p_lisp;	/* 'lisp' */
 #endif
     char_u	*b_p_mps;	/* 'matchpairs' */
+#ifdef USE_MIGEMO
+    int		b_p_migemo;	/* 'migemo' */
+#endif
     int		b_p_ml;		/* 'modeline' */
     int		b_p_ml_nobin;	/* b_p_ml saved for binary mode */
     int		b_p_ma;		/* 'modifiable' */
@@ -1515,6 +1518,10 @@ struct file_buffer
 
 #ifdef FEAT_RUBY
     void	*b_ruby_ref;
+#endif
+
+#ifdef FEAT_SPIDERMONKEY
+    void	*b_spidermonkey_ref;
 #endif
 
 #ifdef FEAT_SYN_HL
@@ -2039,6 +2046,10 @@ struct window_S
 
 #ifdef FEAT_RUBY
     void	*w_ruby_ref;
+#endif
+
+#ifdef FEAT_SPIDERMONKEY
+    void	*w_spidermonkey_ref;
 #endif
 };
 

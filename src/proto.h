@@ -175,6 +175,10 @@ void qsort __ARGS((void *base, size_t elm_count, size_t elm_size, int (*cmp)(con
 #  include "if_ruby.pro"
 # endif
 
+# ifdef FEAT_SPIDERMONKEY
+#  include "if_spidermonkey.pro"
+# endif
+
 # ifdef FEAT_GUI
 #  include "gui.pro"
 #  if defined(UNIX) || defined(MACOS)

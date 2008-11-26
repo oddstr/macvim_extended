@@ -1,0 +1,168 @@
+*if_spidermonkey.txt*   For Vim version 7.0aa.  Last change: 2005 November 30
+
+
+		  VIM REFERENCE MANUAL
+
+
+The SpiderMonkey Interface to Vim	*spidermonkey* *SpiderMonkey*
+
+1. Commands			|spidermonkey-commands|
+2. The vim object		|spidermonkey-vim|
+3. Buffer objects		|spidermonkey-buffer|
+4. Window objects		|spidermonkey-window|
+
+{Vi does not have any of these commands}
+
+The SpiderMonkey interface is available only when Vim was compiled with the
+|+spidermonkey| feature.
+
+==============================================================================
+1. Commands						*spidermonkey-commands*
+
+					*:spidermonkey* *:spi*
+:[range]spi[dermonkey] {stmt}
+			Execute SpiderMonkey statement {stmt}.
+
+:[range]spi[dermonkey] << {endmarker}
+{script}
+{endmarker}
+			Execute SpiderMonkey script {script}.
+			Note: This command doesn't work when the SpiderMonkey
+			feature wasn't compiled in.  To avoid errors, see
+			|script-here|.
+
+Example: >
+
+	function! EchoAllBuffers()
+	spidermonkey << EOF
+	for (bnum in vim.buffers) {
+	  b = vim.buffers[bnum];
+	  for (lnum in b) {
+	    print(b[lnum]);
+	  }
+	}
+	EOF
+	endfunction
+<
+
+							*:spidermonkeyfile*
+:[range]spidermonkeyfile {file}
+			Execute the SpiderMonkey script in {file}.  The whole
+			argument is used as a single file name.  {not in Vi}
+
+SpiderMonkey commands cannot be used in the |sandbox|.
+
+==============================================================================
+2. The vim object					*spidermonkey-vim*
+
+SpiderMonkey code gets all of its access to vim via the "vim" object.
+
+Overview >
+	:spi print("Hello")		# displays a message
+	:spi vim.command(cmd)		# execute an ex command
+	:spi w = vim.windows[n]		# gets window "n"
+	:spi cw = vim.windows.current	# gets the current window
+	:spi b = vim.buffers[n]		# gets buffer "n"
+	:spi cb = vim.buffers.current	# gets the current buffer
+	:spi w.height = lines		# sets the window height
+	:spi name = b.name		# gets the buffer file name
+	:spi bufnum = b.number		# gets the buffer number
+	:spi line = b[n]		# gets a line from the buffer
+	:spi num = b.length		# gets the number of lines
+	:spi b[n] = str			# sets a line in the buffer
+	:spi delete b[n]		# deletes a line
+	:spi line = b.getLine(n)	# gets a line from the buffer
+	:spi b.setLine(n, str)		# sets a line in the buffer
+	:spi b.deleteLine(n)		# deletes a line
+	:spi b.appendLine(n, str)	# appends a line after n
+
+Methods:
+
+vim.command({cmd})					*spidermonkey-command*
+	Executes Ex command {cmd}.
+
+vim.eval({expr})					*spidermonkey-eval*
+	Evaluates {expr} using the vim internal expression evaluator (see
+	|expression|).  Returns the expression result as a string.
+
+Properties:
+
+vim.version		The version of vim.
+
+vim.range_start		Start/End of the range passed with
+vim.range_end		the SpiderMonkey command.
+
+vim.buffers						*spidermonkey-buffers*
+	A sequence object providing access to the list of vim buffers.  The
+	object supports the following operations: >
+	    :spi b = vim.buffers[i]	# indexing (read-only)
+	    :spi n = vim.buffers.count	# Number of elements
+	    :spi for (i in vim.buffers)	# Sequential access
+	           b = vim.buffers[i];
+	    :spi cb = vim.buffers.current	# gets the current buffer
+	    :spi cb = vim.buffers["%"]		# gets the current buffer
+	    :spi fb = vim.buffers.first		# gets the first buffer
+	    :spi lb = vim.buffers.last		# gets the last buffer
+<
+vim.windows						*spidermonkey-windows*
+	A sequence object providing access to the list of vim windows.  The
+	object supports the following operations: >
+	    :spi w = vim.windows[i]	# Indexing (read-only)
+	    :spi n = vim.windows.count	# Number of elements
+	    :spi for (i in vim.windoes)	# Sequential access
+	           w = vim.windows[i];
+	    :spi cw = vim.windows.current	# gets the current buffer
+	    :spi cw = vim.windows["%"]		# gets the current buffer
+	    :spi fw = vim.windows.first		# gets the first window
+	    :spi lw = vim.windows.last		# gets the last
+<
+
+==============================================================================
+3. Buffer objects					*spidermonkey-buffer*
+
+Buffer objects represent vim buffers.  You can obtain them in a number of ways:
+	- from indexing vim.buffers (|spidermonkey-buffers|)
+	- from the "buffer" attribute of a window (|spidermonkey-window|)
+
+Methods:
+
+self[{n}]	Returns a line from the buffer. {n} is the line number.
+getLine({n})
+
+self[{n}] = {str}
+setLine({n}, {str})
+		Sets a line in the buffer. {n} is the line number.
+
+delete self[{n}]
+deleteLine({n})
+		Delete a line from the buffer. {n} is the line number.
+
+appendLine({n}, {str})
+		Appends a line after the line {n}.
+
+Properties:
+
+name		The name of the buffer (RO)
+number		The number of the buffer (RO)
+length		The number of lines (RO)
+next		The next buffer or undefined (RO)
+prev		The previous buffer or undefined (RO)
+
+==============================================================================
+4. Window objects					*spidermonkey-window*
+
+Window objects represent vim windows.  You can obtain them in a number of ways:
+	- from indexing vim.windows (|spidermonkey-windows|)
+
+Methods:
+
+Properties:
+
+number		The number of the window (RO)
+height		The height of the window (RW)
+next		The next window or undefined (RO)
+prev		The previous window or undefined (RO)
+buffer		The buffer displayed in the window (RO)
+
+==============================================================================
+ vim:tw=78:ts=8:ft=help:norl:

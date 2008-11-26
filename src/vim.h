@@ -450,6 +450,10 @@ typedef unsigned long u8char_T;	    /* long should be 32 bits or more */
 # include <stdarg.h>
 #endif
 
+#ifdef MEMWATCH
+# include <memwatch.h>
+#endif
+
 /* ================ end of the header file puzzle =============== */
 
 /*
@@ -465,6 +469,7 @@ typedef unsigned long u8char_T;	    /* long should be 32 bits or more */
  * Check input method control.
  */
 #if defined(FEAT_XIM) \
+    || defined(FEAT_UIMFEP) \
     || (defined(FEAT_GUI) && (defined(FEAT_MBYTE_IME) || defined(GLOBAL_IME))) \
     || (defined(FEAT_GUI_MAC) && defined(FEAT_MBYTE))
 # define USE_IM_CONTROL
@@ -798,6 +803,9 @@ extern char *(*dyn_libintl_textdomain)(const char *domainname);
 #define SEARCH_MARK  0x200  /* set previous context mark */
 #define SEARCH_KEEP  0x400  /* keep previous search pattern */
 #define SEARCH_PEEK  0x800  /* peek for typed char, cancel search */
+#ifdef USE_MIGEMO
+# define SEARCH_MIGEMO	0x1000	/* use migemo for search */
+#endif
 
 /* Values for find_ident_under_cursor() */
 #define FIND_IDENT	1	/* find identifier (word) */
@@ -2041,5 +2049,16 @@ typedef int VimClipboard;	/* This is required for the prototypes. */
 #define DOSO_NONE	0
 #define DOSO_VIMRC	1	/* loading vimrc file */
 #define DOSO_GVIMRC	2	/* loading gvimrc file */
+
+#ifdef MEMWATCH
+# ifdef vim_realloc
+#  undef vim_realloc
+# endif
+# define alloc(n)	mwMalloc((n),__FILE__,__LINE__)
+# define alloc_clear(n)	mwCalloc(1,(n),__FILE__,__LINE__)
+# define lalloc(n,b)	mwMalloc((n),__FILE__,__LINE__)
+# define lalloc_clear(n,b) mwCalloc(1,(n),__FILE__,__LINE__)
+# define vim_realloc(p,n) mwRealloc((p),(n),__FILE__,__LINE__)
+#endif
 
 #endif /* VIM__H */

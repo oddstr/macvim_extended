@@ -309,6 +309,15 @@ static char *(features[]) =
 #else
 	"-menu",
 #endif
+#ifdef USE_MIGEMO
+# ifdef DYNAMIC_MIGEMO
+	"+migemo/dyn",
+# else
+	"+migemo",
+# endif
+#else
+	"-migemo",
+#endif
 #ifdef FEAT_SESSION
 	"+mksession",
 #else
@@ -488,6 +497,15 @@ static char *(features[]) =
 	"+sniff",
 #else
 	"-sniff",
+#endif
+#ifdef FEAT_SPIDERMONKEY
+# ifdef DYNAMIC_SPIDERMONKEY
+	"+spidermonkey/dyn",
+# else
+	"+spydermonkey",
+#endif
+#else
+	"-spidermonkey",
 #endif
 #ifdef FEAT_STL_OPT
 	"+statusline",

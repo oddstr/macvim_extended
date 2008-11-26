@@ -2412,14 +2412,16 @@ keymap_init()
     else
     {
 	char_u	*buf;
+	int	size;
 
 	/* Source the keymap file.  It will contain a ":loadkeymap" command
 	 * which will call ex_loadkeymap() below. */
-	buf = alloc((unsigned)(STRLEN(curbuf->b_p_keymap)
+	size = (STRLEN(curbuf->b_p_keymap)
 # ifdef FEAT_MBYTE
-						       + STRLEN(p_enc)
+		+ STRLEN(p_enc)
 # endif
-						       + 14));
+		+ 14);
+	buf = alloc(size);
 	if (buf == NULL)
 	    return e_outofmem;
 

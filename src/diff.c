@@ -876,6 +876,7 @@ ex_diffpatch(eap)
     char_u	*browseFile = NULL;
     int		browse_flag = cmdmod.browse;
 #endif
+    int		size;
 
 #ifdef FEAT_BROWSE
     if (cmdmod.browse)
@@ -905,11 +906,12 @@ ex_diffpatch(eap)
     /* Get the absolute path of the patchfile, changing directory below. */
     fullname = FullName_save(eap->arg, FALSE);
 #endif
-    buf = alloc((unsigned)(STRLEN(tmp_orig) + (
+    size = (STRLEN(tmp_orig) + (
 # ifdef UNIX
 		    fullname != NULL ? STRLEN(fullname) :
 # endif
-		    STRLEN(eap->arg)) + STRLEN(tmp_new) + 16));
+		    STRLEN(eap->arg)) + STRLEN(tmp_new) + 16);
+    buf = alloc(size);
     if (buf == NULL)
 	goto theend;
 
