@@ -603,6 +603,10 @@ EXTERN long	p_mmt;		/* 'maxmemtot' */
 #ifdef FEAT_MENU
 EXTERN long	p_mis;		/* 'menuitems' */
 #endif
+#ifdef USE_MIGEMO
+EXTERN int	p_migemo;	/* 'migemo' */
+EXTERN char_u	*p_migdict;	/* 'migemodict' */
+#endif
 #ifdef FEAT_SPELL
 EXTERN char_u	*p_msm;		/* 'mkspellmem' */
 #endif
@@ -962,6 +966,9 @@ enum
     , BV_LISP
 #endif
     , BV_MA
+#ifdef USE_MIGEMO
+    , BV_MIG
+#endif
     , BV_ML
     , BV_MOD
     , BV_MPS

@@ -135,6 +135,9 @@
 # define PV_LISP	OPT_BUF(BV_LISP)
 #endif
 #define PV_MA		OPT_BUF(BV_MA)
+#ifdef USE_MIGEMO
+# define PV_MIG		OPT_BUF(BV_MIG)
+#endif
 #define PV_ML		OPT_BUF(BV_ML)
 #define PV_MOD		OPT_BUF(BV_MOD)
 #define PV_MPS		OPT_BUF(BV_MPS)
@@ -1708,6 +1711,14 @@ static struct vimoption
     {"mesg",	    NULL,   P_BOOL|P_VI_DEF,
 			    (char_u *)NULL, PV_NONE,
 			    {(char_u *)FALSE, (char_u *)0L}},
+#ifdef USE_MIGEMO
+    {"migemo",	    "mgm",  P_BOOL|P_VI_DEF|P_VIM,
+			    (char_u *)&p_migemo, PV_MIG,
+			    {(char_u *)FALSE, (char_u *)0L}},
+    {"migemodict",  "mgd",  P_STRING|P_EXPAND|P_VI_DEF|P_VIM,
+			    (char_u *)&p_migdict, PV_NONE,
+			    {(char_u *)"", (char_u *)0L}},
+#endif /* USE_MIGEMO */
     {"mkspellmem",  "msm",  P_STRING|P_VI_DEF|P_EXPAND|P_SECURE,
 #ifdef FEAT_SPELL
 			    (char_u *)&p_msm, PV_NONE,
@@ -5358,6 +5369,11 @@ set_string_option_global(opt_idx, varp)
 	free_string_option(*p);
 	*p = s;
     }
+
+#ifdef USE_MIGEMO
+    if (varp == &p_migdict)
+	reset_migemo(FALSE);
+#endif
 }
 
 /*
@@ -9130,6 +9146,9 @@ get_varp(p)
 	case PV_ML:	return (char_u *)&(curbuf->b_p_ml);
 	case PV_MPS:	return (char_u *)&(curbuf->b_p_mps);
 	case PV_MA:	return (char_u *)&(curbuf->b_p_ma);
+#ifdef USE_MIGEMO
+	case PV_MIG:	return (char_u *)&(curbuf->b_p_migemo);
+#endif
 	case PV_MOD:	return (char_u *)&(curbuf->b_changed);
 	case PV_NF:	return (char_u *)&(curbuf->b_p_nf);
 #ifdef FEAT_OSFILETYPE
@@ -9505,6 +9524,11 @@ buf_copy_options(buf, flags)
 	     * state from the current buffer is better than resetting it. */
 	    buf->b_p_iminsert = p_iminsert;
 	    buf->b_p_imsearch = p_imsearch;
+
+#ifdef USE_MIGEMO
+	    /* This is migemo extension */
+	    buf->b_p_migemo = p_migemo;
+#endif
 
 	    /* options that are normally global but also have a local value
 	     * are not copied, start using the global value */
