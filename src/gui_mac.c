@@ -6434,7 +6434,11 @@ im_on_window_switch(int active)
  * Set IM status on ("active" is TRUE) or off ("active" is FALSE).
  */
     void
+#ifdef FEAT_UIMFEP
+gui_im_set_active(int active)
+#else
 im_set_active(int active)
+#endif
 {
     ScriptLanguageRecord *slptr = NULL;
     OSStatus err;
@@ -6493,7 +6497,11 @@ im_set_active(int active)
  * Get IM status.  When IM is on, return not 0.  Else return 0.
  */
     int
+#ifdef FEAT_UIMFEP
+gui_im_get_status(void)
+#else
 im_get_status(void)
+#endif
 {
     if (! gui.in_use)
 	return 0;
