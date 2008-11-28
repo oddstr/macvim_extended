@@ -983,7 +983,9 @@
  *			a modifed version of Vim.
  *			Also from the "--with-modified-by" configure argument.
  */
-/* #define MODIFIED_BY "John Doe" */
+#ifndef MODIFIED_BY
+# define MODIFIED_BY "Vim extended"
+#endif
 
 /*
  * Machine dependent:
@@ -1178,6 +1180,7 @@
 /*
  * These features can only be included by using a configure argument.  See the
  * Makefile for a line to uncomment.
+ * +lua                 Lua interface: "--enable-luainterp"
  * +mzscheme		MzScheme interface: "--enable-mzscheme"
  * +perl		Perl interface: "--enable-perlinterp"
  * +python		Python interface: "--enable-pythoninterp"

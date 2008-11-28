@@ -315,7 +315,7 @@ CClink = $(CC)
 #CONF_ARGS = --without-local-dir
 
 # Use this one if you distribute a modified version of Vim.
-#CONF_ARGS = --with-modified-by="John Doe"
+CONF_ARGS = --with-modified-by="Vim extended"
 
 # GUI - For creating Vim with GUI (gvim) (B)
 # Uncomment this line when you don't want to get the GUI version, although you
@@ -397,6 +397,13 @@ CClink = $(CC)
 # RUBY
 # Uncomment this when you want to include the Ruby interface.
 #CONF_OPT_RUBY = --enable-rubyinterp
+
+# LUA
+# Uncomment this when you want to include the Lua interface.
+#CONF_OPT_LUA = --enable-luainterp
+# Lua installation dir (also in LUA_PREFIX environment variable)
+#CONF_OPT_LUA_PREFIX = --with-lua-prefix=/usr/local
+#CONF_OPT_LUA_PREFIX = --with-lua-prefix=/usr
 
 # MZSCHEME
 # Uncomment this when you want to include the MzScheme interface.
@@ -1299,7 +1306,7 @@ SHELL = /bin/sh
 .SUFFIXES: .c .o .pro
 
 PRE_DEFS = -Iproto $(DEFS) $(GUI_DEFS) $(GUI_IPATH) $(CPPFLAGS) $(EXTRA_IPATHS)
-POST_DEFS = $(X_CFLAGS) $(MZSCHEME_CFLAGS) $(PERL_CFLAGS) $(PYTHON_CFLAGS) $(TCL_CFLAGS) $(RUBY_CFLAGS) $(SPIDERMONKEY_CFLAGS) $(EXTRA_DEFS)
+POST_DEFS = $(X_CFLAGS) $(LUA_CFLAGS) $(MZSCHEME_CFLAGS) $(PERL_CFLAGS) $(PYTHON_CFLAGS) $(TCL_CFLAGS) $(RUBY_CFLAGS) $(SPIDERMONKEY_CFLAGS) $(EXTRA_DEFS)
 
 ALL_CFLAGS = $(PRE_DEFS) $(CFLAGS) $(PROFILE_CFLAGS) $(POST_DEFS)
 
@@ -1319,7 +1326,7 @@ DEPEND_CFLAGS = -DPROTO -DDEPEND -DFEAT_GUI $(LINT_CFLAGS)
 PFLAGS = $(PROTO_FLAGS) -DPROTO $(LINT_CFLAGS)
 
 ALL_LIB_DIRS = $(GUI_LIBS_DIR) $(X_LIBS_DIR)
-ALL_LIBS = $(GUI_LIBS1) $(GUI_X_LIBS) $(GUI_LIBS2) $(X_PRE_LIBS) $(X_LIBS) $(X_EXTRA_LIBS) $(LIBS) $(EXTRA_LIBS) $(MZSCHEME_LIBS) $(PERL_LIBS) $(PYTHON_LIBS) $(TCL_LIBS) $(RUBY_LIBS) $(SPIDERMONKEY_LIBS) $(PROFILE_LIBS)
+ALL_LIBS = $(GUI_LIBS1) $(GUI_X_LIBS) $(GUI_LIBS2) $(X_PRE_LIBS) $(X_LIBS) $(X_EXTRA_LIBS) $(LIBS) $(EXTRA_LIBS) $(LUA_LIBS) $(MZSCHEME_LIBS) $(PERL_LIBS) $(PYTHON_LIBS) $(TCL_LIBS) $(RUBY_LIBS) $(SPIDERMONKEY_LIBS) $(PROFILE_LIBS)
 
 # abbreviations
 DEST_BIN = $(DESTDIR)$(BINDIR)
@@ -1374,6 +1381,7 @@ TAGS_INCL = *.h
 BASIC_SRC = \
 	buffer.c \
 	charset.c \
+	code_check.c \
 	diff.c \
 	digraph.c \
 	edit.c \
@@ -1420,7 +1428,7 @@ BASIC_SRC = \
 	window.c \
 	$(OS_EXTRA_SRC)
 
-SRC =	$(BASIC_SRC) $(GUI_SRC) $(HANGULIN_SRC) $(MZSCHEME_SRC) \
+SRC =	$(BASIC_SRC) $(GUI_SRC) $(HANGULIN_SRC) $(LUA_SRC) $(MZSCHEME_SRC) \
 	$(PERL_SRC) $(PYTHON_SRC) $(TCL_SRC) $(RUBY_SRC) \
 	$(GDB_SRC) \
 	$(SPIDERMONKEY_SRC) \
@@ -1428,7 +1436,7 @@ SRC =	$(BASIC_SRC) $(GUI_SRC) $(HANGULIN_SRC) $(MZSCHEME_SRC) \
 
 TAGS_SRC = *.c *.cpp if_perl.xs
 
-EXTRA_SRC = hangulin.c if_mzsch.c auto/if_perl.c if_perlsfio.c \
+EXTRA_SRC = hangulin.c if_lua.c if_mzsch.c auto/if_perl.c if_perlsfio.c \
 	    if_python.c if_tcl.c if_ruby.c if_sniff.c gui_beval.c \
 	    gdb.c clewn/gdb_lvl2.c clewn/gdb_lvl3.c clewn/misc.c clewn/obstack.c \
 	    if_spidermonkey.c \
@@ -1449,6 +1457,7 @@ LINT_SRC = $(BASIC_SRC) $(GUI_SRC) $(HANGULIN_SRC) $(PYTHON_SRC) $(TCL_SRC) \
 OBJ = \
 	objects/buffer.o \
 	objects/charset.o \
+	objects/code_check.o \
 	objects/diff.o \
 	objects/digraph.o \
 	objects/edit.o \
@@ -1495,6 +1504,7 @@ OBJ = \
 	objects/undo.o \
 	objects/window.o \
 	$(GUI_OBJ) \
+	$(LUA_OBJ) \
 	$(MZSCHEME_OBJ) \
 	$(PERL_OBJ) \
 	$(PYTHON_OBJ) \
@@ -1510,6 +1520,7 @@ OBJ = \
 PRO_AUTO = \
 	buffer.pro \
 	charset.pro \
+	code_check.pro \
 	diff.pro \
 	digraph.pro \
 	edit.pro \
@@ -1599,6 +1610,7 @@ config auto/config.mk: auto/configure config.mk.in config.h.in
 		$(CONF_OPT_COMPBY) $(CONF_OPT_ACL)  $(CONF_OPT_NETBEANS) \
 		$(CONF_ARGS) $(CONF_OPT_MZSCHEME) $(CONF_OPT_PLTHOME) \
 		$(CONF_OPT_SPIDERMONKEY) \
+		$(CONF_OPT_LUA) $(CONF_OPT_LUA_PREFIX) \
 		$(CONF_OPT_SYSMOUSE)
 
 # Use "make reconfig" to rerun configure without cached values.
@@ -2346,6 +2358,9 @@ objects/buffer.o: buffer.c
 objects/charset.o: charset.c
 	$(CCC) -o $@ charset.c
 
+objects/code_check.o: code_check.c
+	$(CCC) -o $@ code_check.c
+
 objects/diff.o: diff.c
 	$(CCC) -o $@ diff.c
 
@@ -2438,6 +2453,9 @@ objects/if_cscope.o: if_cscope.c
 
 objects/if_xcmdsrv.o: if_xcmdsrv.c
 	$(CCC) -o $@ if_xcmdsrv.c
+
+objects/if_lua.o: if_lua.c
+	$(CCC) -o $@ if_lua.c
 
 objects/if_mzsch.o: if_mzsch.c
 	$(CCC) -o $@ if_mzsch.c
@@ -2689,6 +2707,10 @@ objects/buffer.o: buffer.c vim.h auto/config.h feature.h os_unix.h auto/osdef.h 
   gui_beval.h proto/gui_beval.pro ex_cmds.h proto.h globals.h farsi.h \
   arabic.h version.h
 objects/charset.o: charset.c vim.h auto/config.h feature.h os_unix.h auto/osdef.h \
+  ascii.h keymap.h term.h macros.h option.h structs.h regexp.h gui.h \
+  gui_beval.h proto/gui_beval.pro ex_cmds.h proto.h globals.h farsi.h \
+  arabic.h
+objects/code_check.o: code_check.c vim.h auto/config.h feature.h os_unix.h auto/osdef.h \
   ascii.h keymap.h term.h macros.h option.h structs.h regexp.h gui.h \
   gui_beval.h proto/gui_beval.pro ex_cmds.h proto.h globals.h farsi.h \
   arabic.h
@@ -2946,6 +2968,10 @@ objects/pty.o: pty.c vim.h auto/config.h feature.h os_unix.h auto/osdef.h ascii.
   keymap.h term.h macros.h option.h structs.h regexp.h gui.h gui_beval.h \
   proto/gui_beval.pro ex_cmds.h proto.h globals.h farsi.h arabic.h
 objects/hangulin.o: hangulin.c vim.h auto/config.h feature.h os_unix.h \
+  auto/osdef.h ascii.h keymap.h term.h macros.h option.h structs.h \
+  regexp.h gui.h gui_beval.h proto/gui_beval.pro ex_cmds.h proto.h \
+  globals.h farsi.h arabic.h
+objects/if_lua.o: if_lua.c vim.h auto/config.h feature.h os_unix.h \
   auto/osdef.h ascii.h keymap.h term.h macros.h option.h structs.h \
   regexp.h gui.h gui_beval.h proto/gui_beval.pro ex_cmds.h proto.h \
   globals.h farsi.h arabic.h

@@ -1740,7 +1740,7 @@ plines_win_nofold(wp, lnum)
 	col += 1;
 
     /*
-     * Add column offset for 'number' and 'foldcolumn'.
+     * Add column offset for 'number', 'relativenumber' and 'foldcolumn'.
      */
     width = W_WIDTH(wp) - win_col_off(wp);
     if (width <= 0)
@@ -1801,7 +1801,7 @@ plines_win_col(wp, lnum, column)
 	col += win_lbr_chartabsize(wp, s, (colnr_T)col, NULL) - 1;
 
     /*
-     * Add column offset for 'number', 'foldcolumn', etc.
+     * Add column offset for 'number', 'relativenumber', 'foldcolumn', etc.
      */
     width = W_WIDTH(wp) - win_col_off(wp);
     if (width <= 0)
@@ -2674,6 +2674,11 @@ changed_lines(lnum, col, lnume, xtra)
 #endif
 
     changed_common(lnum, col, lnume, xtra);
+
+    /* update ew linenumbers for CodeCheck if the current buffer is 
+     * being watched. */
+    if (cc_is_buf_watched(curbuf))
+	cc_update_ew_lnums(curbuf, lnum, col, xtra);
 }
 
     static void

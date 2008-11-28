@@ -467,6 +467,21 @@ static int non_zero_arg __ARGS((typval_T *argvars));
 
 #ifdef FEAT_FLOAT
 static void f_abs __ARGS((typval_T *argvars, typval_T *rettv));
+
+/* Below are the 10 added FP functions - I've kept them together   */
+/* here and in their definitions later on. Because the functions[] */
+/* table must be in ASCII order, they are scattered there - WJMc   */
+
+static void f_acos __ARGS((typval_T *argvars, typval_T *rettv));
+static void f_asin __ARGS((typval_T *argvars, typval_T *rettv));
+static void f_atan2 __ARGS((typval_T *argvars, typval_T *rettv)); /* 2 args */
+static void f_cosh __ARGS((typval_T *argvars, typval_T *rettv));
+static void f_exp __ARGS((typval_T *argvars, typval_T *rettv));
+static void f_fmod __ARGS((typval_T *argvars, typval_T *rettv));  /* 2 args */
+static void f_log __ARGS((typval_T *argvars, typval_T *rettv));
+static void f_sinh __ARGS((typval_T *argvars, typval_T *rettv));
+static void f_tan __ARGS((typval_T *argvars, typval_T *rettv));
+static void f_tanh __ARGS((typval_T *argvars, typval_T *rettv));
 #endif
 static void f_add __ARGS((typval_T *argvars, typval_T *rettv));
 static void f_append __ARGS((typval_T *argvars, typval_T *rettv));
@@ -5856,7 +5871,7 @@ list_equal(l1, l2, ic)
     return item1 == NULL && item2 == NULL;
 }
 
-#if defined(FEAT_PYTHON) || defined(PROTO)
+#if defined(FEAT_PYTHON) || defined(FEAT_LUA) || defined(PROTO)
 /*
  * Return the dictitem that an entry in a hashtable points to.
  */
@@ -7464,6 +7479,7 @@ static struct fst
 {
 #ifdef FEAT_FLOAT
     {"abs",		1, 1, f_abs},
+    {"acos",		1, 1, f_acos},	/* WJMc */
 #endif
     {"add",		2, 2, f_add},
     {"append",		2, 2, f_append},
@@ -7471,7 +7487,9 @@ static struct fst
     {"argidx",		0, 0, f_argidx},
     {"argv",		0, 1, f_argv},
 #ifdef FEAT_FLOAT
+    {"asin",		1, 1, f_asin},	/* WJMc */
     {"atan",		1, 1, f_atan},
+    {"atan2",		2, 2, f_atan2},	/* WJMc */
 #endif
     {"browse",		4, 4, f_browse},
     {"browsedir",	2, 2, f_browsedir},
@@ -7504,6 +7522,7 @@ static struct fst
     {"copy",		1, 1, f_copy},
 #ifdef FEAT_FLOAT
     {"cos",		1, 1, f_cos},
+    {"cosh",		1, 1, f_cosh},	/* WJMc */
 #endif
     {"count",		2, 4, f_count},
     {"cscope_connection",0,3, f_cscope_connection},
@@ -7519,6 +7538,9 @@ static struct fst
     {"eventhandler",	0, 0, f_eventhandler},
     {"executable",	1, 1, f_executable},
     {"exists",		1, 1, f_exists},
+#ifdef FEAT_FLOAT
+    {"exp",		1, 1, f_exp},	/* WJMc */
+#endif
     {"expand",		1, 2, f_expand},
     {"extend",		2, 3, f_extend},
     {"feedkeys",	1, 2, f_feedkeys},
@@ -7531,6 +7553,7 @@ static struct fst
 #ifdef FEAT_FLOAT
     {"float2nr",	1, 1, f_float2nr},
     {"floor",		1, 1, f_floor},
+    {"fmod",		2, 2, f_fmod},	/* WJMc */
 #endif
     {"fnameescape",	1, 1, f_fnameescape},
     {"fnamemodify",	2, 2, f_fnamemodify},
@@ -7610,6 +7633,7 @@ static struct fst
     {"lispindent",	1, 1, f_lispindent},
     {"localtime",	0, 0, f_localtime},
 #ifdef FEAT_FLOAT
+    {"log",		1, 1, f_log},	/* WJMc */
     {"log10",		1, 1, f_log10},
 #endif
     {"map",		2, 2, f_map},
@@ -7676,6 +7700,7 @@ static struct fst
     {"simplify",	1, 1, f_simplify},
 #ifdef FEAT_FLOAT
     {"sin",		1, 1, f_sin},
+    {"sinh",		1, 1, f_sinh},	/* WJMc */
 #endif
     {"sort",		1, 2, f_sort},
     {"soundfold",	1, 1, f_soundfold},
@@ -7708,6 +7733,8 @@ static struct fst
     {"tabpagewinnr",	1, 2, f_tabpagewinnr},
     {"tagfiles",	0, 0, f_tagfiles},
     {"taglist",		1, 1, f_taglist},
+    {"tan",		1, 1, f_tan},	/* WJMc */
+    {"tanh",		1, 1, f_tanh},	/* WJMc */
     {"tempname",	0, 0, f_tempname},
     {"test",		1, 1, f_test},
     {"tolower",		1, 1, f_tolower},
@@ -8356,6 +8383,182 @@ get_float_arg(argvars, f)
     EMSG(_("E808: Number or Float required"));
     return FAIL;
 }
+
+/* The 10 added FP functions are defined immediately before atan() - WJMc */
+
+/*
+ * "acos()" function
+ */
+    static void
+f_acos(argvars, rettv)
+    typval_T	*argvars;
+    typval_T	*rettv;
+{
+    float_T	f;
+
+    rettv->v_type = VAR_FLOAT;
+    if (get_float_arg(argvars, &f) == OK)
+	rettv->vval.v_float = acos(f);
+    else
+	rettv->vval.v_float = 0.0;
+}
+
+/*
+ * "asin()" function
+ */
+    static void
+f_asin(argvars, rettv)
+    typval_T	*argvars;
+    typval_T	*rettv;
+{
+    float_T	f;
+
+    rettv->v_type = VAR_FLOAT;
+    if (get_float_arg(argvars, &f) == OK)
+	rettv->vval.v_float = asin(f);
+    else
+	rettv->vval.v_float = 0.0;
+}
+
+/*
+ * "atan2()" function
+ */
+    static void
+f_atan2(argvars, rettv)
+    typval_T	*argvars;
+    typval_T	*rettv;
+{
+    float_T	fx, fy;
+
+    rettv->v_type = VAR_FLOAT;
+    if (get_float_arg(argvars, &fx) == OK
+				     && get_float_arg(&argvars[1], &fy) == OK)
+	rettv->vval.v_float = atan2(fx, fy);
+    else
+	rettv->vval.v_float = 0.0;
+}
+
+/*
+ * "cosh()" function
+ */
+    static void
+f_cosh(argvars, rettv)
+    typval_T	*argvars;
+    typval_T	*rettv;
+{
+    float_T	f;
+
+    rettv->v_type = VAR_FLOAT;
+    if (get_float_arg(argvars, &f) == OK)
+	rettv->vval.v_float = cosh(f);
+    else
+	rettv->vval.v_float = 0.0;
+}
+
+/*
+ * "exp()" function
+ */
+    static void
+f_exp(argvars, rettv)
+    typval_T	*argvars;
+    typval_T	*rettv;
+{
+    float_T	f;
+
+    rettv->v_type = VAR_FLOAT;
+    if (get_float_arg(argvars, &f) == OK)
+	rettv->vval.v_float = exp(f);
+    else
+	rettv->vval.v_float = 0.0;
+}
+
+/*
+ * "fmod()" function
+ */
+    static void
+f_fmod(argvars, rettv)
+    typval_T	*argvars;
+    typval_T	*rettv;
+{
+    float_T	fx, fy;
+
+    rettv->v_type = VAR_FLOAT;
+    if (get_float_arg(argvars, &fx) == OK
+				     && get_float_arg(&argvars[1], &fy) == OK)
+	rettv->vval.v_float = fmod(fx, fy);
+    else
+	rettv->vval.v_float = 0.0;
+}
+
+/*
+ * "log()" function
+ */
+    static void
+f_log(argvars, rettv)
+    typval_T	*argvars;
+    typval_T	*rettv;
+{
+    float_T	f;
+
+    rettv->v_type = VAR_FLOAT;
+    if (get_float_arg(argvars, &f) == OK)
+	rettv->vval.v_float = log(f);
+    else
+	rettv->vval.v_float = 0.0;
+}
+
+/*
+ * "sinh()" function
+ */
+    static void
+f_sinh(argvars, rettv)
+    typval_T	*argvars;
+    typval_T	*rettv;
+{
+    float_T	f;
+
+    rettv->v_type = VAR_FLOAT;
+    if (get_float_arg(argvars, &f) == OK)
+	rettv->vval.v_float = sinh(f);
+    else
+	rettv->vval.v_float = 0.0;
+}
+
+/*
+ * "tan()" function
+ */
+    static void
+f_tan(argvars, rettv)
+    typval_T	*argvars;
+    typval_T	*rettv;
+{
+    float_T	f;
+
+    rettv->v_type = VAR_FLOAT;
+    if (get_float_arg(argvars, &f) == OK)
+	rettv->vval.v_float = tan(f);
+    else
+	rettv->vval.v_float = 0.0;
+}
+
+/*
+ * "tanh()" function
+ */
+    static void
+f_tanh(argvars, rettv)
+    typval_T	*argvars;
+    typval_T	*rettv;
+{
+    float_T	f;
+
+    rettv->v_type = VAR_FLOAT;
+    if (get_float_arg(argvars, &f) == OK)
+	rettv->vval.v_float = tanh(f);
+    else
+	rettv->vval.v_float = 0.0;
+}
+
+/* End of the 10 added FP functions - WJMc */
 
 /*
  * "atan()" function
@@ -11621,6 +11824,11 @@ f_has(argvars, rettv)
 #ifdef FEAT_LOCALMAP
 	"localmap",
 #endif
+#ifdef FEAT_LUA
+# ifndef DYNAMIC_LUA
+	"lua",
+# endif
+#endif
 #ifdef FEAT_MENU
 	"menu",
 #endif
@@ -11873,6 +12081,10 @@ f_has(argvars, rettv)
 #if defined(USE_ICONV) && defined(DYNAMIC_ICONV)
 	else if (STRICMP(name, "iconv") == 0)
 	    n = iconv_enabled(FALSE);
+#endif
+#ifdef DYNAMIC_LUA
+	else if (STRICMP(name, "lua") == 0)
+	    n = lua_enabled(FALSE);
 #endif
 #ifdef DYNAMIC_MZSCHEME
 	else if (STRICMP(name, "mzscheme") == 0)

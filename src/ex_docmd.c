@@ -141,6 +141,7 @@ static char_u	*replace_makeprg __ARGS((exarg_T *eap, char_u *p, char_u **cmdline
 static char_u	*repl_cmdline __ARGS((exarg_T *eap, char_u *src, int srclen, char_u *repl, char_u **cmdlinep));
 static void	ex_highlight __ARGS((exarg_T *eap));
 static void	ex_colorscheme __ARGS((exarg_T *eap));
+static void	ex_codecheck __ARGS((exarg_T *eap));
 static void	ex_quit __ARGS((exarg_T *eap));
 static void	ex_cquit __ARGS((exarg_T *eap));
 static void	ex_quit_all __ARGS((exarg_T *eap));
@@ -241,6 +242,11 @@ static void	ex_popup __ARGS((exarg_T *eap));
 # define ex_spelldump		ex_ni
 # define ex_spellinfo		ex_ni
 # define ex_spellrepall		ex_ni
+#endif
+#ifndef FEAT_LUA
+# define ex_lua			ex_script_ni
+# define ex_luado		ex_ni
+# define ex_luafile		ex_ni
 #endif
 #ifndef FEAT_MZSCHEME
 # define ex_mzscheme		ex_script_ni
@@ -2530,6 +2536,7 @@ do_one_cmd(cmdlinep, sourcing,
 	    case CMD_leftabove:
 	    case CMD_let:
 	    case CMD_lockmarks:
+	    case CMD_lua:
 	    case CMD_match:
 	    case CMD_mzscheme:
 	    case CMD_perl:
@@ -6162,6 +6169,34 @@ ex_colorscheme(eap)
 {
     if (load_colors(eap->arg) == FAIL)
 	EMSG2(_("E185: Cannot find color scheme %s"), eap->arg);
+}
+
+    static void
+ex_codecheck(eap)
+    exarg_T	*eap;
+{
+    switch (eap->cmdidx) {
+	case CMD_ccadd:
+	    if (!cc_get_is_started())
+		cc_init();
+	    if (cc_is_buf_ok(curbuf)) {
+		if (*eap->arg != NUL)
+		    cc_addbuf_setcmd(curbuf, eap->arg);
+		else
+		    EMSG(_("You have to specify a valid compile command "
+				"in order to add this buffer to watchlist."));
+	    } else
+		EMSG(_("The present version of CodeCheck does not support "
+			   "this language."));
+	    break;
+       case CMD_ccrem:
+	    cc_rem_buf(curbuf);
+	    if (cc_get_bufcount() == 0)
+		cc_exit();
+	    break;
+	default:
+	    return;
+   }
 }
 
     static void

@@ -1054,6 +1054,7 @@ enum
     , WV_LBR
 #endif
     , WV_NU
+    , WV_RNU
 #ifdef FEAT_LINEBREAK
     , WV_NUW
 #endif

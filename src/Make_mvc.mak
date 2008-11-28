@@ -30,6 +30,11 @@
 #	  is yes)
 #	Global IME support: GIME=yes (requires GUI=yes)
 #
+#	Lua interface:
+#	  LUA=[Path to Lua directory]
+#	  DYNAMIC_LUA=yes (to load the Lua DLL dynamically)
+#	  LUA_VER=[Lua version]  (default is 51)
+#
 #	MzScheme interface:
 #	  MZSCHEME=[Path to MzScheme directory]
 #	  DYNAMIC_MZSCHEME=yes (to load the MzScheme DLLs dynamically)
@@ -155,6 +160,9 @@ OBJDIR = .\ObjC
 !endif
 !if "$(OLE)" == "yes"
 OBJDIR = $(OBJDIR)O
+!endif
+!ifdef LUA
+OBJDIR = $(OBJDIR)U
 !endif
 !ifdef PERL
 OBJDIR = $(OBJDIR)L
@@ -360,6 +368,9 @@ MSVCVER = 8.0
 MSVCVER = 9.0
 !endif
 !if "$(_NMAKE_VER)" == "9.00.21022.08"
+MSVCVER = 9.0
+!endif
+!if "$(_NMAKE_VER)" == "9.00.30729.01"
 MSVCVER = 9.0
 !endif
 !endif
@@ -616,6 +627,27 @@ TCL_LIB = $(TCL)\lib\tcl$(TCL_VER)vc.lib
 !endif
 !endif
 
+# Lua interface
+!ifdef LUA
+!ifndef LUA_VER
+LUA_VER = 51
+!endif
+!message Lua requested (version $(LUA_VER)) - root dir is "$(LUA)"
+!if "$(DYNAMIC_LUA)" == "yes"
+!message Lua DLL will be loaded dynamically
+!endif
+CFLAGS = $(CFLAGS) -DFEAT_LUA
+LUA_OBJ = $(OUTDIR)\if_lua.obj
+LUA_INC = /I "$(LUA)\include" /I "$(LUA)"
+!if "$(DYNAMIC_LUA)" == "yes"
+CFLAGS = $(CFLAGS) -DDYNAMIC_LUA \
+		-DDYNAMIC_LUA_DLL=\"lua$(LUA_VER).dll\"
+LUA_LIB = /nodefaultlib:lua$(LUA_VER).lib
+!else
+LUA_LIB = "$(LUA)\lib\lua$(LUA_VER).lib"
+!endif
+!endif
+
 # PYTHON interface
 !ifdef PYTHON
 !ifndef PYTHON_VER
@@ -807,7 +839,7 @@ conflags = $(conflags) /map /mapinfo:lines
 
 LINKARGS1 = $(linkdebug) $(conflags)
 LINKARGS2 = $(CON_LIB) $(GUI_LIB) $(LIBC) $(OLE_LIB)  user32.lib $(SNIFF_LIB) \
-		$(MZSCHEME_LIB) $(PERL_LIB) $(PYTHON_LIB) $(RUBY_LIB) \
+		$(LUA_LIB) $(MZSCHEME_LIB) $(PERL_LIB) $(PYTHON_LIB) $(RUBY_LIB) \
 		$(SPIDERMONKEY_LIB) \
 		$(TCL_LIB) $(NETBEANS_LIB) $(XPM_LIB) $(LINK_PDB)
 
@@ -825,11 +857,11 @@ all:	$(VIM).exe vimrun.exe install.exe uninstal.exe xxd/xxd.exe \
 
 $(VIM).exe: $(OUTDIR) $(OBJ) $(GUI_OBJ) $(OLE_OBJ) $(OLE_IDL) $(MZSCHEME_OBJ) \
 		$(PERL_OBJ) $(PYTHON_OBJ) $(RUBY_OBJ) $(TCL_OBJ) $(SNIFF_OBJ) \
-		$(SPIDERMONKEY_OBJ) \
+		$(LUA_OBJ) $(SPIDERMONKEY_OBJ) \
 		$(CSCOPE_OBJ) $(NETBEANS_OBJ) $(XPM_OBJ) version.c version.h
 	$(CC) $(CFLAGS) version.c
 	$(link) $(LINKARGS1) -out:$(VIM).exe $(OBJ) $(GUI_OBJ) $(OLE_OBJ) \
-		$(MZSCHEME_OBJ) $(PERL_OBJ) $(PYTHON_OBJ) $(RUBY_OBJ) \
+		$(LUA_OBJ) $(MZSCHEME_OBJ) $(PERL_OBJ) $(PYTHON_OBJ) $(RUBY_OBJ) \
 		$(TCL_OBJ) $(SNIFF_OBJ) $(CSCOPE_OBJ) $(NETBEANS_OBJ) \
 		$(SPIDERMONKEY_OBJ) \
 		$(XPM_OBJ) $(OUTDIR)\version.obj $(LINKARGS2)
@@ -964,6 +996,9 @@ $(OUTDIR)/gui_beval.obj:	$(OUTDIR) gui_beval.c $(INCL) $(GUI_INCL)
 $(OUTDIR)/gui_w32.obj:	$(OUTDIR) gui_w32.c gui_w48.c $(INCL) $(GUI_INCL)
 
 $(OUTDIR)/if_cscope.obj: $(OUTDIR) if_cscope.c  $(INCL)
+
+$(OUTDIR)/if_lua.obj: $(OUTDIR) if_lua.c  $(INCL)
+	$(CC) $(CFLAGS) $(LUA_INC) if_lua.c
 
 if_perl.c : if_perl.xs typemap
 	$(PERL_EXE) $(XSUBPP) -prototypes -typemap $(XSUBPP_TYPEMAP) \

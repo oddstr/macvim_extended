@@ -1,0 +1,62 @@
+*code_check.txt*   For Vim version 7.2.  Last change: 2008 Aug 18
+
+
+		  VIM REFERENCE MANUAL    by Bram Moolenaar
+
+
+CodeCheck [version 0.1]			*codecheck* *CodeCheck* *code_check*
+
+1. What is CodeCheck			|intro|
+2. Using :ccadd				|ccadd|
+3. Using :ccrem				|ccrem|
+4. Progress				|progress|
+
+==============================================================================
+1. What is CodeCheck						*intro*
+
+*** CodeCheck is sponsored by Google under Google Summer of Code program,
+mentored by Bram Moolenaar and implemented by Birgi Tamersoy. ***
+
+CodeCheck is an on-the-fly syntax checking tool implemented for Vim. It mimics
+the similar feature in Eclipse IDE. Whenever the user delays for a specified
+amount of time, a background thread:
+	- creates a temporary copy of the current buffer,
+	- compiles this temporary copy,
+	- parses the compiler output, and
+	- highlights the related lines in the buffer.
+
+As of today (last change date), CodeCheck is highly platform-dependent. It
+will work only on Linux with Pthreads. Current supported file types are; C/C++
+independent source files.
+
+==============================================================================
+2. Using :ccadd							*ccadd*
+
+Usage:
+:ccadd <compile command>	Adds current buffer to the CodeCheck
+				watchlist. <compile command> is required.
+				<compile command> must include the full path
+				of the corresponding buffer.
+
+Example:
+:ccadd gcc -Wall -c /home/birgi/tmp/a/b/main.c
+
+==============================================================================
+3. Using :ccrem							*ccrem*
+
+Usage:
+:ccrem				Removes current buffer from the CodeCheck
+				watchlist. This command does not take any
+				arguments. If the buffer is not being watched,
+				the command is simply ignored.
+
+==============================================================================
+4. Progress							*progress*
+
+As of today (last change date) the maintainer works on the following issues:
+- Porting to Windows.
+- Specific parts highlighting rather than line highlighting.
+- Implementing a mechanism that would make new compiler/language support
+  easier.
+
+==============================================================================
