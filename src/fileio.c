@@ -8718,11 +8718,13 @@ trigger_cursorhold()
 {
     int		state;
 
+#ifdef FEAT_CODECHECK
     /* trigger a compile request if the current buffer is in
      * the watchlist and the current mode is NOT CMDLINE. */
     if ((State & CMDLINE) == 0)
 	if (cc_is_buf_watched(curbuf))
 	    cc_request_compile(curbuf);
+#endif
 
     if (!did_cursorhold && has_cursorhold() && !Recording
 #ifdef FEAT_INS_EXPAND

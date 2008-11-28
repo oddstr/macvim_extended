@@ -395,3 +395,6 @@
 
 /* Define if you want to include japanese encoding autodetection. */
 #undef FEAT_GUESS_ENCODE_JP
+
+/* Define if you want to include japanese encoding autodetection. */
+#undef FEAT_CODECHECK

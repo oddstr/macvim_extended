@@ -1316,3 +1316,11 @@
 #if (defined(HAVE_MIGEMO_H) && defined(HAVE_MIGEMO)) || defined(DYNAMIC_MIGEMO)
 # define USE_MIGEMO
 #endif
+
+/*
+ * +codecheck		On-the-fly code checking support.
+ * 			At least doesn't work on MacOSX.
+ */
+#if defined(UNIX) && defined(FEAT_BIG) && !defined(FEAT_CODECHECK) && !defined(MACOS_X)
+# define FEAT_CODECHECK
+#endif

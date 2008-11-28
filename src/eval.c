@@ -11684,6 +11684,9 @@ f_has(argvars, rettv)
 #ifdef FEAT_CMDHIST
 	"cmdline_hist",
 #endif
+#ifdef FEAT_CODECHECK
+	"codecheck",
+#endif
 #ifdef FEAT_COMMENTS
 	"comments",
 #endif

@@ -256,7 +256,9 @@ enum key_extra
     , KE_NOP		/* doesn't do something */
     , KE_FOCUSGAINED	/* focus gained */
     , KE_FOCUSLOST	/* focus lost */
+#ifdef FEAT_CODECHECK
     , KE_REDRAW		/* update the screen */
+#endif
 };
 
 /*
@@ -453,7 +455,9 @@ enum key_extra
 
 #define K_CURSORHOLD	TERMCAP2KEY(KS_EXTRA, KE_CURSORHOLD)
 
+#ifdef FEAT_CODECHECK
 #define K_REDRAW	TERMCAP2KEY(KS_EXTRA, KE_REDRAW)
+#endif
 
 /* Bits for modifier mask */
 /* 0x01 cannot be used, because the modifier must be 0x02 or higher */

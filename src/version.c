@@ -129,6 +129,11 @@ static char *(features[]) =
 #else
 	"-cmdline_info",
 #endif
+#ifdef FEAT_CODECHECK
+	"+codecheck",
+#else
+	"-codecheck",
+#endif
 #ifdef FEAT_COMMENTS
 	"+comments",
 #else

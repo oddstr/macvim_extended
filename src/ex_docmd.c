@@ -141,7 +141,11 @@ static char_u	*replace_makeprg __ARGS((exarg_T *eap, char_u *p, char_u **cmdline
 static char_u	*repl_cmdline __ARGS((exarg_T *eap, char_u *src, int srclen, char_u *repl, char_u **cmdlinep));
 static void	ex_highlight __ARGS((exarg_T *eap));
 static void	ex_colorscheme __ARGS((exarg_T *eap));
+#ifdef FEAT_CODECHECK
 static void	ex_codecheck __ARGS((exarg_T *eap));
+#else
+# define ex_codecheck		ex_ni
+#endif
 static void	ex_quit __ARGS((exarg_T *eap));
 static void	ex_cquit __ARGS((exarg_T *eap));
 static void	ex_quit_all __ARGS((exarg_T *eap));
@@ -6171,6 +6175,7 @@ ex_colorscheme(eap)
 	EMSG2(_("E185: Cannot find color scheme %s"), eap->arg);
 }
 
+#ifdef FEAT_CODECHECK
     static void
 ex_codecheck(eap)
     exarg_T	*eap;
@@ -6198,6 +6203,7 @@ ex_codecheck(eap)
 	    return;
    }
 }
+#endif
 
     static void
 ex_highlight(eap)

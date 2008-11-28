@@ -293,6 +293,7 @@ N  *+clientserver*	Unix and Win32: Remote invocation |clientserver|
 N  *+cmdline_compl*	command line completion |cmdline-completion|
 N  *+cmdline_hist*	command line history |cmdline-history|
 N  *+cmdline_info*	|'showcmd'| and |'ruler'|
+B  *+codecheck*		On-the-fly code checking support
 N  *+comments*		|'comments'| support
 N  *+cryptv*		encryption support |encryption|
 B  *+cscope*		|cscope| support

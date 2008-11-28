@@ -1381,7 +1381,6 @@ TAGS_INCL = *.h
 BASIC_SRC = \
 	buffer.c \
 	charset.c \
-	code_check.c \
 	diff.c \
 	digraph.c \
 	edit.c \
@@ -1457,7 +1456,6 @@ LINT_SRC = $(BASIC_SRC) $(GUI_SRC) $(HANGULIN_SRC) $(PYTHON_SRC) $(TCL_SRC) \
 OBJ = \
 	objects/buffer.o \
 	objects/charset.o \
-	objects/code_check.o \
 	objects/diff.o \
 	objects/digraph.o \
 	objects/edit.o \

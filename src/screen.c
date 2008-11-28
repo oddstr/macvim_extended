@@ -2731,6 +2731,7 @@ win_line(wp, lnum, startrow, endrow, nochange)
     extra_check = 0;
 #endif
 
+#ifdef FEAT_CODECHECK
     /* 
      * Highlight the line if this buffer is in the code_check.c watchlist,
      * and there is an associated error in the corresponding error/warning
@@ -2749,6 +2750,7 @@ win_line(wp, lnum, startrow, endrow, nochange)
 		break;
 	}
     }
+#endif
 
 #ifdef FEAT_SYN_HL
     if (syntax_present(wp->w_buffer) && !wp->w_buffer->b_syn_error)

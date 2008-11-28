@@ -1618,6 +1618,7 @@ vgetc()
 		c = K_IGNORE;
 	    }
 
+# ifdef FEAT_CODECHECK
 	    /* Handle redraw event here, this is used by CodeCheck.*/
 	    if (c == K_REDRAW) {
 		/* gui_update_screen() does not work because of 
@@ -1631,6 +1632,7 @@ vgetc()
 
 		c = K_IGNORE;
 	    }
+# endif
 
 	    /* Translate K_CSI to CSI.  The special key is only used to avoid
 	     * it being recognized as the start of a special key. */

@@ -5764,6 +5764,7 @@ clipboard		Compiled with 'clipboard' support.
 cmdline_compl		Compiled with |cmdline-completion| support.
 cmdline_hist		Compiled with |cmdline-history| support.
 cmdline_info		Compiled with 'showcmd' and 'ruler' support.
+codecheck		Compiled with on-the-fly code checking support.
 comments		Compiled with |'comments'| support.
 cryptv			Compiled with encryption support |encryption|.
 cscope			Compiled with |cscope| support.

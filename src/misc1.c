@@ -2675,10 +2675,12 @@ changed_lines(lnum, col, lnume, xtra)
 
     changed_common(lnum, col, lnume, xtra);
 
+#ifdef FEAT_CODECHECK
     /* update ew linenumbers for CodeCheck if the current buffer is 
      * being watched. */
     if (cc_is_buf_watched(curbuf))
 	cc_update_ew_lnums(curbuf, lnum, col, xtra);
+#endif
 }
 
     static void

@@ -1115,6 +1115,26 @@ if test "$enable_cscope" = "yes"; then
   AC_DEFINE(FEAT_CSCOPE)
 fi
 
+dnl FEAT_CODECHECK: currently doesn't work on MacOSX
+AC_MSG_CHECKING(--enable-codecheck argument)
+AC_ARG_ENABLE(codecheck,
+	[  --enable-codecheck      Include on-the-fly code checking.], ,
+	[enable_codecheck="no"])
+AC_MSG_RESULT($enable_codecheck)
+if test "$enable_codecheck" = "yes"; then
+  AC_MSG_CHECKING(whether we can compile with codechecking)
+  if test "`(uname) 2>/dev/null`" = Darwin; then
+    AC_MSG_RESULT([sorry, currently doesn't work on MacOSX.])
+  else
+    AC_MSG_RESULT(yes)
+    AC_DEFINE(FEAT_CODECHECK)
+    CODECHECK_SRC="code_check.c"
+    AC_SUBST(CODECHECK_SRC)
+    CODECHECK_OBJ="objects/code_check.c"
+    AC_SUBST(CODECHECK_OBJ)
+  fi
+fi
+
 dnl FEAT_GDB defined later
 AC_MSG_CHECKING(--enable-gdb argument)
 AC_ARG_ENABLE(gdb,
