@@ -613,6 +613,11 @@ static char *(features[]) =
 #else
 	"-toolbar",
 #endif
+#ifdef FEAT_UIMFEP
+	"+uimfep",
+#else
+	"-uimfep",
+#endif
 #ifdef FEAT_USR_CMDS
 	"+user_commands",
 #else

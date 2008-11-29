@@ -648,6 +648,17 @@
 #endif
 
 /*
+ * +uimfep		UIMFEP support.  Requires +multi_byte.
+ */
+#if defined(FEAT_BIG) && defined(FEAT_MBYTE) && !defined(FEAT_UIMFEP)
+# define FEAT_UIMFEP
+#endif
+
+#if defined(FEAT_UIMFEP) && !defined(FEAT_MBYTE)
+# define FEAT_MBYTE
+#endif
+
+/*
  * +guess_encode	autodetect encoding of japanese file
  */
 #if defined(FEAT_BIG) && defined(FEAT_MBYTE) && !defined(FEAT_MBYTE_IME)

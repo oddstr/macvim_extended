@@ -392,6 +392,7 @@ N  *+textobjects*	|text-objects| selection
    *+tgetent*		non-Unix only: able to use external termcap
 N  *+title*		Setting the window 'title' and 'icon'
 N  *+toolbar*		|gui-toolbar|
+B  *+uimfep*		UIMFEP support
 N  *+user_commands*	User-defined commands. |user-commands|
 N  *+viminfo*		|'viminfo'|
 N  *+vertsplit*		Vertically split windows |:vsplit|
