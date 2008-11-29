@@ -2,7 +2,7 @@
 " You can also use this as a start for your own set of menus.
 "
 " Maintainer:	Bram Moolenaar <Bram@vim.org>
-" Last Change:	2008 Jun 30
+" Last Change:	2008 Aug 22
 
 " Note that ":an" (short for ":anoremenu") is often used to make a menu work
 " in all modes and avoid side effects from mappings defined by the user.
@@ -17,7 +17,8 @@ if !exists("did_install_default_menus")
 let did_install_default_menus = 1
 
 
-if exists("v:lang") || &langmenu != ""
+" Localized menus currently not supported in MacVim
+if !has("gui_macvim") && (exists("v:lang") || &langmenu != "")
   " Try to find a menu translation file for the current language.
   if &langmenu != ""
     if &langmenu =~ "none"
@@ -789,8 +790,9 @@ func! s:BMMunge(fname, bnum)
   return name
 endfunc
 
-" When just starting Vim, load the buffer menu later
-if has("vim_starting")
+" When just starting Vim, load the buffer menu later.  Don't do this for MacVim
+" because it makes the menu flicker each time a new editor window is opened.
+if has("vim_starting") && !has("gui_macvim")
   augroup LoadBufferMenu
     au! VimEnter * if !exists("no_buffers_menu") | call <SID>BMShow() | endif
     au  VimEnter * au! LoadBufferMenu
@@ -1017,10 +1019,9 @@ else
   tmenu ToolBar.Copy		Copy to clipboard
   tmenu ToolBar.Paste		Paste from Clipboard
   if !has("gui_athena")
-    tmenu ToolBar.Find		Find...
+    tmenu ToolBar.Replace	Find / Replace...
     tmenu ToolBar.FindNext	Find Next
     tmenu ToolBar.FindPrev	Find Previous
-    tmenu ToolBar.Replace		Find / Replace...
   endif
   tmenu ToolBar.LoadSesn	Choose a session to load
   tmenu ToolBar.SaveSesn	Save current session

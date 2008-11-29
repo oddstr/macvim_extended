@@ -58,7 +58,7 @@ static int can_update_cursor = TRUE; /* can display the cursor */
 gui_start()
 {
     char_u	*old_term;
-#if defined(UNIX) && !defined(__BEOS__) && !defined(MACOS_X)
+#if defined(UNIX) && !defined(__BEOS__)
 # define MAY_FORK
     int		dofork = TRUE;
 #endif
@@ -117,10 +117,82 @@ gui_start()
      */
     if (gui.in_use && dofork)
     {
+	pid_t	pid = -1;
+
+# if defined MACOS_X
+        int i;
+
+        /* on os x, you have to exec after a fork, otherwise calls to
+         * frameworks will assert (and without corefoundation, you can't start
+         * the gui. what fun.). See CAVEATS at
+http://developer.apple.com/documentation/Darwin/Reference/ManPages/man2/fork.2.html
+         *
+         * Since we have to go through this anyways, we might as well use vfork.
+         * But: then we can't detach from our starting shell, so stick with
+         * fork.
+         *
+         * Kinda sucks to restart vim when doing :gui, so don't fork in that
+         * case (make sure gui.dofork is only set when interpreting argv, not
+         * when doing :gui. Currently, gui.dofork is set to false in ex_gui().
+         *
+         * Also doesn't work well if vim starts cscope (or some other
+         * subprocess I guess), because it's not transferred to the newly
+         * exec'd process, leaving an orphaned process (not a zombie process)
+         * behind. The Right Thing is to kill all our child processes before
+         * calling exec.
+         */
+
+        /* stolen from http://paste.lisp.org/display/50906 */
+        extern int *_NSGetArgc(void);
+        extern char ***_NSGetArgv(void);
+
+        int argc = *_NSGetArgc();
+        char ** argv = *_NSGetArgv();
+        char * newargv[argc+2];
+
+        newargv[0] = argv[0];
+
+        /*
+         * make sure "-f" is in front of potential "--remote" flags, else
+         * they would consume it.
+         */
+        newargv[1] = "-f";
+
+        for (i = 1; i < argc; i++) {
+            newargv[i + 1] = argv[i];
+        }
+        newargv[argc+1] = NULL;
+
+        /* shut down all the stuff we just started, just to start
+         * it again from the exec :-\ */
+        prepare_getout();
+
+        pid = fork();
+        switch(pid) {
+            case -1:
+#  ifndef NDEBUG
+                fprintf(stderr, "vim: Mac OS X workaround fork() failed!");
+#  endif
+                _exit(255);
+            case 0:
+                /* Child. */
+
+                /* make sure we survive our shell */
+                setsid();
+
+                 /* Restarts the vim process, will not return. */
+                execvp(argv[0], newargv);
+
+                /* if we come here, exec has failed. bail. */
+                _exit(255);
+            default:
+                /* Parent */
+                _exit(0);
+        }
+# else
 	int	pipefd[2];	/* pipe between parent and child */
 	int	pipe_error;
 	char	dummy;
-	pid_t	pid = -1;
 
 	/* Setup a pipe between the child and the parent, so that the parent
 	 * knows when the child has done the setsid() call and is allowed to
@@ -155,27 +227,30 @@ gui_start()
 	    _exit(0);
 	}
 
-# if defined(HAVE_SETSID) || defined(HAVE_SETPGID)
+#  if defined(HAVE_SETSID) || defined(HAVE_SETPGID)
 	/*
 	 * Change our process group.  On some systems/shells a CTRL-C in the
 	 * shell where Vim was started would otherwise kill gvim!
 	 */
 	if (pid == 0)	    /* child */
-#  if defined(HAVE_SETSID)
+#   if defined(HAVE_SETSID)
 	    (void)setsid();
-#  else
+#   else
 	    (void)setpgid(0, 0);
+#   endif
 #  endif
-# endif
 	if (!pipe_error)
 	{
 	    close(pipefd[0]);
 	    close(pipefd[1]);
 	}
 
-# if defined(FEAT_GUI_GNOME) && defined(FEAT_SESSION)
+
+#  if defined(FEAT_GUI_GNOME) && defined(FEAT_SESSION)
 	/* Tell the session manager our new PID */
 	gui_mch_forked();
+#  endif
+
 # endif
     }
 #else
@@ -268,7 +343,7 @@ gui_init_check()
 #  endif
 # endif
     gui.menu_is_active = TRUE;	    /* default: include menu */
-# ifndef FEAT_GUI_GTK
+# if !(defined(FEAT_GUI_GTK) || defined(FEAT_GUI_MACVIM))
     gui.menu_height = MENU_DEFAULT_HEIGHT;
     gui.menu_width = 0;
 # endif
@@ -636,7 +711,8 @@ gui_exit(rc)
 }
 
 #if defined(FEAT_GUI_GTK) || defined(FEAT_GUI_X11) || defined(FEAT_GUI_MSWIN) \
-	|| defined(FEAT_GUI_PHOTON) || defined(FEAT_GUI_MAC) || defined(PROTO)
+	|| defined(FEAT_GUI_PHOTON) || defined(FEAT_GUI_MAC) \
+        || defined(PROTO) || defined(FEAT_GUI_MACVIM)
 # define NEED_GUI_UPDATE_SCREEN 1
 /*
  * Called when the GUI shell is closed by the user.  If there are no changed
@@ -707,6 +783,17 @@ gui_init_font(font_list, fontset)
 	    {
 		/* Isolate one comma separated font name. */
 		(void)copy_option_part(&font_list, font_name, FONTLEN, ",");
+
+#if defined(FEAT_GUI_MACVIM)
+                /* The font dialog is modeless in Mac OS X, so when
+                 * gui_mch_init_font() is called with "*" it brings up the
+                 * dialog and returns immediately.  In this case we don't want
+                 * it to be called again with NULL, so return here.  */
+                if (STRCMP(font_name, "*") == 0) {
+                    gui_mch_init_font(font_name, FALSE);
+                    return FALSE;
+                }
+#endif
 
 		/* Careful!!!  The Win32 version of gui_mch_init_font(), when
 		 * called with "*" will change p_guifont to the selected font
@@ -1127,7 +1214,8 @@ gui_update_cursor(force, clear_selection)
     void
 gui_position_menu()
 {
-# if !defined(FEAT_GUI_GTK) && !defined(FEAT_GUI_MOTIF)
+# if !(defined(FEAT_GUI_GTK) || defined(FEAT_GUI_MOTIF) \
+        || defined(FEAT_GUI_MACVIM))
     if (gui.menu_is_active && gui.in_use)
 	gui_mch_set_menu_pos(0, 0, gui.menu_width, gui.menu_height);
 # endif
@@ -1156,7 +1244,8 @@ gui_position_components(total_width)
 	text_area_x += gui.scrollbar_width;
 
     text_area_y = 0;
-#if defined(FEAT_MENU) && !(defined(FEAT_GUI_GTK) || defined(FEAT_GUI_PHOTON))
+#if defined(FEAT_MENU) && !(defined(FEAT_GUI_GTK) || defined(FEAT_GUI_PHOTON) \
+        || defined(FEAT_GUI_MACVIM))
     gui.menu_width = total_width;
     if (gui.menu_is_active)
 	text_area_y += gui.menu_height;
@@ -1240,7 +1329,7 @@ gui_get_base_height()
     /* We can't take the sizes properly into account until anything is
      * realized.  Therefore we recalculate all the values here just before
      * setting the size. (--mdcki) */
-#else
+#elif !defined(FEAT_GUI_MACVIM)
 # ifdef FEAT_MENU
     if (gui.menu_is_active)
 	base_height += gui.menu_height;
@@ -2161,7 +2250,7 @@ gui_outstr_nowrap(s, len, flags, fg, bg, back)
     if (back != 0 && ((draw_flags & DRAW_BOLD) || (highlight_mask & HL_ITALIC)))
 	return FAIL;
 
-#if defined(RISCOS) || defined(HAVE_GTK2)
+#if defined(RISCOS) || defined(HAVE_GTK2) || defined(FEAT_GUI_MACVIM)
     /* If there's no italic font, then fake it.
      * For GTK2, we don't need a different font for italic style. */
     if (hl_mask_todo & HL_ITALIC)
@@ -2193,6 +2282,9 @@ gui_outstr_nowrap(s, len, flags, fg, bg, back)
 #ifdef HAVE_GTK2
     /* The value returned is the length in display cells */
     len = gui_gtk2_draw_string(gui.row, col, s, len, draw_flags);
+#elif defined(FEAT_GUI_MACVIM) && defined(FEAT_MBYTE)
+    /* The value returned is the length in display cells */
+    len = gui_macvim_draw_string(gui.row, col, s, len, draw_flags);
 #else
 # ifdef FEAT_MBYTE
     if (enc_utf8)
@@ -4077,7 +4169,8 @@ gui_update_scrollbars(force)
 	    /* Calculate height and position in pixels */
 	    h = (sb->height + sb->status_height) * gui.char_height;
 	    y = sb->top * gui.char_height + gui.border_offset;
-#if defined(FEAT_MENU) && !defined(FEAT_GUI_GTK) && !defined(FEAT_GUI_MOTIF) && !defined(FEAT_GUI_PHOTON)
+#if defined(FEAT_MENU) && !(defined(FEAT_GUI_GTK) || defined(FEAT_GUI_MOTIF) \
+        || defined(FEAT_GUI_PHOTON) || defined(FEAT_GUI_MACVIM))
 	    if (gui.menu_is_active)
 		y += gui.menu_height;
 #endif
@@ -4805,6 +4898,13 @@ ex_gui(eap)
     {
 	/* Clear the command.  Needed for when forking+exiting, to avoid part
 	 * of the argument ending up after the shell prompt. */
+
+#ifdef MACOS_X
+        /* os x doesn't really support fork(), so we can't fork of a gui
+         * in an already running vim. see gui_start() for more details.
+         */
+	gui.dofork = FALSE;
+#endif
 	msg_clr_eos_force();
 	gui_start();
     }
@@ -4813,7 +4913,8 @@ ex_gui(eap)
 }
 
 #if ((defined(FEAT_GUI_X11) || defined(FEAT_GUI_GTK) || defined(FEAT_GUI_W32) \
-	|| defined(FEAT_GUI_PHOTON)) && defined(FEAT_TOOLBAR)) || defined(PROTO)
+	|| defined(FEAT_GUI_PHOTON)) && defined(FEAT_TOOLBAR) \
+        || defined(FEAT_GUI_MACVIM)) || defined(PROTO)
 /*
  * This is shared between Athena, Motif and GTK.
  */
@@ -5158,7 +5259,8 @@ gui_do_findrepl(flags, find_text, repl_text, down)
 #if (defined(FEAT_DND) && defined(FEAT_GUI_GTK)) \
 	|| defined(FEAT_GUI_MSWIN) \
 	|| defined(FEAT_GUI_MAC) \
-	|| defined(PROTO)
+	|| defined(PROTO) \
+	|| defined(FEAT_GUI_MACVIM)
 
 #ifdef FEAT_WINDOWS
 static void gui_wingoto_xy __ARGS((int x, int y));

@@ -75,7 +75,8 @@
  * On some systems scrolling needs to be done right away instead of in the
  * main loop.
  */
-#if defined(FEAT_GUI_MSWIN) || defined(FEAT_GUI_MAC) || defined(HAVE_GTK2)
+#if defined(FEAT_GUI_MSWIN) || defined(FEAT_GUI_MAC) || defined(HAVE_GTK2) \
+    || defined(FEAT_GUI_MACVIM)
 # define USE_ON_FLY_SCROLL
 #endif
 
@@ -151,7 +152,7 @@
 #define DRAW_BOLD		0x02	/* draw bold text */
 #define DRAW_UNDERL		0x04	/* draw underline text */
 #define DRAW_UNDERC		0x08	/* draw undercurl text */
-#if defined(RISCOS) || defined(HAVE_GTK2)
+#if defined(RISCOS) || defined(HAVE_GTK2) || defined(FEAT_GUI_MACVIM)
 # define DRAW_ITALIC		0x10	/* draw italic text */
 #endif
 #define DRAW_CURSOR		0x20	/* drawing block cursor (win32) */
@@ -294,7 +295,7 @@ typedef struct Gui
     int		right_sbar_x;	    /* Calculated x coord for right scrollbar */
 
 #ifdef FEAT_MENU
-# ifndef FEAT_GUI_GTK
+# if !(defined(FEAT_GUI_GTK) || defined(FEAT_GUI_MACVIM))
     int		menu_height;	    /* Height of the menu bar */
     int		menu_width;	    /* Width of the menu bar */
 # endif
@@ -493,6 +494,10 @@ typedef struct Gui
     char	*rsrc_input_method;
     char	*rsrc_preedit_type_name;
 #endif
+
+#ifdef FEAT_GUI_SCROLL_WHEEL_FORCE
+    int		scroll_wheel_force;
+#endif
 } gui_T;
 
 extern gui_T gui;			/* this is defined in gui.c */
@@ -522,7 +527,7 @@ typedef enum
 # define FRD_MATCH_CASE	0x10	/* match case */
 #endif
 
-#ifdef HAVE_GTK2
+#ifdef HAVE_GTK2 || FEAT_GUI_MACVIM
 /*
  * Convenience macros to convert from 'encoding' to 'termencoding' and
  * vice versa.	If no conversion is necessary the passed-in pointer is

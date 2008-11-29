@@ -93,6 +93,7 @@
     || defined(FEAT_GUI_GTK) \
     || defined(FEAT_GUI_ATHENA) \
     || defined(FEAT_GUI_MAC) \
+    || defined(FEAT_GUI_MACVIM) \
     || defined(FEAT_GUI_W32) \
     || defined(FEAT_GUI_W16) \
     || defined(FEAT_GUI_PHOTON)
@@ -488,7 +489,8 @@ typedef unsigned long u8char_T;	    /* long should be 32 bits or more */
 #if defined(FEAT_XIM) \
     || defined(FEAT_UIMFEP) \
     || (defined(FEAT_GUI) && (defined(FEAT_MBYTE_IME) || defined(GLOBAL_IME))) \
-    || (defined(FEAT_GUI_MAC) && defined(FEAT_MBYTE))
+    || (defined(FEAT_GUI_MAC) && defined(FEAT_MBYTE)) \
+    || (defined(FEAT_GUI_MACVIM) && defined(FEAT_MBYTE))
 # define USE_IM_CONTROL
 #endif
 
@@ -721,6 +723,7 @@ extern char *(*dyn_libintl_textdomain)(const char *domainname);
 #define EXPAND_USER_DEFINED	30
 #define EXPAND_USER_LIST	31
 #define EXPAND_SHELLCMD		32
+#define EXPAND_MACACTION	33
 
 /* Values for exmode_active (0 is no exmode) */
 #define EXMODE_NORMAL		1

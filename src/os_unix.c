@@ -2049,7 +2049,8 @@ mch_settitle(title, icon)
     if (get_x11_windis() == OK)
 	type = 1;
 #else
-# if defined(FEAT_GUI_PHOTON) || defined(FEAT_GUI_MAC) || defined(FEAT_GUI_GTK)
+# if defined(FEAT_GUI_PHOTON) || defined(FEAT_GUI_MAC) \
+        || defined(FEAT_GUI_GTK) || defined(FEAT_GUI_MACVIM)
     if (gui.in_use)
 	type = 1;
 # endif
@@ -2078,7 +2079,8 @@ mch_settitle(title, icon)
 	    set_x11_title(title);		/* x11 */
 #endif
 #if defined(FEAT_GUI_GTK) \
-	|| defined(FEAT_GUI_PHOTON) || defined(FEAT_GUI_MAC)
+	|| defined(FEAT_GUI_PHOTON) || defined(FEAT_GUI_MAC) \
+        || defined(FEAT_GUI_MACVIM)
 	else
 	    gui_mch_settitle(title, icon);
 #endif
@@ -4042,7 +4044,7 @@ mch_call_shell(cmd, options)
 		    /* push stream discipline modules */
 		    if (options & SHELL_COOKED)
 			SetupSlavePTY(pty_slave_fd);
-#  ifdef TIOCSCTTY
+#  if defined(TIOCSCTTY) && !defined(FEAT_GUI_MACVIM)
 		    /* Try to become controlling tty (probably doesn't work,
 		     * unless run by root) */
 		    ioctl(pty_slave_fd, TIOCSCTTY, (char *)NULL);

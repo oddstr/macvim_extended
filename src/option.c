@@ -141,6 +141,9 @@
 #define PV_ML		OPT_BUF(BV_ML)
 #define PV_MOD		OPT_BUF(BV_MOD)
 #define PV_MPS		OPT_BUF(BV_MPS)
+#ifdef FEAT_GUI_MACVIM
+#define PV_MMTA		OPT_BUF(BV_MMTA)
+#endif
 #define PV_NF		OPT_BUF(BV_NF)
 #ifdef FEAT_OSFILETYPE
 # define PV_OFT		OPT_BUF(BV_OFT)
@@ -326,6 +329,9 @@ static int	p_lisp;
 #endif
 static int	p_ml;
 static int	p_ma;
+#ifdef FEAT_GUI_MACVIM
+static int	p_mmta;
+#endif
 static int	p_mod;
 static char_u	*p_mps;
 static char_u	*p_nf;
@@ -483,14 +489,16 @@ static struct vimoption
 #endif
 					    (char_u *)0L}},
     {"antialias",   "anti", P_BOOL|P_VI_DEF|P_VIM|P_RCLR,
-#if defined(FEAT_GUI) && defined(MACOS_X)
+#ifdef FEAT_ANTIALIAS
 			    (char_u *)&p_antialias, PV_NONE,
-			    {(char_u *)FALSE, (char_u *)FALSE}
 #else
 			    (char_u *)NULL, PV_NONE,
-			    {(char_u *)FALSE, (char_u *)FALSE}
 #endif
-			    },
+#if FEAT_GUI_MACVIM
+			    {(char_u *)TRUE, (char_u *)0L}},
+#else
+			    {(char_u *)FALSE, (char_u *)0L}},
+#endif
     {"arabic",	    "arab", P_BOOL|P_VI_DEF|P_VIM,
 #ifdef FEAT_ARABIC
 			    (char_u *)VAR_WIN, PV_ARAB,
@@ -1178,6 +1186,21 @@ static struct vimoption
 			    (char_u *)&p_gdp, PV_NONE,
 			    {(char_u *)"gdb", (char_u *)0L} },
 #endif
+    {"fullscreen",  "fu",   P_BOOL|P_NO_MKRC,
+#ifdef FEAT_FULLSCREEN
+			    (char_u *)&p_fullscreen, PV_NONE,
+#else
+			    (char_u *)NULL, PV_NONE,
+#endif
+			    {(char_u *)FALSE, (char_u *)0L}},
+    {"fuoptions",  "fuopt", P_STRING|P_COMMA|P_NODUP|P_VI_DEF,
+#ifdef FEAT_FULLSCREEN
+			    (char_u *)&p_fuoptions, PV_NONE,
+			    {(char_u *)"maxvert", (char_u *)0L}},
+#else
+			    (char_u *)NULL, PV_NONE,
+			    {(char_u *)NULL, (char_u *)0L}},
+#endif
     {"gdefault",    "gd",   P_BOOL|P_VI_DEF|P_VIM,
 			    (char_u *)&p_gd, PV_NONE,
 			    {(char_u *)FALSE, (char_u *)0L}},
@@ -1666,6 +1689,13 @@ static struct vimoption
 			    (char_u *)&p_macatsui, PV_NONE,
 			    {(char_u *)TRUE, (char_u *)0L}},
 #endif
+    {"macmeta",	    "mmta", P_BOOL|P_VI_DEF,
+#ifdef FEAT_GUI_MACVIM
+			    (char_u *)&p_mmta, PV_MMTA,
+#else
+			    (char_u *)NULL, PV_NONE,
+#endif
+			    {(char_u *)FALSE, (char_u *)0L}},
     {"magic",	    NULL,   P_BOOL|P_VI_DEF,
 			    (char_u *)&p_magic, PV_NONE,
 			    {(char_u *)TRUE, (char_u *)0L}},
@@ -2556,11 +2586,19 @@ static struct vimoption
 			    (char_u *)&p_toolbar, PV_NONE,
 			    {(char_u *)"icons,tooltips", (char_u *)0L}},
 #endif
-#if defined(FEAT_TOOLBAR) && defined(FEAT_GUI_GTK) && defined(HAVE_GTK2)
+#if defined(FEAT_TOOLBAR) && ((defined(FEAT_GUI_GTK) && defined(HAVE_GTK2)) \
+        || defined(FEAT_GUI_MACVIM))
     {"toolbariconsize",	"tbis", P_STRING|P_VI_DEF,
 			    (char_u *)&p_tbis, PV_NONE,
 			    {(char_u *)"small", (char_u *)0L}},
 #endif
+    {"transparency",   "transp",  P_NUM|P_VIM|P_RCLR,
+#ifdef FEAT_TRANSPARENCY
+			    (char_u *)&p_transp, PV_NONE,
+#else
+			    (char_u *)NULL, PV_NONE,
+#endif
+			    {(char_u *)0L, (char_u *)0L} },
     {"ttimeout",    NULL,   P_BOOL|P_VI_DEF|P_VIM,
 			    (char_u *)&p_ttimeout, PV_NONE,
 			    {(char_u *)FALSE, (char_u *)0L}},
@@ -2972,6 +3010,9 @@ static void fill_breakat_flags __ARGS((void));
 static int opt_strings_flags __ARGS((char_u *val, char **values, unsigned *flagp, int list));
 static int check_opt_strings __ARGS((char_u *val, char **values, int));
 static int check_opt_wim __ARGS((void));
+#ifdef FEAT_FULLSCREEN
+static int check_fuoptions __ARGS((char_u *, unsigned *, int *));
+#endif
 
 /*
  * Initialize the options, first part.
@@ -2984,6 +3025,9 @@ set_init_1()
     char_u	*p;
     int		opt_idx;
     long_u	n;
+#if defined(FEAT_GUI_MACVIM) && defined(FEAT_MBYTE)
+    int         did_mb_init;
+#endif
 
 #ifdef FEAT_LANGMAP
     langmap_init();
@@ -3338,7 +3382,22 @@ set_init_1()
 	    p_enc = vim_strsave((char_u *)"cp936");
 	    vim_free(p);
 	}
+#if defined(FEAT_GUI_MACVIM)
+	did_mb_init = (mb_init() == NULL);
+	if (!did_mb_init)
+	{
+            /* The encoding returned by enc_locale() was invalid, so fall back
+             * on using utf-8 as the default encoding in MacVim. */
+	    vim_free(p_enc);
+	    p_enc = vim_strsave((char_u *)"utf-8");
+	    did_mb_init = (mb_init() == NULL);
+	}
+
+	/* did_mb_init should always be TRUE, but check just in case. */
+	if (did_mb_init)
+#else
 	if (mb_init() == NULL)
+#endif
 	{
 	    opt_idx = findoption((char_u *)"encoding");
 	    if (opt_idx >= 0)
@@ -5062,6 +5121,10 @@ didset_options()
 #ifdef FEAT_FOLDING
     (void)opt_strings_flags(p_fdo, p_fdo_values, &fdo_flags, TRUE);
 #endif
+#ifdef FEAT_FULLSCREEN
+    (void)check_fuoptions(p_fuoptions, &fuoptions_flags, 
+            &fuoptions_bgcolor);
+#endif
     (void)opt_strings_flags(p_dy, p_dy_values, &dy_flags, TRUE);
 #ifdef FEAT_VIRTUALEDIT
     (void)opt_strings_flags(p_ve, p_ve_values, &ve_flags, TRUE);
@@ -5077,7 +5140,8 @@ didset_options()
 #if defined(FEAT_TOOLBAR) && !defined(FEAT_GUI_W32)
     (void)opt_strings_flags(p_toolbar, p_toolbar_values, &toolbar_flags, TRUE);
 #endif
-#if defined(FEAT_TOOLBAR) && defined(FEAT_GUI_GTK) && defined(HAVE_GTK2)
+#if defined(FEAT_TOOLBAR) && ((defined(FEAT_GUI_GTK) && defined(HAVE_GTK2)) \
+        || defined(FEAT_GUI_MACVIM))
     (void)opt_strings_flags(p_tbis, p_tbis_values, &tbis_flags, FALSE);
 #endif
 #ifdef FEAT_CMDWIN
@@ -5737,12 +5801,16 @@ did_set_string_option(opt_idx, varp, new_value_alloced, oldval, errbuf,
 	    }
 	}
 
-# if defined(FEAT_GUI_GTK) && defined(HAVE_GTK2)
+# if (defined(FEAT_GUI_GTK) && defined(HAVE_GTK2)) || defined(FEAT_GUI_MACVIM)
 	if (errmsg == NULL && varp == &p_tenc && gui.in_use)
 	{
-	    /* GTK+ 2 uses only a single encoding, and that is UTF-8. */
+	    /* MacVim and GTK+ 2 GUIs force 'tenc' to UTF-8. */
 	    if (STRCMP(p_tenc, "utf-8") != 0)
+#  if defined(FEAT_GUI_MACVIM)
+		errmsg = (char_u *)N_("E617: Cannot be changed in MacVim");
+#  else
 		errmsg = (char_u *)N_("E617: Cannot be changed in the GTK+ 2 GUI");
+#  endif
 	}
 # endif
 
@@ -6085,7 +6153,8 @@ did_set_string_option(opt_idx, varp, new_value_alloced, oldval, errbuf,
 # endif
 	    if (p != NULL && gui_init_font(p_guifont, FALSE) != OK)
 	    {
-# if defined(FEAT_GUI_MSWIN) || defined(FEAT_GUI_PHOTON)
+# if defined(FEAT_GUI_MSWIN) || defined(FEAT_GUI_PHOTON) \
+                || defined(FEAT_GUI_MACVIM)
 		if (STRCMP(p_guifont, "*") == 0)
 		{
 		    /* Dialog was cancelled: Keep the old value without giving
@@ -6466,8 +6535,9 @@ did_set_string_option(opt_idx, varp, new_value_alloced, oldval, errbuf,
     }
 #endif
 
-#if defined(FEAT_TOOLBAR) && defined(FEAT_GUI_GTK) && defined(HAVE_GTK2)
-    /* 'toolbariconsize': GTK+ 2 only */
+#if defined(FEAT_TOOLBAR) && ((defined(FEAT_GUI_GTK) && defined(HAVE_GTK2)) \
+        || defined(FEAT_GUI_MACVIM))
+    /* 'toolbariconsize': GTK+ 2 and MacVim only */
     else if (varp == &p_tbis)
     {
 	if (opt_strings_flags(p_tbis, p_tbis_values, &tbis_flags, FALSE) != OK)
@@ -6582,6 +6652,16 @@ did_set_string_option(opt_idx, varp, new_value_alloced, oldval, errbuf,
     }
 #endif
 
+#ifdef FEAT_FULLSCREEN
+    /* 'fuoptions' */
+    else if (varp == &p_fuoptions)
+    {
+        if (check_fuoptions(p_fuoptions, &fuoptions_flags, 
+                    &fuoptions_bgcolor) != OK)
+	    errmsg = e_invarg;
+    }
+#endif
+    
 #ifdef FEAT_VIRTUALEDIT
     /* 'virtualedit' */
     else if (varp == &p_ve)
@@ -7289,6 +7369,40 @@ set_bool_option(opt_idx, varp, value, opt_flags)
 	set_fileformat(curbuf->b_p_tx ? EOL_DOS : EOL_UNIX, opt_flags);
     }
 
+#ifdef FEAT_FULLSCREEN
+    /* when 'fullscreen' changes, forward it to the gui */
+    else if ((int *)varp == &p_fullscreen && gui.in_use)
+    {
+	if (p_fullscreen && !old_value)
+	{
+            guicolor_T fg, bg;
+            if (fuoptions_flags & FUOPT_BGCOLOR_HLGROUP) 
+            {
+                /* Find out background color from colorscheme 
+                 * via highlight group id */
+                syn_id2colors(fuoptions_bgcolor, &fg, &bg);
+            } 
+            else
+            {
+                /* set explicit background color */
+                bg = fuoptions_bgcolor;
+            }
+            gui_mch_enter_fullscreen(fuoptions_flags, bg);
+	}
+        else if (!p_fullscreen && old_value)
+	{
+	    gui_mch_leave_fullscreen();
+	}
+    }
+#endif
+
+#if defined(FEAT_ANTIALIAS) && defined(FEAT_GUI_MACVIM)
+    else if ((int *)varp == &p_antialias)
+    {
+	gui_macvim_set_antialias(p_antialias);
+    }
+#endif
+
     /* when 'textauto' is set or reset also change 'fileformats' */
     else if ((int *)varp == &p_ta)
 	set_string_option_direct((char_u *)"ffs", -1,
@@ -7929,6 +8043,20 @@ set_num_option(opt_idx, varp, value, errbuf, errbuflen, opt_flags)
 	    curwin->w_p_nuw = 10;
 	}
 	curwin->w_nrwidth_line_count = 0;
+    }
+#endif
+
+#if defined(FEAT_TRANSPARENCY)
+    /* 'transparency' is a number between 0 and 100 */
+    else if (pp == &p_transp)
+    {
+	if (p_transp < 0 || p_transp > 100)
+	{
+	    errmsg = e_invarg;
+            p_transp = old_value;
+	}
+        else if (gui.in_use)
+            gui_mch_new_colors();
     }
 #endif
 
@@ -9184,6 +9312,9 @@ get_varp(p)
 #endif
 	case PV_ML:	return (char_u *)&(curbuf->b_p_ml);
 	case PV_MPS:	return (char_u *)&(curbuf->b_p_mps);
+#ifdef FEAT_GUI_MACVIM
+	case PV_MMTA:	return (char_u *)&(curbuf->b_p_mmta);
+#endif
 	case PV_MA:	return (char_u *)&(curbuf->b_p_ma);
 #ifdef USE_MIGEMO
 	case PV_MIG:	return (char_u *)&(curbuf->b_p_migemo);
@@ -9559,6 +9690,9 @@ buf_copy_options(buf, flags)
 #ifdef FEAT_KEYMAP
 	    buf->b_p_keymap = vim_strsave(p_keymap);
 	    buf->b_kmap_state |= KEYMAP_INIT;
+#endif
+#ifdef FEAT_GUI_MACVIM
+	    buf->b_p_mmta = p_mmta;
 #endif
 	    /* This isn't really an option, but copying the langmap and IME
 	     * state from the current buffer is better than resetting it. */
@@ -10748,3 +10882,96 @@ check_ff_value(p)
 {
     return check_opt_strings(p, p_ff_values, FALSE);
 }
+
+#ifdef FEAT_FULLSCREEN
+/*
+ * Read the 'fuoptions' option, set fuoptions_flags and 
+ * fuoptions_bgcolor.
+ */
+    static int
+check_fuoptions(p_fuoptions, flags, bgcolor)
+    char_u	*p_fuoptions;	/* fuoptions string */
+    unsigned    *flags;         /* fuoptions flags */
+    int         *bgcolor;       /* background highlight group id */
+{
+    unsigned 	new_fuoptions_flags;
+    int         new_fuoptions_bgcolor;
+    char_u      *p;
+    char_u      hg_term;        /* character terminating
+                                   highlight group string in 
+                                   'background' option' */
+    int		i,j,k;
+
+    new_fuoptions_flags = 0;
+    new_fuoptions_bgcolor = 0xFF000000;
+
+    for (p = p_fuoptions; *p; ++p)
+    {
+	for (i = 0; ASCII_ISALPHA(p[i]); ++i)
+	    ;
+	if (p[i] != NUL && p[i] != ',' && p[i] != ':')
+	    return FAIL;
+        if (i == 10 && STRNCMP(p, "background", 10) == 0) 
+        {
+            if (p[i] != ':') return FAIL;
+            i++;
+            if (p[i] == NUL) return FAIL;
+            if (p[i] == '#')
+            {
+                /* explicit color (#aarrggbb) */
+                i++;
+                for (j = i; j < i+8 && vim_isxdigit(p[j]); ++j)
+                    ;
+                if (j < i+8)
+                    return FAIL;    /* less than 8 digits */
+                if (p[j] != NUL && p[j] != ',')
+                    return FAIL; 
+                new_fuoptions_bgcolor = 0;
+                for (k = 0; k < 8; k++) 
+                    new_fuoptions_bgcolor = new_fuoptions_bgcolor * 16 +
+                        hex2nr(p[i+k]);
+                i = j;
+                /* mark bgcolor as an explicit argb color */
+                new_fuoptions_flags &= ~FUOPT_BGCOLOR_HLGROUP;
+            } 
+            else
+            {
+                /* highlight group name */
+                for (j = i; ASCII_ISALPHA(p[j]); ++j)
+                    ;
+                if (p[j] != NUL && p[j] != ',')
+                    return FAIL;
+                hg_term = p[j];
+                p[j] = NUL;     /* temporarily terminate string */
+                new_fuoptions_bgcolor = syn_name2id((char_u*)(p+i));
+                p[j] = hg_term; /* restore string */
+                if (! new_fuoptions_bgcolor) 
+                    return FAIL;
+                i = j;
+                /* mark bgcolor as highlight group id */
+                new_fuoptions_flags |= FUOPT_BGCOLOR_HLGROUP;
+            }
+        }
+        else if (i == 7 && STRNCMP(p, "maxhorz", 7) == 0)
+	    new_fuoptions_flags |= FUOPT_MAXHORZ;
+        else if (i == 7 && STRNCMP(p, "maxvert", 7) == 0)
+	    new_fuoptions_flags |= FUOPT_MAXVERT;
+	else
+	    return FAIL;
+	p += i;
+	if (*p == NUL)
+	    break;
+        if (*p == ':')
+            return FAIL;
+    }
+
+    *flags = new_fuoptions_flags;
+    *bgcolor = new_fuoptions_bgcolor;
+
+    /* Let the GUI know, in case the background color has changed. */
+    gui_mch_fuopt_update();
+
+    return OK;
+}
+#endif
+

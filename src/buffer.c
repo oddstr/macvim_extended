@@ -466,6 +466,10 @@ close_buffer(win, buf, action)
     if (usingNetbeans)
 	netbeans_file_closed(buf);
 #endif
+#ifdef FEAT_ODB_EDITOR
+    odb_buffer_close(buf);
+#endif
+
     /* Change directories when the 'acd' option is set. */
     DO_AUTOCHDIR
 
@@ -3152,6 +3156,10 @@ maketitle()
 	return;
     }
 
+#ifdef FEAT_GUI_MACVIM
+    gui_macvim_update_modified_flag();
+#endif
+
     need_maketitle = FALSE;
     if (!p_title && !p_icon)
 	return;
@@ -3245,7 +3253,9 @@ maketitle()
 		STRCAT(buf, ")");
 	    }
 
+#ifndef FEAT_GUI_MACVIM
 	    append_arg_number(curwin, buf, FALSE, IOSIZE);
+#endif
 
 #if defined(FEAT_CLIENTSERVER)
 	    if (serverName != NULL)

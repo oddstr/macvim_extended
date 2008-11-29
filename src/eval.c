@@ -5871,7 +5871,7 @@ list_equal(l1, l2, ic)
     return item1 == NULL && item2 == NULL;
 }
 
-#if defined(FEAT_PYTHON) || defined(FEAT_LUA) || defined(PROTO)
+#if defined(FEAT_PYTHON) || defined(FEAT_LUA) || defined(PROTO) || defined(FEAT_GUI_MACVIM)
 /*
  * Return the dictitem that an entry in a hashtable points to.
  */
@@ -11751,6 +11751,9 @@ f_has(argvars, rettv)
 #if !defined(USE_SYSTEM) && defined(UNIX)
 	"fork",
 #endif
+#ifdef FEAT_FULLSCREEN
+	"fullscreen",
+#endif
 #ifdef FEAT_GDB
 	"gdb",
 #endif
@@ -11781,6 +11784,9 @@ f_has(argvars, rettv)
 #endif
 #ifdef FEAT_GUI_MAC
 	"gui_mac",
+#endif
+#ifdef FEAT_GUI_MACVIM
+	"gui_macvim",
 #endif
 #ifdef FEAT_GUI_MOTIF
 	"gui_motif",
@@ -11957,6 +11963,9 @@ f_has(argvars, rettv)
 #ifdef FEAT_NETBEANS_INTG
 	"netbeans_intg",
 #endif
+#ifdef FEAT_ODB_EDITOR
+	"odbeditor",
+#endif
 #ifdef FEAT_SPELL
 	"spell",
 #endif
@@ -11997,6 +12006,9 @@ f_has(argvars, rettv)
 #endif
 #ifdef FEAT_TOOLBAR
 	"toolbar",
+#endif
+#ifdef FEAT_TRANSPARENCY
+	"transparency",
 #endif
 #ifdef FEAT_UIMFEP
 	"uimfep",
@@ -14355,8 +14367,10 @@ remote_common(argvars, rettv, expr)
     char_u	buf[NUMBUFLEN];
 # ifdef WIN32
     HWND	w;
-# else
+# elif defined(FEAT_X11)
     Window	w;
+# elif defined(MAC_CLIENTSERVER)
+    int         w;      // This is the port number ('w' is a bit confusing)
 # endif
 
     if (check_restricted() || check_secure())
@@ -14373,9 +14387,11 @@ remote_common(argvars, rettv, expr)
     keys = get_tv_string_buf(&argvars[1], buf);
 # ifdef WIN32
     if (serverSendToVim(server_name, keys, &r, &w, expr, TRUE) < 0)
-# else
+# elif defined(FEAT_X11)
     if (serverSendToVim(X_DISPLAY, server_name, keys, &r, &w, expr, 0, TRUE)
 									  < 0)
+# elif defined(MAC_CLIENTSERVER)
+    if (serverSendToVim(server_name, keys, &r, &w, expr, TRUE) < 0)
 # endif
     {
 	if (r != NULL)
@@ -14439,7 +14455,7 @@ f_remote_foreground(argvars, rettv)
 	if (server_name != NULL)
 	    serverForeground(server_name);
     }
-# else
+# elif defined(FEAT_X11) || defined(MAC_CLIENTSERVER)
     /* Send a foreground() expression to the server. */
     argvars[1].v_type = VAR_STRING;
     argvars[1].vval.v_string = vim_strsave((char_u *)"foreground()");
@@ -14484,13 +14500,15 @@ f_remote_peek(argvars, rettv)
 	s = serverGetReply((HWND)n, FALSE, FALSE, FALSE);
 	rettv->vval.v_number = (s != NULL);
     }
-# else
+# elif defined(FEAT_X11)
     rettv->vval.v_number = 0;
     if (check_connection() == FAIL)
 	return;
 
     rettv->vval.v_number = serverPeekReply(X_DISPLAY,
 						serverStrToWin(serverid), &s);
+# elif defined(MAC_CLIENTSERVER)
+    rettv->vval.v_number = serverPeekReply(serverStrToPort(serverid), &s);
 # endif
 
     if (argvars[1].v_type != VAR_UNKNOWN && rettv->vval.v_number > 0)
@@ -14530,9 +14548,11 @@ f_remote_read(argvars, rettv)
 	if (n != 0)
 	    r = serverGetReply((HWND)n, FALSE, TRUE, TRUE);
 	if (r == NULL)
-# else
+# elif defined(FEAT_X11)
 	if (check_connection() == FAIL || serverReadReply(X_DISPLAY,
 		serverStrToWin(serverid), &r, FALSE) < 0)
+# elif defined(MAC_CLIENTSERVER)
+        if (serverReadReply(serverStrToPort(serverid), &r) < 0)
 # endif
 	    EMSG(_("E277: Unable to read a server reply"));
     }
@@ -15532,9 +15552,9 @@ f_serverlist(argvars, rettv)
     char_u	*r = NULL;
 
 #ifdef FEAT_CLIENTSERVER
-# ifdef WIN32
+# if defined(WIN32) || defined(MAC_CLIENTSERVER)
     r = serverGetVimNames();
-# else
+# elif defined(FEAT_X11)
     make_connection();
     if (X_DISPLAY != NULL)
 	r = serverGetVimNames(X_DISPLAY);
