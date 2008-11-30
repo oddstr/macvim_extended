@@ -1178,14 +1178,6 @@ static struct vimoption
 			    {(char_u *)FALSE, (char_u *)0L}
 #endif
 			    },
-#ifdef FEAT_GDB
-    {"gdbvariables", "gdbvar",P_STRING|P_EXPAND|P_VI_DEF|P_SECURE,
-			    (char_u *)&p_gvar, PV_NONE,
-			    {(char_u *)"gdb-variables", (char_u *)0L} },
-    {"gdbprg",	    "gdp",  P_STRING|P_EXPAND|P_VI_DEF|P_SECURE,
-			    (char_u *)&p_gdp, PV_NONE,
-			    {(char_u *)"gdb", (char_u *)0L} },
-#endif
     {"fullscreen",  "fu",   P_BOOL|P_NO_MKRC,
 #ifdef FEAT_FULLSCREEN
 			    (char_u *)&p_fullscreen, PV_NONE,
@@ -1200,6 +1192,14 @@ static struct vimoption
 #else
 			    (char_u *)NULL, PV_NONE,
 			    {(char_u *)NULL, (char_u *)0L}},
+#endif
+#ifdef FEAT_GDB
+    {"gdbvariables", "gdbvar",P_STRING|P_EXPAND|P_VI_DEF|P_SECURE,
+			    (char_u *)&p_gvar, PV_NONE,
+			    {(char_u *)"gdb-variables", (char_u *)0L} },
+    {"gdbprg",	    "gdp",  P_STRING|P_EXPAND|P_VI_DEF|P_SECURE,
+			    (char_u *)&p_gdp, PV_NONE,
+			    {(char_u *)"gdb", (char_u *)0L} },
 #endif
     {"gdefault",    "gd",   P_BOOL|P_VI_DEF|P_VIM,
 			    (char_u *)&p_gd, PV_NONE,
