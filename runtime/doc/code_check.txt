@@ -6,13 +6,13 @@
 
 CodeCheck [version 0.1]			*codecheck* *CodeCheck* *code_check*
 
-1. What is CodeCheck			|intro|
+1. What is CodeCheck			|codecheck-intro|
 2. Using :ccadd				|ccadd|
 3. Using :ccrem				|ccrem|
-4. Progress				|progress|
+4. Progress				|codecheck-progress|
 
 ==============================================================================
-1. What is CodeCheck						*intro*
+1. What is CodeCheck					*codecheck-intro*
 
 *** CodeCheck is sponsored by Google under Google Summer of Code program,
 mentored by Bram Moolenaar and implemented by Birgi Tamersoy. ***
@@ -51,7 +51,7 @@ Usage:
 				the command is simply ignored.
 
 ==============================================================================
-4. Progress							*progress*
+4. Progress						*codecheck-progress*
 
 As of today (last change date) the maintainer works on the following issues:
 - Porting to Windows.
