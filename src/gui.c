@@ -211,7 +211,7 @@ http://developer.apple.com/documentation/Darwin/Reference/ManPages/man2/fork.2.h
 		/* The read returns when the child closes the pipe (or when
 		 * the child dies for some reason). */
 		close(pipefd[1]);
-		(void)read(pipefd[0], &dummy, (size_t)1);
+		ignored = (int)read(pipefd[0], &dummy, (size_t)1);
 		close(pipefd[0]);
 	    }
 
