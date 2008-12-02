@@ -1,111 +1,110 @@
 " Vim syntax file
-" Language:	GDB command files
-" Maintainer:	Claudio Fleiner <claudio@fleiner.com>
-" URL:		http://www.fleiner.com/vim/syntax/gdb.vim
-" Last Change:	2003 Jan 04
+" Language:	gdb syntax file
+" Maintainer:	<xdegaye at users dot sourceforge dot net>
+" Last Change:	Apr 3 2004
 
-" For version 5.x: Clear all syntax items
-" For version 6.x: Quit when a syntax file was already loaded
-if version < 600
-  syntax clear
-elseif exists("b:current_syntax")
-  finish
+if exists("b:current_syntax")
+    finish
 endif
 
-syn keyword gdbInfo contained address architecture args breakpoints catch common copying dcache
-syn keyword gdbInfo contained display files float frame functions handle line
-syn keyword gdbInfo contained locals program registers scope set sharedlibrary signals
-syn keyword gdbInfo contained source sources stack symbol target terminal threads
-syn keyword gdbInfo contained syn keyword tracepoints types udot variables warranty watchpoints
-syn match gdbInfo contained "all-registers"
+setlocal iskeyword=a-z,A-Z,48-57,-
 
+syn keyword Cmd contained
+	\ ac[tions] add-sh[ared-symbol-files] add-sy[mbol-file] adv[ance] app[end]
+	\ apr[opos] at[tach] aw[atch] ba[cktrace] b[reak] bt cal[l] cat[ch] cd
+	\ cl[ear] col[lect] comm[ands] compa[re-sections] compl[ete] cond[ition]
+	\ c cont[inue] cor[e-file] cr[eatevar] def[ine] d del[ete] det[ach] dir[ectory]
+	\ disab[le] disas[semble] disp[lay] dl[l-symbols] doc[ument] don[t-repeat]
+	\ down down-[silently] du[mp] ec[ho] ed[it] ena[ble] end ex[ec-file]
+	\ fil[e] fin[ish] fl[ushregs] fo[rward-search] f[rame] g[enerate-core-file]
+	\ ha[ndle] hb[reak] he[lp] if ig[nore] i inf[o] ins[pect] interp[reter-exec]
+	\ interr[upt] j[ump] k[ill] l[ist] lo[ad] mac[ro] mai[ntenance] mak[e]
+	\ me[m] mo[nitor] n next nexti ni no[sharedlibrary] ou[tput] ov[erlay]
+	\ pas[scount] pat[h] p print printf pt[ype] pw[d] Quit q[uit] rb[reak]
+	\ rem[ote] res[tore] ret[urn] rev[erse-search] r[un] rw[atch]
+	\ sa[ve-tracepoints] sea[rch] sec[tion] sel[ect-frame] set sha[redlibrary]
+	\ sho[w] si sig[nal] so[urce] s step stepi stepp[ing] sto[p] sy[mbol-file]
+	\ ta[rget] tb[reak] tc[atch] td[ump] tf[ind] thb[reak] t thr[ead] tp
+	\ tr[ace] tstar[t] tstat[us] tsto[p] tt[y] u und[isplay] uns[et] unt[il] up
+	\ up-[silently] wa[tch] wha[tis] whe[re] while while-[stepping] ws x
 
-syn keyword gdbStatement contained actions apply attach awatch backtrace break bt call catch cd clear collect commands
-syn keyword gdbStatement contained complete condition continue delete detach directory disable disassemble display down
-syn keyword gdbStatement contained echo else enable end file finish frame handle hbreak help if ignore
-syn keyword gdbStatement contained inspect jump kill list load maintenance make next nexti ni output overlay
-syn keyword gdbStatement contained passcount path print printf ptype pwd quit rbreak remote return run rwatch
-syn keyword gdbStatement contained search section set sharedlibrary shell show si signal source step stepi stepping
-syn keyword gdbStatement contained stop target tbreak tdump tfind thbreak thread tp trace tstart tstatus tstop
-syn keyword gdbStatement contained tty undisplay unset until up watch whatis where while ws x
-syn match gdbFuncDef "\<define\>.*"
-syn match gdbStatmentContainer "^\s*\S\+" contains=gdbStatement,gdbFuncDef
-syn match gdbStatement "^\s*info" nextgroup=gdbInfo skipwhite skipempty
+syn keyword Info contained
+	\ ad[dress] al[l-registers] ar[gs] b[reakpoints] ca[tch] com[mon]
+	\ cop[ying] dc[ache] di[splay] dl[l] e[xtensions] fi[les] fl[oat]
+	\ fr[ame] fu[nctions] h[andle] li[ne] lo[cals] ma[cro] me[m] proc
+	\ prog[ram] reg[isters] rem[ote-process] sc[ope] se[t] sh[aredlibrary]
+	\ si[gnals] source sources st[ack] sy[mbol] ta[rget] te[rminal]
+	\ th[reads] tr[acepoints] ty[pes] u[dot] va[riables] ve[ctor] w3[2]
+	\ war[ranty] wat[chpoints]
 
-" some commonly used abreviations
-syn keyword gdbStatement c disp undisp disas p
+syn keyword ShwSet contained
+	\ an[notate] archd[ebug] archi[tecture] arg[s] au[to-solib-add]
+	\ b[acktrace-below-main] can[-use-hw-watchpoints] cas[e-sensitive]
+	\ cha[rset] che[ck] coe[rce-float-to-double] comp[laints]
+	\ conf[irm] debug debugexc[eptions] debugexe[c]
+	\ debugev[ents] debugm[emory] debugv[arobj] debug-[file-directory]
+	\ dem[angle-style] dis[assembly-flavor] do[wnload-write-size]
+	\ ed[iting] end[ian] env[ironment] ev[entdebug] exe[c-done-display]
+	\ f[ollow-fork-mode] g[nutarget] he[ight] hi[story] i[nput-radix]
+	\ la[nguage] li[stsize] m[ax-user-call-depth] new-c[onsole] new-g[roup]
+	\ op[aque-type-resolution] os osa[bi] ou[tput-radix] ov[erload-resolution]
+	\ pag[ination] pri[nt] prompt prompt-[escape-char] ra[dix]
+	\ remote remotea[ddresssize] remoteba[ud] remotebr[eak] remotec[ache]
+	\ remotedeb[ug] remotedev[ice] remotelogb[ase] remotelogf[ile]
+	\ remotet[imeout] remotew[ritesize] sc[heduler-locking] se[rial]
+	\ solib-a[bsolute-prefix] solib-s[earch-path] ste[p-mode]
+	\ sto[p-on-solib-events] sy[mbol-reloading] str[uct-convention]
+	\ t[rust-readonly-sections] un[windonsignal]
+	\ verb[ose] wat[chdog] wi[dth] wr[ite]
 
-syn region gdbDocument matchgroup=gdbFuncDef start="\<document\>.*$" matchgroup=gdbFuncDef end="^end$"
+syn keyword Shw contained
+	\ comm[ands] conv[enience] cop[ying] dir[ectories] pat[hs] us[er] va[lues]
+	\ vers[ion] war[ranty]
 
-syn match gdbStatement "\<add-shared-symbol-files\>"
-syn match gdbStatement "\<add-symbol-file\>"
-syn match gdbStatement "\<core-file\>"
-syn match gdbStatement "\<dont-repeat\>"
-syn match gdbStatement "\<down-silently\>"
-syn match gdbStatement "\<exec-file\>"
-syn match gdbStatement "\<forward-search\>"
-syn match gdbStatement "\<reverse-search\>"
-syn match gdbStatement "\<save-tracepoints\>"
-syn match gdbStatement "\<select-frame\>"
-syn match gdbStatement "\<symbol-file\>"
-syn match gdbStatement "\<up-silently\>"
-syn match gdbStatement "\<while-stepping\>"
+syn keyword St contained ext[ension-language] va[riable]
 
-syn keyword gdbSet annotate architecture args check complaints confirm editing endian
-syn keyword gdbSet environment gnutarget height history language listsize print prompt
-syn keyword gdbSet radix remotebaud remotebreak remotecache remotedebug remotedevice remotelogbase
-syn keyword gdbSet remotelogfile remotetimeout remotewritesize targetdebug variable verbose
-syn keyword gdbSet watchdog width write
-syn match gdbSet "\<auto-solib-add\>"
-syn match gdbSet "\<solib-absolute-prefix\>"
-syn match gdbSet "\<solib-search-path\>"
-syn match gdbSet "\<stop-on-solib-events\>"
-syn match gdbSet "\<symbol-reloading\>"
-syn match gdbSet "\<input-radix\>"
-syn match gdbSet "\<demangle-style\>"
-syn match gdbSet "\<output-radix\>"
+if ! exists("b:current_syntax") || b:current_syntax != "gdbvim"
+    syn match Command display "^\s*\k\+"
+	\ contains=Cmd
 
-syn match gdbComment "^\s*#.*"
+    syn match Help display "^\s*he\%[lp]\s*\k\+"
+	\ contains=Cmd
 
-syn match gdbVariable "\$\K\k*"
+    syn match Information display "\(^\s*inf\%[o]\s*\)\@<=\k\+"
+	\ contains=Info
 
-" Strings and constants
-syn region  gdbString		start=+"+  skip=+\\\\\|\\"+  end=+"+
-syn match   gdbCharacter	"'[^']*'" contains=gdbSpecialChar,gdbSpecialCharError
-syn match   gdbCharacter	"'\\''" contains=gdbSpecialChar
-syn match   gdbCharacter	"'[^\\]'"
-syn match   gdbNumber		"\<[0-9_]\+\>"
-syn match   gdbNumber		"\<0x[0-9a-fA-F_]\+\>"
+    syn match Show display "\(^\s*sho\%[w]\s*\)\@<=\k\+"
+	\ contains=ShwSet,Shw
 
-
-if !exists("gdb_minlines")
-  let gdb_minlines = 10
+    syn match Set display "\(^\s*set\s*\)\@<=\k\+"
+	\ contains=ShwSet,St
 endif
-exec "syn sync ccomment gdbComment minlines=" . gdb_minlines
 
-" Define the default highlighting.
-" For version 5.7 and earlier: only when not done already
-" For version 5.8 and later: only when an item doesn't have highlighting yet
-if version >= 508 || !exists("did_gdb_syn_inits")
-  if version < 508
-    let did_gdb_syn_inits = 1
-    command -nargs=+ HiLink hi link <args>
-  else
-    command -nargs=+ HiLink hi def link <args>
-  endif
-  HiLink gdbFuncDef	Function
-  HiLink gdbComment	Comment
-  HiLink gdbStatement	Statement
-  HiLink gdbString	String
-  HiLink gdbCharacter	Character
-  HiLink gdbVariable	Identifier
-  HiLink gdbSet		Constant
-  HiLink gdbInfo	Type
-  HiLink gdbDocument	Special
-  HiLink gdbNumber	Number
-  delcommand HiLink
-endif
+syn match gdbChar display "'[^`']\+'"
+syn match gdbVar display "\$\d\+\>"
+syn match gdbStr display /""\|".\{-}[^\\]"/
+
+syn case ignore
+syn match cNumbers display transparent "\<\d\|\.\d\|[+-] *\d\|[+-] *\.\d" contains=cNumber,cFloat
+
+syn match cNumber display contained "[ +-]*\x\+\>"
+
+syn match cFloat display contained "[ +-]*\d\+f\>"
+syn match cFloat display contained "[ +-]*\d\+\.\d*\(e[-+]\=\d\+\)\=[fl]\=\>"
+syn match cFloat display contained "[ +-]*\.\d\+\(e[-+]\=\d\+\)\=[fl]\=\>"
+syn match cFloat display contained "[ +-]*\d\+e[-+]\=\d\+[fl]\=\>"
+syn case match
+
+high def link Cmd	    Statement
+high def link Info	    Type
+high def link ShwSet	    Type
+high def link Shw	    Type
+high def link St	    Type
+high def link gdbStr	    String
+high def link gdbChar	    Character
+high def link gdbVar	    Identifier
+high def link cNumber	    Number
+high def link cFloat	    Float
 
 let b:current_syntax = "gdb"
 
-" vim: ts=8

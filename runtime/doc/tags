@@ -43,6 +43,7 @@ $VIMRUNTIME	starting.txt	/*$VIMRUNTIME*
 'ari'	options.txt	/*'ari'*
 'arshape'	options.txt	/*'arshape'*
 'as'	todo.txt	/*'as'*
+'asm'	gdb.txt	/*'asm'*
 'autochdir'	options.txt	/*'autochdir'*
 'autoindent'	options.txt	/*'autoindent'*
 'autoprint'	vi_diff.txt	/*'autoprint'*
@@ -252,7 +253,11 @@ $VIMRUNTIME	starting.txt	/*$VIMRUNTIME*
 'fuoptions'	options.txt	/*'fuoptions'*
 'gcr'	options.txt	/*'gcr'*
 'gd'	options.txt	/*'gd'*
+'gdbprg'	gdb.txt	/*'gdbprg'*
+'gdbvar'	gdb.txt	/*'gdbvar'*
+'gdbvariables'	gdb.txt	/*'gdbvariables'*
 'gdefault'	options.txt	/*'gdefault'*
+'gdp'	gdb.txt	/*'gdp'*
 'gfm'	options.txt	/*'gfm'*
 'gfn'	options.txt	/*'gfn'*
 'gfs'	options.txt	/*'gfs'*
@@ -5789,6 +5794,20 @@ g`a	motion.txt	/*g`a*
 ga	various.txt	/*ga*
 garbagecollect()	eval.txt	/*garbagecollect()*
 gd	pattern.txt	/*gd*
+gdb	gdb.txt	/*gdb*
+gdb-assembly	gdb.txt	/*gdb-assembly*
+gdb-commands	gdb.txt	/*gdb-commands*
+gdb-cr	gdb.txt	/*gdb-cr*
+gdb-createvar	gdb.txt	/*gdb-createvar*
+gdb-introduction	gdb.txt	/*gdb-introduction*
+gdb-limitations	gdb.txt	/*gdb-limitations*
+gdb-mappings	gdb.txt	/*gdb-mappings*
+gdb-modes	gdb.txt	/*gdb-modes*
+gdb-options	gdb.txt	/*gdb-options*
+gdb-starting	gdb.txt	/*gdb-starting*
+gdb-variables	gdb.txt	/*gdb-variables*
+gdb-window	gdb.txt	/*gdb-window*
+gdb.txt	gdb.txt	/*gdb.txt*
 ge	motion.txt	/*ge*
 get()	eval.txt	/*get()*
 get-ms-debuggers	debug.txt	/*get-ms-debuggers*
@@ -5967,6 +5986,7 @@ hebrew.txt	hebrew.txt	/*hebrew.txt*
 help	various.txt	/*help*
 help-context	help.txt	/*help-context*
 help-summary	usr_02.txt	/*help-summary*
+help-tags	tags	1
 help-translated	various.txt	/*help-translated*
 help-xterm-window	various.txt	/*help-xterm-window*
 help.txt	help.txt	/*help.txt*
@@ -7323,6 +7343,7 @@ spell	spell.txt	/*spell*
 spell-ACCENT	spell.txt	/*spell-ACCENT*
 spell-AUTHOR	spell.txt	/*spell-AUTHOR*
 spell-BAD	spell.txt	/*spell-BAD*
+spell-BREAK	spell.txt	/*spell-BREAK*
 spell-CHECKCOMPOUNDCASE	spell.txt	/*spell-CHECKCOMPOUNDCASE*
 spell-CHECKCOMPOUNDDUP	spell.txt	/*spell-CHECKCOMPOUNDDUP*
 spell-CHECKCOMPOUNDPATTERN	spell.txt	/*spell-CHECKCOMPOUNDPATTERN*
@@ -7342,6 +7363,7 @@ spell-COMPOUNDMIN	spell.txt	/*spell-COMPOUNDMIN*
 spell-COMPOUNDPERMITFLAG	spell.txt	/*spell-COMPOUNDPERMITFLAG*
 spell-COMPOUNDROOT	spell.txt	/*spell-COMPOUNDROOT*
 spell-COMPOUNDRULE	spell.txt	/*spell-COMPOUNDRULE*
+spell-COMPOUNDRULES	spell.txt	/*spell-COMPOUNDRULES*
 spell-COMPOUNDSYLLABLE	spell.txt	/*spell-COMPOUNDSYLLABLE*
 spell-COMPOUNDSYLMAX	spell.txt	/*spell-COMPOUNDSYLMAX*
 spell-COMPOUNDWORDMAX	spell.txt	/*spell-COMPOUNDWORDMAX*
@@ -7352,6 +7374,7 @@ spell-FOL	spell.txt	/*spell-FOL*
 spell-FORBIDDENWORD	spell.txt	/*spell-FORBIDDENWORD*
 spell-HOME	spell.txt	/*spell-HOME*
 spell-KEEPCASE	spell.txt	/*spell-KEEPCASE*
+spell-KEY	spell.txt	/*spell-KEY*
 spell-LANG	spell.txt	/*spell-LANG*
 spell-LEMMA_PRESENT	spell.txt	/*spell-LEMMA_PRESENT*
 spell-LOW	spell.txt	/*spell-LOW*
@@ -8140,6 +8163,7 @@ vimball-manual	pi_vimball.txt	/*vimball-manual*
 vimdev	intro.txt	/*vimdev*
 vimdiff	diff.txt	/*vimdiff*
 vimfiles	options.txt	/*vimfiles*
+vimgdb	gdb.txt	/*vimgdb*
 viminfo	starting.txt	/*viminfo*
 viminfo-encoding	starting.txt	/*viminfo-encoding*
 viminfo-errors	starting.txt	/*viminfo-errors*
