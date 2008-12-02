@@ -662,7 +662,7 @@
 /*
  * +guess_encode	autodetect encoding of japanese file
  */
-#if defined(FEAT_BIG) && defined(FEAT_MBYTE) && !defined(FEAT_MBYTE_IME)
+#if defined(FEAT_BIG) && defined(FEAT_MBYTE) && !defined(FEAT_GUESS_ENCODE_JP)
 #define FEAT_GUESS_ENCODE_JP
 # endif
 
