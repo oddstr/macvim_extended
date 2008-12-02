@@ -1341,10 +1341,11 @@
 
 /*
  * +codecheck		On-the-fly code checking support.
+ * 			Must be enabled by configure. See Makefile.
  * 			At least doesn't work on MacOSX.
  */
 #if defined(UNIX) && defined(FEAT_BIG) && !defined(FEAT_CODECHECK) && !defined(MACOS_X)
-# define FEAT_CODECHECK
+/* # define FEAT_CODECHECK */
 #endif
 
 /*

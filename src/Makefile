@@ -1446,6 +1446,7 @@ BASIC_SRC = \
 SRC =	$(BASIC_SRC) $(GUI_SRC) $(HANGULIN_SRC) $(LUA_SRC) $(MZSCHEME_SRC) \
 	$(PERL_SRC) $(PYTHON_SRC) $(TCL_SRC) $(RUBY_SRC) \
 	$(GDB_SRC) \
+	$(CODECHECK_SRC) \
 	$(SPIDERMONKEY_SRC) \
 	$(SNIFF_SRC) $(WORKSHOP_SRC) $(WSDEBUG_SRC)
 
@@ -1454,6 +1455,7 @@ TAGS_SRC = *.c *.cpp if_perl.xs
 EXTRA_SRC = hangulin.c if_lua.c if_mzsch.c auto/if_perl.c if_perlsfio.c \
 	    if_python.c if_tcl.c if_ruby.c if_sniff.c gui_beval.c \
 	    gdb.c clewn/gdb_lvl2.c clewn/gdb_lvl3.c clewn/misc.c clewn/obstack.c \
+	    code_check.c \
 	    if_spidermonkey.c \
 	    workshop.c wsdebug.c integration.c netbeans.c
 
@@ -1529,6 +1531,7 @@ OBJ = \
 	$(GDB_OBJ) \
 	$(NETBEANS_OBJ) \
 	$(WSDEBUG_OBJ) \
+	$(CODECHECK_OBJ) \
 	$(SPIDERMONKEY_OBJ)
 
 PRO_AUTO = \
