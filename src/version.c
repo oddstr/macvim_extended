@@ -576,6 +576,11 @@ static char *(features[]) =
 #else
 	"-user_commands",
 #endif
+#ifdef FEAT_VARTABS
+	"+vartabs",
+#else
+	"-vartabs",
+#endif
 #ifdef FEAT_VERTSPLIT
 	"+vertsplit",
 #else

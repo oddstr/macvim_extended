@@ -796,6 +796,15 @@ vim_strnsize(s, len)
  * Also see getvcol() below.
  */
 
+#ifdef FEAT_VARTABS
+#define RET_WIN_BUF_CHARTABSIZE(wp, buf, p, col) \
+    if (*(p) == TAB && (!(wp)->w_p_list || lcs_tab1)) \
+    { \
+	return tabstop_padding(col, (buf)->b_p_ts, (buf)->b_p_vts_ary); \
+    } \
+    else \
+	return ptr2cells(p);
+#else
 #define RET_WIN_BUF_CHARTABSIZE(wp, buf, p, col) \
     if (*(p) == TAB && (!(wp)->w_p_list || lcs_tab1)) \
     { \
@@ -805,6 +814,7 @@ vim_strnsize(s, len)
     } \
     else \
 	return ptr2cells(p);
+#endif
 
 #if defined(FEAT_VREPLACE) || defined(FEAT_EX_EXTRA) || defined(FEAT_GUI) \
 	|| defined(FEAT_VIRTUALEDIT) || defined(PROTO)
@@ -1040,6 +1050,9 @@ win_lbr_chartabsize(wp, s, col, headp)
     colnr_T	col2;
     colnr_T	colmax;
     int		added;
+# ifdef FEAT_VARTABS
+    colnr_T	orig_col = col;
+# endif
 # ifdef FEAT_MBYTE
     int		mb_added = 0;
 # else
@@ -1147,7 +1160,15 @@ win_lbr_chartabsize(wp, s, col, headp)
 	{
 	    added = vim_strsize(p_sbr);
 	    if (tab_corr)
+	    {
+# ifdef FEAT_VARTABS
+		int ts = tabstop_at(orig_col, wp->w_buffer->b_p_ts,
+					      wp->w_buffer->b_p_vts_ary);
+		size += (added / ts) * ts;
+# else
 		size += (added / wp->w_buffer->b_p_ts) * wp->w_buffer->b_p_ts;
+# endif
+	    }
 	    else
 		size += added;
 	    if (col != 0)
@@ -1177,8 +1198,13 @@ win_nolbr_chartabsize(wp, s, col, headp)
 
     if (*s == TAB && (!wp->w_p_list || lcs_tab1))
     {
+# ifdef FEAT_VARTABS
+	return tabstop_padding(col, wp->w_buffer->b_p_ts,
+				    wp->w_buffer->b_p_vts_ary);
+# else
 	n = wp->w_buffer->b_p_ts;
 	return (int)(n - (col % n));
+# endif
     }
     n = ptr2cells(s);
     /* Add one cell for a double-width character in the last column of the
@@ -1239,6 +1265,9 @@ getvcol(wp, pos, start, cursor, end)
     char_u	*posptr;	/* points to char at pos->col */
     int		incr;
     int		head;
+#ifdef FEAT_VARTABS
+    int		*vts = wp->w_buffer->b_p_vts_ary;
+#endif
     int		ts = wp->w_buffer->b_p_ts;
     int		c;
 
@@ -1274,7 +1303,11 @@ getvcol(wp, pos, start, cursor, end)
 	    }
 	    /* A tab gets expanded, depending on the current column */
 	    if (c == TAB)
+#ifdef FEAT_VARTABS
+		incr = tabstop_padding(vcol, ts, vts);
+#else
 		incr = ts - (vcol % ts);
+#endif
 	    else
 	    {
 #ifdef FEAT_MBYTE

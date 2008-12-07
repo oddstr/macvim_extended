@@ -386,6 +386,9 @@ shift_block(oap, amount)
     char_u		*newp, *oldp, *midp, *ptr;
     int			oldcol = curwin->w_cursor.col;
     int			p_sw = (int)curbuf->b_p_sw;
+#ifdef FEAT_VARTABS
+    int			*p_vts = curbuf->b_p_vts_ary;
+#endif
     int			p_ts = (int)curbuf->b_p_ts;
     struct block_def	bd;
     int			internal = 0;
@@ -435,12 +438,19 @@ shift_block(oap, amount)
 	}
 	/* OK, now total=all the VWS reqd, and textstart points at the 1st
 	 * non-ws char in the block. */
+#ifdef FEAT_VARTABS
+	if (!curbuf->b_p_et)
+	    tabstop_fromto(ws_vcol, ws_vcol + total, p_ts, p_vts, &i, &j);
+	else
+	    j = total;
+#else
 	if (!curbuf->b_p_et)
 	    i = ((ws_vcol % p_ts) + total) / p_ts; /* number of tabs */
 	if (i)
 	    j = ((ws_vcol % p_ts) + total) % p_ts; /* number of spp */
 	else
 	    j = total;
+#endif
 	/* if we're splitting a TAB, allow for it */
 	bd.textcol -= bd.pre_whitesp_c - (bd.startspaces != 0);
 	len = (int)STRLEN(bd.textstart) + 1;
@@ -456,64 +466,146 @@ shift_block(oap, amount)
     }
     else /* left */
     {
-	vcol = oap->start_vcol;
-	/* walk vcol past ws to be removed */
-	for (midp = oldp + bd.textcol;
-	      vcol < (oap->start_vcol + total) && vim_iswhite(*midp); )
+#ifdef FEAT_VARTABS
+	if (tabstop_count(p_vts) > 1)
 	{
-	    incr = lbr_chartabsize_adv(&midp, (colnr_T)vcol);
-	    vcol += incr;
-	}
-	/* internal is the block-internal ws replacing a split TAB */
-	if (vcol > (oap->start_vcol + total))
-	{
-	    /* we have to split the TAB *(midp-1) */
-	    internal = vcol - (oap->start_vcol + total);
-	}
-	/* if 'expandtab' is not set, use TABs */
+	    /* With multiple tabstops a completely different method is needed.
+	     * Tabs count for different widths in different parts of the line,
+	     * so instead of trying to preserve tabs copied from the old line
+	     * the total width of all whitespace is calculated, the shift is
+	     * removed, and then width is converted back to tabs and spaces.
+	     */
+	    int  totalspace = 0;
+	    int  tcol;		/* used for tracking tab columns */
 
-	split = bd.startspaces + internal;
-	if (split > 0)
-	{
+	    vcol = oap->start_vcol;
+	    /* walk vcol past ws to be removed */
+	    for (midp = oldp + bd.textcol;
+		  vcol < (oap->start_vcol + total) && vim_iswhite(*midp); )
+	    {
+		incr = lbr_chartabsize_adv(&midp, (colnr_T)vcol);
+		vcol += incr;
+	    }
+	    /* internal is the block-internal ws replacing a split TAB */
+	    if (vcol > (oap->start_vcol + total))
+	    {
+		/* we have to split the TAB *(midp-1) */
+		internal = vcol - (oap->start_vcol + total);
+	    }
+
+	    totalspace = bd.startspaces + internal;
+	    /* Add the remaining ws that will be retained in the shift. */
+	    tcol = vcol;
+	    while (vim_iswhite(*midp))
+	    {
+		if (*midp == TAB)
+		{
+		    int pad = tabstop_padding(tcol, p_ts, p_vts);
+		    totalspace += pad;
+		    tcol += pad;
+		}
+		else /*space */
+		{
+		    totalspace++;
+		    tcol++;
+		}
+		midp++;
+	    }
+
+	    /* Convert the ws width into tabs and spaces. */
 	    if (!curbuf->b_p_et)
 	    {
 		for (ptr = oldp, col = 0; ptr < oldp+bd.textcol; )
 		    col += lbr_chartabsize_adv(&ptr, (colnr_T)col);
 
-		/* col+1 now equals the start col of the first char of the
-		 * block (may be < oap.start_vcol if we're splitting a TAB) */
-		i = ((col % p_ts) + split) / p_ts; /* number of tabs */
+		tabstop_fromto(col, col + totalspace, p_ts, p_vts, &i, &j);
 	    }
-	    if (i)
-		j = ((col % p_ts) + split) % p_ts; /* number of spp */
-	    else
-		j = split;
+
+	    newp = alloc_check(bd.textcol + i + j + (unsigned)STRLEN(midp) + 1);
+	    if (newp == NULL)
+		return;
+	    vim_memset(newp, NUL, (size_t)(bd.textcol + i + j + STRLEN(midp) + 1));
+
+	    /* copy first part we want to keep */
+	    mch_memmove(newp, oldp, (size_t)bd.textcol);
+
+	    copy_chars(newp + bd.textcol, (size_t)i, TAB);
+	    copy_spaces(newp + bd.textcol + i, (size_t)j);
 	}
-
-	newp = alloc_check(bd.textcol + i + j + (unsigned)STRLEN(midp) + 1);
-	if (newp == NULL)
-	    return;
-	vim_memset(newp, NUL, (size_t)(bd.textcol + i + j + STRLEN(midp) + 1));
-
-	/* copy first part we want to keep */
-	mch_memmove(newp, oldp, (size_t)bd.textcol);
-	/* Now copy any TABS and spp to ensure correct alignment! */
-	while (vim_iswhite(*midp))
+	else
+	/* If there's only a single value for 'vartabstop' then this is copied
+	 * into p_ts and we fall through into the original code for normal tabs.
+	 * This ensures that the behaviour for a single tabstop value is exactly
+	 * the same as with earlier versions of Vim.
+	 *   Note that when FEAT_VARTABS is undefined the code below is indented
+	 * one position too far; that is, it's contained within an "else" block
+	 * that exists only when FEAT_VARTABS is defined.
+	 */
 	{
-	    if (*midp == TAB)
+	    if (tabstop_count(p_vts) == 1)
+		p_ts = tabstop_first(p_vts);
+#endif
+	    vcol = oap->start_vcol;
+	    /* walk vcol past ws to be removed */
+	    for (midp = oldp + bd.textcol;
+		  vcol < (oap->start_vcol + total) && vim_iswhite(*midp); )
+	    {
+		incr = lbr_chartabsize_adv(&midp, (colnr_T)vcol);
+		vcol += incr;
+	    }
+	    /* internal is the block-internal ws replacing a split TAB */
+	    if (vcol > (oap->start_vcol + total))
+	    {
+		/* we have to split the TAB *(midp-1) */
+		internal = vcol - (oap->start_vcol + total);
+	    }
+	    /* if 'expandtab' is not set, use TABs */
+
+	    split = bd.startspaces + internal;
+	    if (split > 0)
+	    {
+		if (!curbuf->b_p_et)
+		{
+		    for (ptr = oldp, col = 0; ptr < oldp+bd.textcol; )
+			col += lbr_chartabsize_adv(&ptr, (colnr_T)col);
+
+		    /* col+1 now equals the start col of the first char of the
+		     * block (may be < oap.start_vcol if we're splitting a TAB) */
+		    i = ((col % p_ts) + split) / p_ts; /* number of tabs */
+		}
+		if (i)
+		    j = ((col % p_ts) + split) % p_ts; /* number of spp */
+		else
+		    j = split;
+	    }
+
+	    newp = alloc_check(bd.textcol + i + j + (unsigned)STRLEN(midp) + 1);
+	    if (newp == NULL)
+		return;
+	    vim_memset(newp, NUL, (size_t)(bd.textcol + i + j + STRLEN(midp) + 1));
+
+	    /* copy first part we want to keep */
+	    mch_memmove(newp, oldp, (size_t)bd.textcol);
+	    /* Now copy any TABS and spp to ensure correct alignment! */
+	    while (vim_iswhite(*midp))
+	    {
+		if (*midp == TAB)
+		    i++;
+		else /*space */
+		    j++;
+		midp++;
+	    }
+	    /* We might have an extra TAB worth of spp now! */
+	    if (j / p_ts && !curbuf->b_p_et)
+	    {
 		i++;
-	    else /*space */
-		j++;
-	    midp++;
+		j -= p_ts;
+	    }
+	    copy_chars(newp + bd.textcol, (size_t)i, TAB);
+	    copy_spaces(newp + bd.textcol + i, (size_t)j);
+#ifdef FEAT_VARTABS
 	}
-	/* We might have an extra TAB worth of spp now! */
-	if (j / p_ts && !curbuf->b_p_et)
-	{
-	    i++;
-	    j -= p_ts;
-	}
-	copy_chars(newp + bd.textcol, (size_t)i, TAB);
-	copy_spaces(newp + bd.textcol + i, (size_t)j);
+#endif
 
 	/* the end */
 	STRMOVE(newp + STRLEN(newp), midp);
@@ -3404,10 +3496,18 @@ do_put(regname, dir, count, flags)
 	{
 	    /* Don't need to insert spaces when "p" on the last position of a
 	     * tab or "P" on the first position. */
+#ifdef FEAT_VARTABS
+	    int viscol = getviscol();
+	    if (dir == FORWARD
+		    ? tabstop_padding(viscol, curbuf->b_p_ts, curbuf->b_p_vts_ary) != 1
+						: curwin->w_cursor.coladd > 0)
+		coladvance_force(viscol);
+#else
 	    if (dir == FORWARD
 		    ? (int)curwin->w_cursor.coladd < curbuf->b_p_ts - 1
 						: curwin->w_cursor.coladd > 0)
 		coladvance_force(getviscol());
+#endif
 	    else
 		curwin->w_cursor.coladd = 0;
 	}

@@ -1004,6 +1004,10 @@ enum
     , BV_TW
     , BV_TX
     , BV_WM
+#ifdef FEAT_VARTABS
+    , BV_VSTS
+    , BV_VTS
+#endif
     , BV_COUNT	    /* must be the last one */
 };
 

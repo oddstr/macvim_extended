@@ -221,6 +221,9 @@ gui_mch_create_beval_area(target, mesg, mesgCB, clientData)
 	beval->msg = mesg;
 	beval->msgCB = mesgCB;
 	beval->clientData = clientData;
+#ifdef FEAT_VARTABS
+	beval->vts = 0;
+#endif
 
 	/*
 	 * Set up event handler which will keep its eyes on the pointer,
@@ -263,6 +266,10 @@ gui_mch_destroy_beval_area(beval)
     gtk_widget_destroy(beval->balloonShell);
 # else
     XtDestroyWidget(beval->balloonShell);
+# endif
+# ifdef FEAT_VARTABS
+    if (beval->vts)
+	vim_free(beval->vts);
 # endif
     vim_free(beval);
 }
@@ -401,6 +408,11 @@ get_beval_info(beval, getword, winp, lnump, textp, colp)
 		*lnump = lnum;
 		*textp = lbuf;
 		*colp = col;
+#ifdef FEAT_VARTABS
+		if (beval->vts)
+		    vim_free(beval->vts);
+		beval->vts = tabstop_copy(wp->w_buffer->b_p_vts_ary);
+#endif
 		beval->ts = wp->w_buffer->b_p_ts;
 		return OK;
 	    }
