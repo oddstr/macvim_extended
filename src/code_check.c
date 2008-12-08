@@ -312,8 +312,10 @@ cc_slave_sroutine(void *args) {
 
 	/* when gui mode is used, an other update screen is required. */
 	/*				    i don't know why :)!!!. */
+#ifdef FEAT_GUI
 	if (gui.in_use)
 	    cc_update_screen();
+#endif
 
 	/* find the buffer line */
 
@@ -361,7 +363,9 @@ cc_slave_sroutine(void *args) {
  */
     void
 cc_update_screen(void) {
+#ifdef FEAT_GUI
     if (!gui.in_use) {
+#endif
 	/* in console mode updating the screen from the worker thread
 	 * does not cause any problems. */
 	update_topline();
@@ -370,6 +374,7 @@ cc_update_screen(void) {
 	setcursor();
 	cursor_on();
 	out_flush();
+#ifdef FEAT_GUI
     } else {
 	/* updating the screen in gui mode is troublesome. */
 	char_u	bytes[3];
@@ -380,6 +385,7 @@ cc_update_screen(void) {
 
 	add_to_input_buf(bytes, 3);
     }
+#endif
 }
 
 /*
@@ -485,6 +491,7 @@ cc_create_ewlist(char_u *tmp_out_ffname) {
 cc_compile_tmp_copy(cc_bufline_T *bufline, char_u *tmp_copy_ffname, 
 	int copy_type) {
     char_u	cmd[MAX_CMD_LENGTH];
+    int		retval;
 
     if (bufline->buf_compile_cmd[0] == NUL)
 	return CC_FAIL;
@@ -497,7 +504,9 @@ cc_compile_tmp_copy(cc_bufline_T *bufline, char_u *tmp_copy_ffname,
     sprintf((char *)cmd, "%s > %s.out 2>&1", 
 	    (char *)bufline->buf_compile_cmd, (char *)tmp_copy_ffname);
 #if 1    
-    system((char *)cmd);
+    retval = system((char *)cmd);
+    if (retval < 0)
+	return CC_FAIL;
 #endif
 
     return CC_SUCCESS;
@@ -517,7 +526,9 @@ cc_create_tmp_copy(buf_T *buf, char_u *tmp_copy_ffname, int copy_type) {
 	    cc_set_tmp_copy_ffname(buf, tmp_copy_ffname);
 	    sprintf((char *)cmd, "touch %s", (char *)tmp_copy_ffname);
     
-	    system((char *)cmd);
+	    retval = system((char *)cmd);
+	    if (retval < 0)
+		return CC_FAIL;
 #if 1
 	    retval = buf_write(buf, tmp_copy_ffname, NULL,
 		    (linenr_T) 1, buf->b_ml.ml_line_count, NULL, 
