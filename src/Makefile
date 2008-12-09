@@ -399,7 +399,7 @@ CONF_ARGS = --with-modified-by="Vim extended"
 
 # LUA
 # Uncomment this when you want to include the Lua interface.
-#CONF_OPT_LUA = --enable-luainterp
+CONF_OPT_LUA = --enable-luainterp
 # Lua installation dir (also in LUA_PREFIX environment variable)
 #CONF_OPT_LUA_PREFIX = --with-lua-prefix=/usr/local
 #CONF_OPT_LUA_PREFIX = --with-lua-prefix=/usr
