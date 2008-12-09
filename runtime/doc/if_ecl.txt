@@ -1,0 +1,543 @@
+*if_ecl.txt*      For Vim version 7.1.  Last change: $Date:: 2008-06-22$
+
+			     VIM REFERENCE MANUAL
+				      by
+	 	Eirik A. Nygaard, Larry Clapp and Mikael Jansson
+
+
+Ecl							*ecl*
+
+1. ECL commands			|ecl-commands|
+2. Vim package			|vim-package|
+   2.1 Functions                        |vim-package-functions|
+   2.2 Macros                           |vim-package-macros|
+   2.3 Classes                          |vim-package-classes|
+   2.4 Mapping                          |vim-package-mapping|
+
+==============================================================================
+1. ECL commands						*ecl-commands*
+
+							*:ecl*
+:ecl {cmd}		Executes {cmd} as a lisp expression.
+
+:ecl << {endpattern}
+{script}
+{endpattern}
+			Executes {script} as a lisp expression. If the
+			{endpattern} is omitted it defaults to '.' (a dot).
+
+Example script:
+	function! ECL_version()
+		ecl << EOF
+			(format t "Running ~A ~A"
+			  (CL:LISP-IMPLEMENTATION-TYPE)
+			  (CL:LISP-IMPLEMENTATION-VERSION))
+		EOF
+	endfunction
+
+:[range]ecl		Executes the content in [range] as a lisp expression.
+
+==============================================================================
+2. Vim package						*vim-package*
+
+To access Vim with ECL you have to use functions in the VIM package.  We don't
+recommend that you USE-PACKAGE the VIM package directly, because it contains
+Vim homographs of several CL functions (e.g. vim:append, vim:funcall,
+vim:setq, vim:search, and vim:map) that do wildly different things than their
+CL counterparts.  Just use a vim: prefix.
+
+Overview (not everything from Vim is implemented yet.)
+
+2.1 Functions ~
+                                                        *vim-package-functions*
+
+							*vim:msg*
+vim:msg {string}	Print a message. 
+
+							*vim:cmd*
+vim:cmd {string}	Execute a Vim ex command, as if typed at the colon
+			prompt.  Does NOT interpret special <> characters.
+
+                                                        *vim:normal*
+vim:normal {str} &rest rest
+                        Execute a normal-mode Vim command, wraps |:normal|
+
+                                                        *vim:normal!*
+vim:normal! {str} &rest rest
+                        Execute a normal-mode Vim command without remapping,
+                        wraps |:normal!|
+							*vim:execute*
+vim:execute {string}	Executes a string using Vim's |:execute| command.
+			DOES interpret special <> characters.
+
+							*vim:expr*
+vim:expr {string}	Evaluates string as a Vim expression.
+			Return the result as a string, or NIL on failure.
+
+                                                        *vim:eval-range*
+vim:eval-range
+                        Called when the :ecl command is issued without an
+                        argument.
+
+							*vim:range*
+vim:range		A variable containing a cons of start line and end
+			line, set when :ecl is called.
+
+							*vim:windows*
+vim:windows		Return a list of Vim's windows.
+
+							*vim:current-window*
+vim:current-window	Return the current window.
+
+							*vim:window-width*
+vim:window-width [{window}]
+			Return width of window, if no argument is given, it
+			defaults to the current window.
+
+							*vim:window-height*
+vim:window-height [{window}]
+			Return height of window, if no argument is given, it
+			defaults to the current window.
+
+                                                        *vim:window-column*
+vim:window-column [{window}]
+                        Return the leftmost column of the window on the
+                        screen. If no argument is given, it defaults to the
+                        current window.
+
+							*vim:window-cursor*
+vim:window-cursor [{window}]
+			Return the position of the curser as a cons (lnum .
+			col) in window, window defaults to the current window.
+
+							*vim:window-buffer*
+vim:window-buffer [{window}]
+			Return the buffer in window, defaults to the current
+			window.
+
+							*vim:buffers*
+vim:buffers		Return all buffers.
+
+							*vim:current-buffer*
+vim:current-buffer	Return the current buffer.
+
+							*vim:buffer-line-count*
+vim:buffer-line-count [{buffer}]
+			Number of lines in buffer, the buffer defaults to the
+			current buffer.
+
+							*vim:buffer-lines*
+vim:buffer-lines [{:buffer}] [{:start}] [{:end}]
+			Return the lines in buffer from start to end
+			(inclusive). Defaults: start 1, end lines in buffer,
+			and buffer to the current buffer.
+
+                                                        *vim:find-buffer*
+vim:find-buffer {name}
+                        Return the internal Vim buffer representation given by
+                        name, or nil.
+
+                                                        *vim:buffer-name*
+vim:buffer-name [{:buffer}]
+                        Return the name of the buffer, defaulting to the
+                        current buffer.
+
+							*vim:get-line*
+vim:get-line [{n} [{buffer}]]
+                        Return line number {n} from {buffer}. Defaults to
+                        current line in current buffer.
+
+							*vim:replace-lines*
+vim:replace-lines {lines} [{:start}] [{:end}] [{:buffer}]
+			Replace lines from {:start} to {:end} (inclusive) with the content
+			of the lines (a list of strings) in {:buffer}.
+			Defaults: {:start} 1, {:end} lines in buffer, and {:buffer}
+			to the current buffer.
+
+                                                        *vim:append-line-to-buffer*
+vim:append-line-to-buffer {string} [{:buffer}]
+                        Append a line with the text in {string} to {:buffer},
+                        defaulting to the current bufffer.
+
+                                                        *vim:append-to-buffer*
+vim:append-to-buffer {string} [{:buffer}]
+                        Append the string to the end to {:buffer}, defaulting
+                        to the current buffer.
+
+                                                        *vim:append*
+vim:append {lnum} {string}
+                        See |append()|
+
+                                                        *vim:argc*
+vim:argc                See |argc()|
+
+                                                        *vim:argv*
+vim:argv                See |argv()|
+
+                                                        *vim:argidx*
+vim:argidx              See |argidx()|
+
+                                                        *vim:browse*
+vim:browse {save} {title} {initdir} {default}
+                        See |browse()|
+
+                                                        *vim:bufexists*
+vim:bufexists {expr}
+                        Use T to find out about the alternate file name.
+                        See |bufexists()|
+
+                                                        *vim:buflisted*
+vim:buflisted {expr}
+                        Use T to find out about the alternate file name.
+                        See |buflisted()|
+
+                                                        *vim:bufloaded*
+vim:bufloaded {expr}
+                        Use T to find out about the alternate file name.
+                        See |bufloaded()|
+
+                                                        *vim:bufname*
+vim:bufname {expr}
+                        Use T to find out about the alternate file name.
+                        See |bufname()|
+
+                                                        *vim:bufnr*
+vim:bufnr {expr}
+                        {expr} defaults to ".", i.e. the current buffer.
+                        See |bufname()|
+
+                                                        *vim:num-buffers*
+vim:num-buffers         Return the total number of buffers.
+
+                                                        *vim:bufwinnr*
+vim:bufwinnr {expr}     See |bufwinnr()|
+
+                                                        *vim:byte2line*
+vim:byte2line {byte}    See |byte2line()|
+
+                                                        *vim:char2nr*
+vim:char2nr {expr}      See |char2nr()|
+
+                                                        *vim:cindent*
+vim:cindent {lnum}      See |cindent()|
+
+                                                        *vim:col*
+vim:col {expr}          See |col()|
+
+                                                        *vim:confirm*
+vim:confirm {msg} [{choices} [{default} [{type}]]]
+                        See |confirm()|
+
+                                                        *vim:cursor*
+vim:cursor {lnum} {col} See |cursor()|
+
+                                                        *vim:expand*
+vim:expand {expr} [{flag]}
+                        Use t/nil for {flag}.
+                        See |cursor()|
+
+                                                        *vim:getcwd*
+vim:getcwd              See |getcwd()|
+
+                                                        *vim:getline*
+vim:getline {lnum}      See |getcwd()|
+
+                                                        *vim:getwinposx*
+vim:getwinposx          See |getwinposx()|
+
+                                                        *vim:getwinposy*
+vim:getwinposy          See |getwinposy()|
+
+                                                        *vim:input*
+vim:input {prompt} [{text}, [{completion}]]
+                        See |input()|
+
+                                                        *vim:line*
+vim:line {expr}         See |line()|
+
+                                                        *vim:lispindent*
+vim:lispindent {lnum}   See |lispindent()|
+
+                                                        *vim:search*
+vim:search {pattern} {:flags} {:stopline}
+                        {:stopline} defaults to nil.
+                        See |search()|
+
+                                                        *vim:setline*
+vim:setline {lnum} {line}
+                        See |setline()|
+                                                        
+                                                        *vim:virtcol*
+vim:virtcol {expr}      See |virtcol()|
+
+                                                        *vim:winbufnr*
+vim:winbufnr {nr}       See |winbufnr()|
+
+                                                        *vim:wincol*
+vim:wincol              See |wincol()|
+
+                                                        *vim:winline*
+vim:winline             See |winline()|
+
+                                                        *vim:winheight*
+vim:winheight {nr}      See |winheight()|
+
+                                                        *vim:winnr*
+vim:winnr [{arg}]       See |winnr()|
+
+                                                        *vim:winwidth*
+vim:winwidth {nr}       See |winwidth()|
+
+                                                        *vim:num-windows*
+vim:num-windows         Return the number of open windows in the current tab.
+
+                                                        *vim:tabpagebuflist*
+vim:tabpagebuflist [{arg}]
+                        See |tabpagebuflist()|
+
+                                                        *vim:tabpagenr*
+vim:tabpagenr [{arg}]
+                        If no arg given, or NIL given, return the tab page
+                        number of the current tab.  If arg is given, it must
+                        STRING= "$", and we return the tab page number of
+                        the last tab.  (If it doesn't STRING= "$", it's
+                        silently ignored.)
+                        See |tabpagenr()|
+
+                                                        *vim:wincmd*
+vim:wincmd {cmd} [{n}]
+                        {n} defaults to 0.
+                        See |:wincmd|
+
+                                                        *vim:close*
+vim:close {:bang}
+                        When {:bang} is T, behave as |vim:close!|
+                        See |:close|
+
+                                                        *vim:close!*
+vim:close!              See |:close!|
+
+                                                        *vim:funcall*
+vim:funcall {function-name} {args}
+                        Call a Vim function.
+
+                                                        *vim:setq*
+vim:setq {var} {val}
+                        Set the variable {var} to {val}, akin to: >
+                                let var = val
+<
+                                                        *vim:var*
+vim:var {var}
+                        Return the value of the variable. If it's a string
+                        that looks like a number, return the number.
+
+                                                        *vim:change-to-buffer*
+vim:change-to-buffer {expr}
+                        Changes to the given buffer. Hides the current buffer.
+                        {expr} can be either a name or a number.
+
+                                                        *vim:open-buffer*
+vim:open-buffer {expr}
+                        Opens a window on the given buffer.
+                        {expr} can be either a name or a number.
+
+
+                                                        *vim:get-pos*
+vim:get-pos [{where}]
+                        Get the buffer & position of the cursor; returns an
+                        instance of |vim:point|.
+                        {where} defaults to ".", i.e. the position in the
+                        current buffer.
+                                                        *vim:goto-pos*
+vim:goto-pos [{point}]  Go to the position specified by {point}.
+
+                                                        *vim:kill*
+vim:kill {pid} {sig}    Send the {pid} a signal specified by {sig}.
+
+                                                        *vim:scroll-window*
+vim:scroll-window {n}
+                        Negative means scroll the window down, i.e. scroll the
+                        text up, using <C-e>. 
+                        Positive means scroll the window up, i.e. scroll the
+                        text down, using <C-u>.
+
+                                                        *vim:position-window*
+vim:position-window {want}
+                        Scroll the window such that the current line of text
+                        is at the given window line.  The top line is line 0.
+                        If WANT is NIL, positions the current line in the
+                        middle of the screen.
+
+                                                        *vim:append-text-to-buffer*
+vim:append-text-to-buffer {line}
+                        Append {line} to the current buffer
+
+                                                        *vim:append-multi-line-string*
+vim:append-multi-line-string {text}
+                        Append the multi-line string {text} to the current
+                        buffer. 
+
+                                                        *vim:multi-line-map*
+vim:multi-line-map {f} {text}
+                        Apply the function {f} on all lines in {text}
+
+
+2.2 Macros ~
+                                                        *vim-package-macros*
+                                                        *vim:get-pos-after*
+vim:get-pos-after {body}
+                        Run some code; return the cursor position afterwards.
+
+                                                        *vim:with-buffer*
+vim:with-buffer {expr} {body}
+                        Run code on the buffer given by {expr}.
+
+                                                        *vim:with-options*
+vim:with-options {bindings} {body}
+                        Set new values to existing Vim options; restores old
+                        values at exit.  Works with Vim variables, too, as
+                        long as they already exist.
+
+                        {bindings} - either
+                            + list of (var val), or
+                            + list of variable names, in which case they are
+                              set to "".
+
+                                                        *vim:with-window*
+vim:with-window {winnr} {body}
+                        Run {body} in the context of the given {winnr} Signals
+                        an error if the given value is NIL or the number is
+                        out of range.
+
+                                                        *vim:with-window-of*
+vim:with-window-of {buffer} {body}
+                        Same as |vim:with-window|, but with owning window of
+                        {buffer}.
+
+2.3 Classes ~
+                                                        *vim-package-classes*
+                                                        *vim:point*
+vim:point
+                        Class used to specify position, with the following
+                        slots/initargs: >
+                                bufnr
+                                line
+                                col
+                                virtcol
+                                winline
+
+<                                                       *vim:bufnr-of*
+vim:bufnr-of            |vim:point| accessor
+
+                                                        *vim:line-of*
+vim:line-of             |vim:point| accessor
+
+                                                        *vim:col-of*
+vim:col-of              |vim:point| accessor
+
+                                                        *vim:virtcol-of*
+vim:virtcol-of          |vim:point| accessor
+
+                                                        *vim:winline-of*
+vim:winline-of          |vim:point| accessor
+
+2.4 Mapping ~
+                                                        *vim-package-mapping*
+							*vim:maparg*
+vim:maparg {name} {:mode} {:abbr}
+
+  {name}  - a string
+  {:mode} - a keyword or string; see below
+  {:abbr} - a generalized boolean
+
+  Returns the rhs ("right hand side") of mapping {name} in mode {:mode}.  When
+  there is no mapping for {name}, returns NIL.
+
+  {:mode} can be one of these keywords or strings (or NIL):
+
+    :normal             "n"
+    :visual-select      "v"
+    :operator-pending   "o"
+    :insert             "i"
+    :command            "c"
+    :lang-arg           "l"
+    NIL                 ""
+
+  When {:mode} is omitted or NIL, the modes for "" are used (i.e. Normal,
+  Visual, and Operator-pending).
+
+  When {:abbr} is non-NIL, use abbreviations instead of mappings.
+
+  See also |maparg()|.
+
+							*vim:map*
+vim:map {lhs} {rhs} {:mode} {:noremap} {:flags}
+
+  Make a Vim mapping.  See |:map|.
+
+  {lhs}      - a string
+  {rhs}      - a string or function designator
+  {:mode}    - a list designator
+  {:noremap} - a generalized boolean
+  {:flags}   - a list designator
+
+  {rhs} can be a string or a Lisp function.  A mapping to a Lisp function is
+  translated into a mapping that calls the function.
+
+  {:mode} can be one of these keywords or strings, or a list thereof, or a
+  single multi-character string (e.g. "nvo"):
+
+    :normal             "n"
+    :visual-select      "v"
+    :visual		"x"
+    :select		"s"
+    :operator-pending   "o"
+    :insert             "i"
+    :command            "c"
+    :lang-arg           "l"
+    NIL                 ""
+
+  If you supply multiple {:mode}s, vim:map will make one map per mode.
+
+  If {:noremap} is non-NIL, then the mapping is not remapped.
+
+  {:flags} can be one of these keywords or strings, or a list thereof:
+
+    :buffer		"<buffer>"		|:map-<buffer>|
+    :silent		"<silent>"		|:map-<silent>|
+    :special		"<special>"		|:map-<special>|
+    :script		"<script>"		|:map-<script>|
+    :unique		"<unique>"		|:map-<unique>|
+    :expr		"<expr>"		|:map-<expr>|
+
+							*vim:map!*
+vim:map! {lhs} {rhs} {:noremap} {:flags}
+
+  Convenience function.  Calls |vim:map| with modes :insert and :command.
+  Passes through {:noremap} and {:flags}.
+
+  See also |:map!|.
+
+							*vim:unmap*
+vim:unmap {lhs} {:mode} {:flags}
+
+  Remove the mappings of {lhs} for the specified modes.  The mapping may
+  remain defined for other modes where it applies.
+
+  {:mode} and {:flags} can take on the same values as in |vim:map|.
+
+  Returns whatever {lhs} was mapped to before you unmapped it.  If you specify
+  multiple modes, or "", returns multiple values.
+
+  See also |:unmap|.
+
+							*vim:unmap!*
+vim:unmap! {lhs} {:flags}
+
+  Convenience function.  Calls vim:unmap with modes :insert and :command.
+
+  {:flags} can take on the same values as in |vim:map|.
+
+  See also |:unmap!|.
+
+ vim:tw=78:ts=8:ft=help:norl:isk+=-:isk+=\:
