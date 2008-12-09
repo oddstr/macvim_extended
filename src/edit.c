@@ -651,7 +651,13 @@ edit(cmdchar, startln, count)
 	    mincol = curwin->w_wcol;
 	    validate_cursor_col();
 
-	    if ((int)curwin->w_wcol < (int)mincol - curbuf->b_p_ts
+	    if (
+#ifdef FEAT_VARTABS
+		(int)curwin->w_wcol < (int)mincol
+		    - tabstop_at(get_nolist_virtcol(), curbuf->b_p_ts, curbuf->b_p_vts_ary)
+#else
+		(int)curwin->w_wcol < (int)mincol - curbuf->b_p_ts
+#endif
 		    && curwin->w_wrow == W_WINROW(curwin)
 						 + curwin->w_height - 1 - p_so
 		    && (curwin->w_cursor.lnum != curwin->w_topline
@@ -8465,7 +8471,13 @@ ins_bs(c, mode, inserted_space_p)
 	 */
 	if (	   mode == BACKSPACE_CHAR
 		&& ((p_sta && in_indent)
-		    || (curbuf->b_p_sts != 0
+		    || (
+#ifdef FEAT_VARTABS
+			(tabstop_count(curbuf->b_p_vsts_ary) != 0
+			    || curbuf->b_p_sts != 0)
+#else
+			curbuf->b_p_sts != 0
+#endif
 			&& curwin->w_cursor.col > 0
 			&& (*(ml_get_cursor() - 1) == TAB
 			    || (*(ml_get_cursor() - 1) == ' '
@@ -8478,10 +8490,12 @@ ins_bs(c, mode, inserted_space_p)
 	    colnr_T	start_vcol;
 
 	    *inserted_space_p = FALSE;
+#ifndef FEAT_VARTABS
 	    if (p_sta && in_indent)
 		ts = curbuf->b_p_sw;
 	    else
 		ts = curbuf->b_p_sts;
+#endif
 	    /* Compute the virtual column where we want to be.  Since
 	     * 'showbreak' may get in the way, need to get the last column of
 	     * the previous character. */
@@ -8490,7 +8504,15 @@ ins_bs(c, mode, inserted_space_p)
 	    dec_cursor();
 	    getvcol(curwin, &curwin->w_cursor, NULL, NULL, &want_vcol);
 	    inc_cursor();
+#ifdef FEAT_VARTABS
+	    if (p_sta && in_indent)
+		want_vcol = (want_vcol / curbuf->b_p_sw) * curbuf->b_p_sw;
+	    else
+		want_vcol = tabstop_start(want_vcol, curbuf->b_p_sts,
+						     curbuf->b_p_vsts_ary);
+#else
 	    want_vcol = (want_vcol / ts) * ts;
+#endif
 
 	    /* delete characters until we are at or before want_vcol */
 	    while (vcol > want_vcol
@@ -9149,8 +9171,21 @@ ins_tab()
      * When nothing special, insert TAB like a normal character
      */
     if (!curbuf->b_p_et
+#ifdef FEAT_VARTABS
+	    && !(p_sta && ind
+		/* These five lines mean 'tabstop' != 'shiftwidth' */
+		&& ((tabstop_count(curbuf->b_p_vts_ary) > 1)
+		    || (tabstop_count(curbuf->b_p_vts_ary) == 1
+		        && tabstop_first(curbuf->b_p_vts_ary) != curbuf->b_p_sw)
+	            || (tabstop_count(curbuf->b_p_vts_ary) == 0
+		        && curbuf->b_p_ts != curbuf->b_p_sw)))
+	    && tabstop_count(curbuf->b_p_vsts_ary) == 0
+	    && curbuf->b_p_sts == 0
+#else
 	    && !(p_sta && ind && curbuf->b_p_ts != curbuf->b_p_sw)
-	    && curbuf->b_p_sts == 0)
+	    && curbuf->b_p_sts == 0
+#endif
+	    )
 	return TRUE;
 
     if (stop_arrow() == FAIL)
@@ -9164,6 +9199,20 @@ ins_tab()
 #endif
     AppendToRedobuff((char_u *)"\t");
 
+#ifdef FEAT_VARTABS
+    if (p_sta && ind)		/* insert tab in indent, use 'shiftwidth' */
+    {
+	temp = (int)curbuf->b_p_sw;
+	temp -= get_nolist_virtcol() % temp;
+    }
+    else if (tabstop_count(curbuf->b_p_vsts_ary) > 0 || curbuf->b_p_sts > 0)
+	                        /* use 'softtabstop' when set */
+	temp = tabstop_padding(get_nolist_virtcol(), curbuf->b_p_sts,
+						     curbuf->b_p_vsts_ary);
+    else			/* otherwise use 'tabstop' */
+	temp = tabstop_padding(get_nolist_virtcol(), curbuf->b_p_ts,
+						     curbuf->b_p_vts_ary);
+#else
     if (p_sta && ind)		/* insert tab in indent, use 'shiftwidth' */
 	temp = (int)curbuf->b_p_sw;
     else if (curbuf->b_p_sts > 0) /* use 'softtabstop' when set */
@@ -9171,6 +9220,7 @@ ins_tab()
     else			/* otherwise use 'tabstop' */
 	temp = (int)curbuf->b_p_ts;
     temp -= get_nolist_virtcol() % temp;
+#endif
 
     /*
      * Insert the first space with ins_char().	It will delete one char in
@@ -9195,7 +9245,13 @@ ins_tab()
     /*
      * When 'expandtab' not set: Replace spaces by TABs where possible.
      */
+#ifdef FEAT_VARTABS
+    if (!curbuf->b_p_et && (tabstop_count(curbuf->b_p_vsts_ary) > 0
+                            || curbuf->b_p_sts > 0
+			    || (p_sta && ind)))
+#else
     if (!curbuf->b_p_et && (curbuf->b_p_sts || (p_sta && ind)))
+#endif
     {
 	char_u		*ptr;
 #ifdef FEAT_VREPLACE

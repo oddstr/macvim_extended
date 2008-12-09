@@ -1,0 +1,85 @@
+Test for variable tabstops
+
+STARTTEST
+:if !has("vartabs") | e! test.ok | w! test.out | qa! | endif
+:%d
+:" [1,2] Test normal operation of tabstops and softtabstops.
+:set ts=4
+aa	a	a	a	a:retab 8
+:.w! >>test.out
+:%d
+:set ts=8 sts=6
+ab	b	b	b	b:.w! >>test.out
+:%d
+:" [3,4] Test variable tabstops.
+:set sts=0 vts=4,8,4,8
+ac	c	c	c	c	c:retab 8
+:.w! >>test.out
+:%d
+:set et vts=4,8,4,8
+ad	d	d	d	d	d:.w! >>test.out
+:%d
+:" [5] Changing ts should have no effect if vts is in use.
+:set ts=6
+ae	e	e	e	e	e:.w! >>test.out
+:%d
+:" [6] Clearing vts should revert to using ts.
+:set vts=
+af	f	f	f	f	f:.w! >>test.out
+:%d
+:" [7] Test variable softtabstops.
+:set noet ts=8 vsts=12,2,6
+ag	g	g	g	g	g:.w! >>test.out
+:%d
+:" [8] Variable tabstops and softtabstops combined.
+:set vsts=6,12,8 vts=4,6,8
+ah	h	h	h	h:.w! >>test.out
+:%d
+:" [9] Retab with a single value, not using vts.
+:set ts=8 sts=0 vts= vsts=
+ai	i	i	i	i:retab 4
+o='9: ts='.&ts.' vts='.&vts.' sts='.&sts.' vsts='.&vsts:.-1,.w! >>test.out
+:%d
+:" [10] Retab with a single value, using vts.
+:set ts=8 sts=0 vts=6 vsts=
+aj	j	j	j	j:retab 4
+o='10: ts='.&ts.' vts='.&vts.' sts='.&sts.' vsts='.&vsts:.-1,.w! >>test.out
+:%d
+:" [11] Retab with multiple values, not using vts.
+:set ts=6 sts=0 vts= vsts=
+ak	k	k	k	k	k:retab 4,8
+o='11: ts='.&ts.' vts='.&vts.' sts='.&sts.' vsts='.&vsts:.-1,.w! >>test.out
+:%d
+:" [12] Retab with multiple values, using vts.
+:set ts=8 sts=0 vts=6 vsts=
+al	l	l	l	l	l:retab 4,8
+o='12: ts='.&ts.' vts='.&vts.' sts='.&sts.' vsts='.&vsts:.-1,.w! >>test.out
+:%d
+:" [13] Check that global and local values are set.
+:set ts=4 vts=6 sts=8 vsts=10
+am	m	m	m:.w! >>test.out
+o='13a: ts='.&ts.' vts='.&vts.' sts='.&sts.' vsts='.&vsts:.w! >>test.out
+:new
+an	n	n	n:.w! >>test.out
+o='13b: ts='.&ts.' vts='.&vts.' sts='.&sts.' vsts='.&vsts:.w! >>test.out
+:q!
+:%d
+:" [14] Check that local values only are set.
+:setlocal ts=5 vts=7 sts=9 vsts=11
+ao	o	o	o:.w! >>test.out
+o='14a: ts='.&ts.' vts='.&vts.' sts='.&sts.' vsts='.&vsts:.w! >>test.out
+:new
+ap	p	p	p:.w! >>test.out
+o='14b: ts='.&ts.' vts='.&vts.' sts='.&sts.' vsts='.&vsts:.w! >>test.out
+:q!
+:%d
+:" [15] Check that global values only are set.
+:setglobal ts=6 vts=8 sts=10 vsts=12
+aq	q	q	q:.w! >>test.out
+o='15a: ts='.&ts.' vts='.&vts.' sts='.&sts.' vsts='.&vsts:.w! >>test.out
+:new
+ar	r	r	r:.w! >>test.out
+o='15b: ts='.&ts.' vts='.&vts.' sts='.&sts.' vsts='.&vsts:.w! >>test.out
+:qa!
+ENDTEST
+dummy text

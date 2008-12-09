@@ -4116,8 +4116,13 @@ win_line(wp, lnum, startrow, endrow, nochange)
 		if (c == TAB && (!wp->w_p_list || lcs_tab1))
 		{
 		    /* tab amount depends on current column */
+#ifdef FEAT_VARTABS
+		    n_extra = tabstop_padding(vcol, wp->w_buffer->b_p_ts,
+						    wp->w_buffer->b_p_vts_ary) - 1;
+#else
 		    n_extra = (int)wp->w_buffer->b_p_ts
 				   - vcol % (int)wp->w_buffer->b_p_ts - 1;
+#endif
 #ifdef FEAT_MBYTE
 		    mb_utf8 = FALSE;	/* don't draw as UTF-8 */
 #endif

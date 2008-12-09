@@ -812,6 +812,13 @@
 #endif
 
 /*
+ * +vartabs		'vartabstop' and 'varsofttabstop' options.
+ */
+#ifdef FEAT_BIG
+# define FEAT_VARTABS
+#endif
+
+/*
  * Preferences:
  * ============
  */

@@ -3,6 +3,9 @@ int get_indent __ARGS((void));
 int get_indent_lnum __ARGS((linenr_T lnum));
 int get_indent_buf __ARGS((buf_T *buf, linenr_T lnum));
 int get_indent_str __ARGS((char_u *ptr, int ts));
+#ifdef FEAT_VARTABS
+int get_indent_str_vtab __ARGS((char_u *ptr, int ts, int *vts));
+#endif
 int set_indent __ARGS((int size, int flags));
 int get_number_indent __ARGS((linenr_T lnum));
 int open_line __ARGS((int dir, int flags, int old_indent));

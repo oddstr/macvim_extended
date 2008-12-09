@@ -53,4 +53,15 @@ int can_bs __ARGS((int what));
 void save_file_ff __ARGS((buf_T *buf));
 int file_ff_differs __ARGS((buf_T *buf));
 int check_ff_value __ARGS((char_u *p));
+#ifdef FEAT_VARTABS
+int tabstop_set __ARGS((char_u *var, int **array));
+int tabstop_padding __ARGS((colnr_T col, int ts, int *vts));
+colnr_T tabstop_start __ARGS((colnr_T col, int ts, int *vts));
+int tabstop_at __ARGS((colnr_T col, int ts, int *vts));
+void tabstop_fromto __ARGS((colnr_T start_col, colnr_T end_col, int ts, int *vts, int *ntabs, int *nspcs));
+int tabstop_eq __ARGS((int *ts1, int *ts2));
+int *tabstop_copy __ARGS((int *oldts));
+int tabstop_count __ARGS((int *ts));
+int tabstop_first __ARGS((int *ts));
+#endif
 /* vim: set ft=c : */
