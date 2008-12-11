@@ -2282,14 +2282,13 @@ shadow:	runtime pixmaps
 				 ../../testdir/*.vim \
 				 ../../testdir/*.ok .
 	if test -d clewn; then \
-		ln -s clewn $(SHADOWDIR)/clewn; \
+		ln -s ../clewn $(SHADOWDIR)/clewn; \
 	fi
 	if test -d MacVim; then \
 		mkdir $(SHADOWDIR)/MacVim; \
-		cd $(SHADOWDIR)/MacVim; \
-		ln -s ../../MacVim/* .; \
+		ln -s ../../MacVim/* $(SHADOWDIR)/MacVim/; \
 		if test -d ../../MacVim/build; then \
-			rm build; \
+			rm $(SHADOWDIR)/MacVim/build; \
 		fi; \
 	fi
 
