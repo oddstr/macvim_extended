@@ -2266,6 +2266,17 @@ shadow:	runtime pixmaps
 				 ../../testdir/*.in \
 				 ../../testdir/*.vim \
 				 ../../testdir/*.ok .
+	if test -d clewn; then \
+		ln -s clewn $(SHADOWDIR)/clewn; \
+	fi
+	if test -d MacVim; then \
+		mkdir $(SHADOWDIR)/MacVim; \
+		cd $(SHADOWDIR)/MacVim; \
+		ln -s ../../MacVim/* .; \
+		if test -d ../../MacVim/build; then \
+			rm build; \
+		fi; \
+	fi
 
 # Link needed for doing "make install" in a shadow directory.
 runtime:
