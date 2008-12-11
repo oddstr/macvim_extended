@@ -1391,6 +1391,9 @@ prepare_getout()
 #ifdef FEAT_LUA
     lua_end();
 #endif
+#ifdef FEAT_ECL
+    ecl_end();
+#endif
 #ifdef FEAT_MZSCHEME
     mzscheme_end();
 #endif

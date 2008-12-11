@@ -187,6 +187,11 @@ static char *(features[]) =
 #else
 	"-ebcdic",
 #endif
+#ifdef FEAT_ECL
+	"+ecl",
+#else
+	"-ecl",
+#endif
 #ifdef FEAT_EMACS_TAGS
 	"+emacs_tags",
 #else
@@ -637,6 +642,11 @@ static char *(features[]) =
 	"+user_commands",
 #else
 	"-user_commands",
+#endif
+#ifdef FEAT_VARTABS
+	"+vartabs",
+#else
+	"-vartabs",
 #endif
 #ifdef FEAT_VERTSPLIT
 	"+vertsplit",

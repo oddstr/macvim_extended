@@ -128,7 +128,7 @@ static int	check_more __ARGS((int, int));
 static linenr_T get_address __ARGS((char_u **, int skip, int to_other_file));
 static void	get_flags __ARGS((exarg_T *eap));
 #if !defined(FEAT_PERL) || !defined(FEAT_PYTHON) || !defined(FEAT_TCL) \
-	|| !defined(FEAT_RUBY) || !defined(FEAT_MZSCHEME) \
+	|| !defined(FEAT_RUBY) || !defined(FEAT_MZSCHEME) || !defined(FEAT_ECL) \
 	|| !defined(FEAT_SPIDERMONKEY)
 # define HAVE_EX_SCRIPT_NI
 static void	ex_script_ni __ARGS((exarg_T *eap));
@@ -279,6 +279,9 @@ static void	ex_popup __ARGS((exarg_T *eap));
 #ifndef FEAT_SPIDERMONKEY
 # define ex_spidermonkey	ex_script_ni
 # define ex_spidermonkeyfile	ex_ni
+#endif
+#ifndef FEAT_ECL
+# define ex_ecl			ex_script_ni
 #endif
 #ifndef FEAT_SNIFF
 # define ex_sniff		ex_ni
@@ -2534,6 +2537,7 @@ do_one_cmd(cmdlinep, sourcing,
 	    case CMD_echoerr:
 	    case CMD_echomsg:
 	    case CMD_echon:
+	    case CMD_ecl:
 	    case CMD_execute:
 	    case CMD_help:
 	    case CMD_hide:

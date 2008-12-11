@@ -1,0 +1,28 @@
+a   a	a   a	a
+b     b	    b	  b	b
+c   c	    c	c	c	c
+d   d       d   d       d       d
+e   e       e   e       e       e
+f     f     f     f     f     f
+g	    g g	    g	  g	g
+h	  h		h	h	h
+i		i		i		i		i
+9: ts=4 vts= sts=0 vsts=
+j	  j		j	  j		j
+10: ts=8 vts=4 sts=0 vsts=
+k	  k	k     k	    k	  k
+11: ts=6 vts=4,8 sts=0 vsts=
+l	  l	l     l	    l	  l
+12: ts=8 vts=4,8 sts=0 vsts=
+m	    m		  m		m
+13a: ts=4 vts=6 sts=8 vsts=10
+n	    n		  n		n
+13b: ts=4 vts=6 sts=8 vsts=10
+o	    o		 o	     o
+14a: ts=5 vts=7 sts=9 vsts=11
+p	    p		  p		p
+14b: ts=4 vts=6 sts=8 vsts=10
+q	    q		 q	     q
+15a: ts=5 vts=7 sts=9 vsts=11
+r	    r		r	    r
+15b: ts=6 vts=8 sts=10 vsts=12

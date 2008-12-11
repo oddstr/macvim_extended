@@ -58,6 +58,9 @@ typedef struct BalloonEvalStruct
     BeState		showState;	/* tells us whats currently going on */
 # endif
 #endif
+#ifdef FEAT_VARTABS
+    int			*vts;		/* vartabstop setting for this buffer */
+#endif
     int			ts;		/* tabstop setting for this buffer */
     char_u		*msg;
     void		(*msgCB)__ARGS((struct BalloonEvalStruct *, int));

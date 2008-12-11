@@ -20,7 +20,7 @@
 #	system, compiler or preferences.  Uncommenting means that the '#' in
 #	the first column of a line is removed.
 #	- If you want a version of Vim that is small and starts up quickly,
-#	  you might want to disable the GUI, X11, Perl, Python and Tcl.
+#	  you might want to disable the GUI, X11, Perl, ECL, Python and Tcl.
 #	- Uncomment the line with --disable-gui if you have Motif, GTK and/or
 #	  Athena but don't want to make gvim (the GUI version of Vim with nice
 #	  menus and scrollbars, but makes Vim bigger and startup slower).
@@ -40,6 +40,7 @@
 #	  each makes Vim quite a bit bigger:
 #		--enable-perlinterp	for Perl interpreter
 #		--enable-pythoninterp	for Python interpreter
+#		--enable-eclinterp	for ECL compiler
 #		--enable-rubyinterp	for Ruby interpreter
 #		--enable-tclinterp	for Tcl interpreter
 #		--enable-cscope		for Cscope interface
@@ -382,6 +383,10 @@ CONF_ARGS = --with-modified-by="Vim extended"
 # This requires at least "small" features, "tiny" doesn't work.
 #CONF_OPT_PERL = --enable-perlinterp
 
+# ECL - For creating Vim with ECL interface
+# Uncomment this when you want to include the ECL interface.
+CONF_OPT_ECL = --enable-eclinterp
+
 # PYTHON
 # Uncomment this when you want to include the Python interface.
 # NOTE: This may cause threading to be enabled, which has side effects (such
@@ -400,7 +405,7 @@ CONF_ARGS = --with-modified-by="Vim extended"
 
 # LUA
 # Uncomment this when you want to include the Lua interface.
-#CONF_OPT_LUA = --enable-luainterp
+CONF_OPT_LUA = --enable-luainterp
 # Lua installation dir (also in LUA_PREFIX environment variable)
 #CONF_OPT_LUA_PREFIX = --with-lua-prefix=/usr/local
 #CONF_OPT_LUA_PREFIX = --with-lua-prefix=/usr
@@ -1021,6 +1026,12 @@ SYS_INDOFF_FILE = $(DESTDIR)$(SCRIPTLOC)/indoff.vim
 ### Name of the option window script file target.
 SYS_OPTWIN_FILE = $(DESTDIR)$(SCRIPTLOC)/optwin.vim
 
+### Name of the ecl lisp file.
+SYS_IF_ECL_FILE = $(DESTDIR)$(SCRIPTLOC)/if_ecl.lisp
+
+### Name of the ecl vim file.
+SYS_IF_ECL_VIM_FILE = $(DESTDIR)$(SCRIPTLOC)/if_ecl.vim
+
 # Program to install the program in the target directory.  Could also be "mv".
 INSTALL_PROG	= cp
 
@@ -1322,7 +1333,7 @@ SHELL = /bin/sh
 .SUFFIXES: .c .o .pro
 
 PRE_DEFS = -Iproto $(DEFS) $(GUI_DEFS) $(GUI_IPATH) $(CPPFLAGS) $(EXTRA_IPATHS)
-POST_DEFS = $(X_CFLAGS) $(LUA_CFLAGS) $(MZSCHEME_CFLAGS) $(PERL_CFLAGS) $(PYTHON_CFLAGS) $(TCL_CFLAGS) $(RUBY_CFLAGS) $(SPIDERMONKEY_CFLAGS) $(EXTRA_DEFS)
+POST_DEFS = $(X_CFLAGS) $(LUA_CFLAGS) $(MZSCHEME_CFLAGS) $(PERL_CFLAGS) $(ECL_CFLAGS) $(PYTHON_CFLAGS) $(TCL_CFLAGS) $(RUBY_CFLAGS) $(SPIDERMONKEY_CFLAGS) $(EXTRA_DEFS)
 
 ALL_CFLAGS = $(PRE_DEFS) $(CFLAGS) $(PROFILE_CFLAGS) $(POST_DEFS)
 
@@ -1342,7 +1353,7 @@ DEPEND_CFLAGS = -DPROTO -DDEPEND -DFEAT_GUI $(LINT_CFLAGS)
 PFLAGS = $(PROTO_FLAGS) -DPROTO $(LINT_CFLAGS)
 
 ALL_LIB_DIRS = $(GUI_LIBS_DIR) $(X_LIBS_DIR)
-ALL_LIBS = $(GUI_LIBS1) $(GUI_X_LIBS) $(GUI_LIBS2) $(X_PRE_LIBS) $(X_LIBS) $(X_EXTRA_LIBS) $(LIBS) $(EXTRA_LIBS) $(LUA_LIBS) $(MZSCHEME_LIBS) $(PERL_LIBS) $(PYTHON_LIBS) $(TCL_LIBS) $(RUBY_LIBS) $(SPIDERMONKEY_LIBS) $(PROFILE_LIBS)
+ALL_LIBS = $(GUI_LIBS1) $(GUI_X_LIBS) $(GUI_LIBS2) $(X_PRE_LIBS) $(X_LIBS) $(X_EXTRA_LIBS) $(LIBS) $(EXTRA_LIBS) $(LUA_LIBS) $(MZSCHEME_LIBS) $(PERL_LIBS) $(PYTHON_LIBS) $(TCL_LIBS) $(RUBY_LIBS) $(SPIDERMONKEY_LIBS) $(ECL_LIBS) $(PROFILE_LIBS)
 
 # abbreviations
 DEST_BIN = $(DESTDIR)$(BINDIR)
@@ -1448,7 +1459,7 @@ SRC =	$(BASIC_SRC) $(GUI_SRC) $(HANGULIN_SRC) $(LUA_SRC) $(MZSCHEME_SRC) \
 	$(GDB_SRC) \
 	$(CODECHECK_SRC) \
 	$(SPIDERMONKEY_SRC) \
-	$(SNIFF_SRC) $(WORKSHOP_SRC) $(WSDEBUG_SRC)
+	$(SNIFF_SRC) $(WORKSHOP_SRC) $(WSDEBUG_SRC) $(ECL_SRC)
 
 TAGS_SRC = *.c *.cpp if_perl.xs
 
@@ -1457,7 +1468,7 @@ EXTRA_SRC = hangulin.c if_lua.c if_mzsch.c auto/if_perl.c if_perlsfio.c \
 	    gdb.c clewn/gdb_lvl2.c clewn/gdb_lvl3.c clewn/misc.c clewn/obstack.c \
 	    code_check.c \
 	    if_spidermonkey.c \
-	    workshop.c wsdebug.c integration.c netbeans.c
+	    workshop.c wsdebug.c integration.c netbeans.c if_ecl.c
 
 # All sources, also the ones that are not configured
 ALL_SRC = $(BASIC_SRC) $(ALL_GUI_SRC) $(EXTRA_SRC)
@@ -1465,7 +1476,7 @@ ALL_SRC = $(BASIC_SRC) $(ALL_GUI_SRC) $(EXTRA_SRC)
 # Which files to check with lint.  Select one of these three lines.  ALL_SRC
 # checks more, but may not work well for checking a GUI that wasn't configured.
 # The perl sources also don't work well with lint.
-LINT_SRC = $(BASIC_SRC) $(GUI_SRC) $(HANGULIN_SRC) $(PYTHON_SRC) $(TCL_SRC) \
+LINT_SRC = $(BASIC_SRC) $(GUI_SRC) $(HANGULIN_SRC) $(ECL_SRC) $(PYTHON_SRC) $(TCL_SRC) \
 	$(GDB_SRC) \
 	$(SNIFF_SRC) $(WORKSHOP_SRC) $(WSDEBUG_SRC) $(NETBEANS_SRC)
 #LINT_SRC = $(SRC)
@@ -1523,6 +1534,7 @@ OBJ = \
 	$(LUA_OBJ) \
 	$(MZSCHEME_OBJ) \
 	$(PERL_OBJ) \
+	$(ECL_OBJ) \
 	$(PYTHON_OBJ) \
 	$(TCL_OBJ) \
 	$(RUBY_OBJ) \
@@ -1556,6 +1568,7 @@ PRO_AUTO = \
 	if_cscope.pro \
 	if_xcmdsrv.pro \
 	if_python.pro \
+	if_ecl.pro \
 	if_ruby.pro \
 	if_spidermonkey.pro \
 	main.pro \
@@ -1628,7 +1641,7 @@ config auto/config.mk: auto/configure config.mk.in config.h.in
 		$(CONF_ARGS) $(CONF_OPT_MZSCHEME) $(CONF_OPT_PLTHOME) \
 		$(CONF_OPT_SPIDERMONKEY) \
 		$(CONF_OPT_LUA) $(CONF_OPT_LUA_PREFIX) \
-		$(CONF_OPT_SYSMOUSE)
+		$(CONF_OPT_SYSMOUSE) $(CONF_OPT_ECL)
 
 # Use "make reconfig" to rerun configure without cached values.
 # When config.h changes, most things will be recompiled automatically.
@@ -1894,6 +1907,8 @@ installrtbase: $(HELPSOURCE)/vim.1 $(DEST_VIM) $(DEST_RT) \
 	chmod $(VIMSCRIPTMOD) $(SYS_INDOFF_FILE)
 	$(INSTALL_DATA) $(SCRIPTSOURCE)/optwin.vim $(SYS_OPTWIN_FILE)
 	chmod $(VIMSCRIPTMOD) $(SYS_OPTWIN_FILE)
+	$(INSTALL_DATA) $(SCRIPTSOURCE)/if_ecl.lisp $(SYS_IF_ECL_FILE)
+	$(INSTALL_DATA) $(SCRIPTSOURCE)/if_ecl.vim $(SYS_IF_ECL_VIM_FILE)
 # install the print resource files
 	cd $(PRINTSOURCE); $(INSTALL_DATA) *.ps $(DEST_PRINT)
 	cd $(DEST_PRINT); chmod $(FILEMOD) *.ps
@@ -2502,6 +2517,9 @@ objects/if_perl.o: auto/if_perl.c
 
 objects/if_perlsfio.o: if_perlsfio.c
 	$(CCC) -o $@ if_perlsfio.c
+
+objects/if_ecl.o: if_ecl.c
+	$(CCC) -o $@ if_ecl.c
 
 objects/if_python.o: if_python.c
 	$(CCC) -o $@ if_python.c

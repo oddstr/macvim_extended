@@ -820,8 +820,8 @@ Short explanation of each option:		*option-list*
 'pumheight'	  'ph'	    maximum height of the popup menu
 'quoteescape'	  'qe'	    escape characters used in a string
 'readonly'	  'ro'	    disallow writing the buffer
-'relativenumber'  'rnu'	    print relative line number in front of each line
 'redrawtime'	  'rdt'     timeout for 'hlsearch' and |:match| highlighting
+'relativenumber'  'rnu'	    print relative line number in front of each line
 'remap'			    allow mappings to work recursively
 'report'		    threshold for reporting nr. of lines changed
 'restorescreen'   'rs'	    Win32: restore screen when exiting

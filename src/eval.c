@@ -12041,6 +12041,9 @@ f_has(argvars, rettv)
 #ifdef FEAT_VIMINFO
 	"viminfo",
 #endif
+#ifdef FEAT_VARTABS
+	"vartabs",
+#endif
 #ifdef FEAT_VERTSPLIT
 	"vertsplit",
 #endif
