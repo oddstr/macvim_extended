@@ -677,6 +677,7 @@
 
 /* Use iconv() when it's available. */
 #if defined(FEAT_MBYTE) && ((defined(HAVE_ICONV_H) && defined(HAVE_ICONV)) \
+		|| (defined(HAVE_ICONV_H) && defined(HAVE_LIBICONV)) \
 		|| defined(DYNAMIC_ICONV))
 # define USE_ICONV
 #endif

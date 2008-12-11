@@ -1963,6 +1963,12 @@ typedef int VimClipboard;	/* This is required for the prototypes. */
 #   define ICONV_EINVAL EINVAL
 #   define ICONV_EILSEQ EILSEQ
 #  endif
+/* MacPorts' libiconv provides libiconv_open, not iconv_open. */
+#  ifdef HAVE_LIBICONV
+#   define iconv_open  libiconv_open
+#   define iconv       libiconv
+#   define iconv_close libiconv_close
+#  endif
 # endif
 
 #endif

@@ -2854,14 +2854,20 @@ AC_TRY_LINK([
 #endif
     ], [iconv_open("fr", "to");],
     AC_MSG_RESULT(yes; with -liconv); AC_DEFINE(HAVE_ICONV),
-    LIBS="$save_LIBS"
     AC_TRY_LINK([
 #ifdef HAVE_ICONV_H
 # include <iconv.h>
 #endif
-	], [iconv_open("fr", "to");],
-	AC_MSG_RESULT(yes); AC_DEFINE(HAVE_ICONV),
-	AC_MSG_RESULT(no)))
+	], [libiconv_open("fr", "to");],
+	AC_MSG_RESULT([yes; using libiconv_open()]); AC_DEFINE(HAVE_LIBICONV),
+	LIBS="$save_LIBS"
+	AC_TRY_LINK([
+#ifdef HAVE_ICONV_H
+# include <iconv.h>
+#endif
+	    ], [iconv_open("fr", "to");],
+	    AC_MSG_RESULT(yes); AC_DEFINE(HAVE_ICONV),
+	    AC_MSG_RESULT(no))))
 
 
 AC_MSG_CHECKING(for nl_langinfo(CODESET))
