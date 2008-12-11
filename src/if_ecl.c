@@ -29,6 +29,7 @@
 
 #include "vim.h"
 #undef CAR
+#define shadow ecl_shadow
 #include "ecl/ecl.h"
 #include "ecl/ecl-inl.h"
 #include <signal.h>
