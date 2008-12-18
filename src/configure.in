@@ -1123,44 +1123,86 @@ AC_ARG_ENABLE(spidermonkeyinterp,
 	[enable_spidermonkeyinterp="no"])
 AC_MSG_RESULT($enable_spidermonkeyinterp)
 if test "$enable_spidermonkeyinterp" = "yes"; then
+  SPIDERMONKEY_SRC="if_spidermonkey.c"
+  SPIDERMONKEY_OBJ="objects/if_spidermonkey.o"
+  SPIDERMONKEY_PRO="if_spidermonkey.pro"
+
+  save_cflags="$CFLAGS"
+  save_libs="$LIBS"
 
   # Must define one of XP_BEOS, XP_MAC, XP_OS2, XP_WIN or XP_UNIX
   AC_MSG_CHECKING(for OS definition)
   if test "$BEOS" = "yes"; then
     spidermonkey_cflags="-DXP_BEOS"
-  elif test "$MACOSX" = "yes"; then
-    spidermonkey_cflags="-DXP_MAC"
   else
     spidermonkey_cflags="-DXP_UNIX"
   fi
   AC_MSG_RESULT("$spidermonkey_cflags")
 
-  save_cflags="$CFLAGS"
-  save_libs="$LIBS"
+  AC_ARG_WITH(spidermonkey-includes,
+    [  --with-spidermonkey-includes=DIR Specify location of spidermonkey headers],
+    [spidermonkey_cflags="$spidermonkey_cflags -I$withval"]
+  )
+  if test "x$spidermonkey_incs" == x; then
+    if test -f $prefix/include/js/jsapi.h; then
+      spidermonkey_cflags="$spidermonkey_cflags -I$prefix/include/js"
+    elif test -f /usr/include/js/jsapi.h; then
+      spidermonkey_cflags="$spidermonkey_cflags -I/usr/include/js"
+    elif test -f /usr/local/include/js/jsapi.h; then
+      spidermonkey_cflags="$spidermonkey_cflags -I/usr/local/include/js"
+    elif test -f /opt/local/include/js/jsapi.h; then
+      spidermonkey_cflags="$spidermonkey_cflags -I/opt/local/include/js"
+    fi
+  fi
   CFLAGS="$CFLAGS $spidermonkey_cflags"
-  LIBS="$LIBS -lmozjs"
+
+  dnl check whether spidermonkey library does work
+  spidermonkey_libs="-ljs"
+  AC_ARG_WITH(spidermonkey-libs,
+    [  --with-spidermonkey-libs=DIR   Specify location of spidermonkey libs],
+    [spidermonkey_ldflags="-L$withval"]
+  )
+  LIBS="$LIBS $spidermonkey_libs $spidermonkey_ldflags"
 
   AC_MSG_CHECKING(whether SpiderMonkey library is usable)
   AC_TRY_LINK([
 #include <jsapi.h>
     ], [JS_NewRuntime(1024);],
-    AC_MSG_RESULT(yes),
-    AC_MSG_RESULT(no); AC_MSG_ERROR(can not use SpiderMonkey library))
+    spidermonkey_ok=yes,
+    spidermonkey_ok=no
+    )
 
-  AC_MSG_CHECKING(whether SpiderMonkey was compiled with JS_THREADSAFE flag)
-  AC_TRY_LINK([
+  if test $spidermonkey_ok = no; then
+    spidermonkey_libs="-lmozjs"
+    LIBS="$save_libs $spidermonkey_libs $spidermonkey_ldflags"
+    AC_TRY_LINK([
+#include <jsapi.h>
+      ], [JS_NewRuntime(1024);],
+      spidermonkey_ok=yes,
+      spidermonkey_ok=no
+      )
+  fi
+
+  if test $spidermonkey_ok = no; then
+    AC_MSG_RESULT(no: SPIDERMONKEY DISABLED)
+    SPIDERMONKEY_SRC=
+    SPIDERMONKEY_OBJ=
+    SPIDERMONKEY_PRO=
+  else
+    AC_MSG_RESULT(yes)
+    AC_DEFINE(FEAT_SPIDERMONKEY)
+
+    AC_MSG_CHECKING(whether SpiderMonkey was compiled with JS_THREADSAFE flag)
+    AC_TRY_LINK([
 #define JS_THREADSAFE
 #include <jsapi.h>
-    ], [JS_GetContextThread(NULL);],
-    AC_MSG_RESULT(yes); spidermonkey_cflags="$spidermonkey_cflags -DJS_THREADSAFE",
-    AC_MSG_RESULT(no))
+      ], [JS_GetContextThread(NULL);],
+      AC_MSG_RESULT(yes); spidermonkey_cflags="$spidermonkey_cflags -DJS_THREADSAFE",
+      AC_MSG_RESULT(no))
 
-  SPIDERMONKEY_SRC="if_spidermonkey.c"
-  SPIDERMONKEY_OBJ="objects/if_spidermonkey.o"
-  SPIDERMONKEY_PRO="if_spidermonkey.pro"
-  SPIDERMONKEY_CFLAGS="$spidermonkey_cflags"
-  SPIDERMONKEY_LIBS="-lmozjs"
-  AC_DEFINE(FEAT_SPIDERMONKEY)
+    SPIDERMONKEY_CFLAGS="$spidermonkey_cflags"
+    SPIDERMONKEY_LIBS="$spidermonkey_libs $spidermonkey_ldflags"
+  fi
 
   CFLAGS="$save_cflags"
   LIBS="$save_libs"
