@@ -18,7 +18,7 @@
 #  define XP_BEOS
 # endif
 #endif
-#include <js/jsapi.h>
+#include <jsapi.h>
 
 static int sm_initialized = 0;
 

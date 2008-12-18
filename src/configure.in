@@ -1128,9 +1128,8 @@ if test "$enable_spidermonkeyinterp" = "yes"; then
   AC_MSG_CHECKING(for OS definition)
   if test "$BEOS" = "yes"; then
     spidermonkey_cflags="-DXP_BEOS"
-  dnl Maybe obsolete difinition. use XP_UNIX for MACOSX
-#  elif test "$MACOSX" = "yes"; then
-#    spidermonkey_cflags="-DXP_MAC"
+  elif test "$MACOSX" = "yes"; then
+    spidermonkey_cflags="-DXP_MAC"
   else
     spidermonkey_cflags="-DXP_UNIX"
   fi
@@ -1143,7 +1142,7 @@ if test "$enable_spidermonkeyinterp" = "yes"; then
 
   AC_MSG_CHECKING(whether SpiderMonkey library is usable)
   AC_TRY_LINK([
-#include <js/jsapi.h>
+#include <jsapi.h>
     ], [JS_NewRuntime(1024);],
     AC_MSG_RESULT(yes),
     AC_MSG_RESULT(no); AC_MSG_ERROR(can not use SpiderMonkey library))
@@ -1151,7 +1150,7 @@ if test "$enable_spidermonkeyinterp" = "yes"; then
   AC_MSG_CHECKING(whether SpiderMonkey was compiled with JS_THREADSAFE flag)
   AC_TRY_LINK([
 #define JS_THREADSAFE
-#include <js/jsapi.h>
+#include <jsapi.h>
     ], [JS_GetContextThread(NULL);],
     AC_MSG_RESULT(yes); spidermonkey_cflags="$spidermonkey_cflags -DJS_THREADSAFE",
     AC_MSG_RESULT(no))
