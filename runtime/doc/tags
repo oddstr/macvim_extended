@@ -4,6 +4,8 @@
 $	motion.txt	/*$*
 $HOME	options.txt	/*$HOME*
 $HOME-use	version5.txt	/*$HOME-use*
+$MYGVIMRC	gui.txt	/*$MYGVIMRC*
+$MYVIMRC	starting.txt	/*$MYVIMRC*
 $VIM	starting.txt	/*$VIM*
 $VIM-use	version5.txt	/*$VIM-use*
 $VIMRUNTIME	starting.txt	/*$VIMRUNTIME*
@@ -1772,7 +1774,6 @@ $VIMRUNTIME	starting.txt	/*$VIMRUNTIME*
 :Print	various.txt	/*:Print*
 :Rexplore	pi_netrw.txt	/*:Rexplore*
 :RmVimball	pi_vimball.txt	/*:RmVimball*
-:Sexplore	pi_netrw.txt	/*:Sexplore*
 :TOhtml	syntax.txt	/*:TOhtml*
 :Texplore	pi_netrw.txt	/*:Texplore*
 :UseVimball	pi_vimball.txt	/*:UseVimball*
@@ -1785,6 +1786,7 @@ $VIMRUNTIME	starting.txt	/*$VIMRUNTIME*
 :_!	cmdline.txt	/*:_!*
 :_#	cmdline.txt	/*:_#*
 :_##	cmdline.txt	/*:_##*
+:_#<	cmdline.txt	/*:_#<*
 :_%	cmdline.txt	/*:_%*
 :_%:	cmdline.txt	/*:_%:*
 :_%<	cmdline.txt	/*:_%<*
@@ -1977,7 +1979,7 @@ $VIMRUNTIME	starting.txt	/*$VIMRUNTIME*
 :command-range	map.txt	/*:command-range*
 :command-register	map.txt	/*:command-register*
 :command-verbose	map.txt	/*:command-verbose*
-:comment	eval.txt	/*:comment*
+:comment	cmdline.txt	/*:comment*
 :comp	quickfix.txt	/*:comp*
 :compiler	quickfix.txt	/*:compiler*
 :con	eval.txt	/*:con*
@@ -2093,6 +2095,7 @@ $VIMRUNTIME	starting.txt	/*$VIMRUNTIME*
 :enew!	editing.txt	/*:enew!*
 :ex	editing.txt	/*:ex*
 :exe	eval.txt	/*:exe*
+:exe-comment	eval.txt	/*:exe-comment*
 :execute	eval.txt	/*:execute*
 :exi	editing.txt	/*:exi*
 :exit	editing.txt	/*:exit*
@@ -2443,6 +2446,8 @@ $VIMRUNTIME	starting.txt	/*$VIMRUNTIME*
 :nunme	gui.txt	/*:nunme*
 :nunmenu	gui.txt	/*:nunmenu*
 :o	vi_diff.txt	/*:o*
+:ol	starting.txt	/*:ol*
+:oldfiles	starting.txt	/*:oldfiles*
 :om	map.txt	/*:om*
 :omap	map.txt	/*:omap*
 :omap_l	map.txt	/*:omap_l*
@@ -4112,7 +4117,9 @@ E805	eval.txt	/*E805*
 E806	eval.txt	/*E806*
 E807	eval.txt	/*E807*
 E808	eval.txt	/*E808*
+E809	cmdline.txt	/*E809*
 E81	map.txt	/*E81*
+E810	diff.txt	/*E810*
 E82	message.txt	/*E82*
 E83	message.txt	/*E83*
 E84	windows.txt	/*E84*
@@ -4709,6 +4716,10 @@ bzip2	pi_gzip.txt	/*bzip2*
 c	change.txt	/*c*
 c.vim	syntax.txt	/*c.vim*
 cW	change.txt	/*cW*
+c_#	cmdline.txt	/*c_#*
+c_##	cmdline.txt	/*c_##*
+c_#<	cmdline.txt	/*c_#<*
+c_%	cmdline.txt	/*c_%*
 c_<BS>	cmdline.txt	/*c_<BS>*
 c_<C-Left>	cmdline.txt	/*c_<C-Left>*
 c_<C-R>	cmdline.txt	/*c_<C-R>*
@@ -4744,6 +4755,7 @@ c_CTRL-B	cmdline.txt	/*c_CTRL-B*
 c_CTRL-C	cmdline.txt	/*c_CTRL-C*
 c_CTRL-D	cmdline.txt	/*c_CTRL-D*
 c_CTRL-E	cmdline.txt	/*c_CTRL-E*
+c_CTRL-F	cmdline.txt	/*c_CTRL-F*
 c_CTRL-H	cmdline.txt	/*c_CTRL-H*
 c_CTRL-I	cmdline.txt	/*c_CTRL-I*
 c_CTRL-J	cmdline.txt	/*c_CTRL-J*
@@ -4784,6 +4796,7 @@ cc	change.txt	/*cc*
 ceil()	eval.txt	/*ceil()*
 ch.vim	syntax.txt	/*ch.vim*
 change-list-jumps	motion.txt	/*change-list-jumps*
+change-name	tips.txt	/*change-name*
 change-tabs	change.txt	/*change-tabs*
 change.txt	change.txt	/*change.txt*
 changed-5.1	version5.txt	/*changed-5.1*
@@ -5603,6 +5616,7 @@ g:netrw_browse_split	pi_netrw.txt	/*g:netrw_browse_split*
 g:netrw_browsex_viewer	pi_netrw.txt	/*g:netrw_browsex_viewer*
 g:netrw_compress	pi_netrw.txt	/*g:netrw_compress*
 g:netrw_ctags	pi_netrw.txt	/*g:netrw_ctags*
+g:netrw_cursorline	pi_netrw.txt	/*g:netrw_cursorline*
 g:netrw_cygwin	pi_netrw.txt	/*g:netrw_cygwin*
 g:netrw_dav_cmd	pi_netrw.txt	/*g:netrw_dav_cmd*
 g:netrw_decompress	pi_netrw.txt	/*g:netrw_decompress*
@@ -5619,7 +5633,9 @@ g:netrw_ftp_timelist_cmd	pi_netrw.txt	/*g:netrw_ftp_timelist_cmd*
 g:netrw_ftpmode	pi_netrw.txt	/*g:netrw_ftpmode*
 g:netrw_glob_escape	pi_netrw.txt	/*g:netrw_glob_escape*
 g:netrw_hide	pi_netrw.txt	/*g:netrw_hide*
+g:netrw_home	pi_netrw.txt	/*g:netrw_home*
 g:netrw_http_cmd	pi_netrw.txt	/*g:netrw_http_cmd*
+g:netrw_http_xcmd	pi_netrw.txt	/*g:netrw_http_xcmd*
 g:netrw_ignorenetrc	pi_netrw.txt	/*g:netrw_ignorenetrc*
 g:netrw_keepdir	pi_netrw.txt	/*g:netrw_keepdir*
 g:netrw_list_cmd	pi_netrw.txt	/*g:netrw_list_cmd*
@@ -6067,6 +6083,7 @@ i_CTRL-O	insert.txt	/*i_CTRL-O*
 i_CTRL-P	insert.txt	/*i_CTRL-P*
 i_CTRL-Q	insert.txt	/*i_CTRL-Q*
 i_CTRL-R	insert.txt	/*i_CTRL-R*
+i_CTRL-R_=	insert.txt	/*i_CTRL-R_=*
 i_CTRL-R_CTRL-O	insert.txt	/*i_CTRL-R_CTRL-O*
 i_CTRL-R_CTRL-P	insert.txt	/*i_CTRL-R_CTRL-P*
 i_CTRL-R_CTRL-R	insert.txt	/*i_CTRL-R_CTRL-R*
@@ -6562,6 +6579,7 @@ netrw-list	pi_netrw.txt	/*netrw-list*
 netrw-listbookmark	pi_netrw.txt	/*netrw-listbookmark*
 netrw-listhack	pi_netrw.txt	/*netrw-listhack*
 netrw-login	pi_netrw.txt	/*netrw-login*
+netrw-mB	pi_netrw.txt	/*netrw-mB*
 netrw-mT	pi_netrw.txt	/*netrw-mT*
 netrw-mb	pi_netrw.txt	/*netrw-mb*
 netrw-mc	pi_netrw.txt	/*netrw-mc*
@@ -6751,6 +6769,7 @@ object-select	motion.txt	/*object-select*
 objects	index.txt	/*objects*
 obtaining-exted	netbeans.txt	/*obtaining-exted*
 ocaml.vim	syntax.txt	/*ocaml.vim*
+oldfiles-variable	eval.txt	/*oldfiles-variable*
 ole-activation	if_ole.txt	/*ole-activation*
 ole-eval	if_ole.txt	/*ole-eval*
 ole-gethwnd	if_ole.txt	/*ole-gethwnd*
@@ -7214,6 +7233,7 @@ spell	spell.txt	/*spell*
 spell-ACCENT	spell.txt	/*spell-ACCENT*
 spell-AUTHOR	spell.txt	/*spell-AUTHOR*
 spell-BAD	spell.txt	/*spell-BAD*
+spell-BREAK	spell.txt	/*spell-BREAK*
 spell-CHECKCOMPOUNDCASE	spell.txt	/*spell-CHECKCOMPOUNDCASE*
 spell-CHECKCOMPOUNDDUP	spell.txt	/*spell-CHECKCOMPOUNDDUP*
 spell-CHECKCOMPOUNDPATTERN	spell.txt	/*spell-CHECKCOMPOUNDPATTERN*
@@ -7233,6 +7253,7 @@ spell-COMPOUNDMIN	spell.txt	/*spell-COMPOUNDMIN*
 spell-COMPOUNDPERMITFLAG	spell.txt	/*spell-COMPOUNDPERMITFLAG*
 spell-COMPOUNDROOT	spell.txt	/*spell-COMPOUNDROOT*
 spell-COMPOUNDRULE	spell.txt	/*spell-COMPOUNDRULE*
+spell-COMPOUNDRULES	spell.txt	/*spell-COMPOUNDRULES*
 spell-COMPOUNDSYLLABLE	spell.txt	/*spell-COMPOUNDSYLLABLE*
 spell-COMPOUNDSYLMAX	spell.txt	/*spell-COMPOUNDSYLMAX*
 spell-COMPOUNDWORDMAX	spell.txt	/*spell-COMPOUNDWORDMAX*
@@ -7243,6 +7264,7 @@ spell-FOL	spell.txt	/*spell-FOL*
 spell-FORBIDDENWORD	spell.txt	/*spell-FORBIDDENWORD*
 spell-HOME	spell.txt	/*spell-HOME*
 spell-KEEPCASE	spell.txt	/*spell-KEEPCASE*
+spell-KEY	spell.txt	/*spell-KEY*
 spell-LANG	spell.txt	/*spell-LANG*
 spell-LEMMA_PRESENT	spell.txt	/*spell-LEMMA_PRESENT*
 spell-LOW	spell.txt	/*spell-LOW*
@@ -7837,6 +7859,7 @@ v:lnum	eval.txt	/*v:lnum*
 v:mouse_col	eval.txt	/*v:mouse_col*
 v:mouse_lnum	eval.txt	/*v:mouse_lnum*
 v:mouse_win	eval.txt	/*v:mouse_win*
+v:oldfiles	eval.txt	/*v:oldfiles*
 v:operator	eval.txt	/*v:operator*
 v:prevcount	eval.txt	/*v:prevcount*
 v:profiling	eval.txt	/*v:profiling*
@@ -8027,6 +8050,7 @@ viminfo-file	starting.txt	/*viminfo-file*
 viminfo-file-marks	starting.txt	/*viminfo-file-marks*
 viminfo-file-name	starting.txt	/*viminfo-file-name*
 viminfo-read	starting.txt	/*viminfo-read*
+viminfo-read-write	starting.txt	/*viminfo-read-write*
 viminfo-write	starting.txt	/*viminfo-write*
 vimrc	starting.txt	/*vimrc*
 vimrc-filetype	usr_05.txt	/*vimrc-filetype*

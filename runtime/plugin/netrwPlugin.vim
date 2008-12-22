@@ -1,6 +1,6 @@
 " netrwPlugin.vim: Handles file transfer and remote directory listing across a network
 "            PLUGIN SECTION
-" Date:		Aug 01, 2008
+" Date:		Aug 10, 2008
 " Maintainer:	Charles E Campbell, Jr <NdrOchip@ScampbellPfamily.AbizM-NOSPAM>
 " GetLatestVimScripts: 1075 1 :AutoInstall: netrw.vim
 " Copyright:    Copyright (C) 1999-2008 Charles E. Campbell, Jr. {{{1
@@ -16,19 +16,16 @@
 "  But be doers of the Word, and not only hearers, deluding your own selves {{{1
 "  (James 1:22 RSV)
 " =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
-
-" ---------------------------------------------------------------------
 " Load Once: {{{1
 if &cp || exists("g:loaded_netrwPlugin")
  finish
 endif
-let g:loaded_netrwPlugin = "v132"
-let s:keepcpo            = &cpo
-if v:version < 700
- echohl WarningMsg | echo "***netrw*** you need vim version 7.0 for this version of netrw" | echohl None
+let g:loaded_netrwPlugin = "v134"
+if v:version < 702
+ echohl WarningMsg | echo "***netrw*** you need vim version 7.2 for this version of netrw" | echohl None
  finish
 endif
-let s:keepcpo= &cpo
+let s:keepcpo = &cpo
 set cpo&vim
 
 " ---------------------------------------------------------------------
@@ -154,24 +151,6 @@ fun! NetUserPass(...)
  endif
 "  call Dret("NetUserPass")
 endfun
-
-" ------------------------------------------------------------------------
-" NetReadFixup: this sort of function is typically written by the user {{{1
-"               to handle extra junk that their system's ftp dumps
-"               into the transfer.  This function is provided as an
-"               example and as a fix for a Windows 95 problem: in my
-"               experience, win95's ftp always dumped four blank lines
-"               at the end of the transfer.
-if has("win95") && exists("g:netrw_win95ftp") && g:netrw_win95ftp
- fun! NetReadFixup(method, line1, line2)
-"   call Dfunc("NetReadFixup(method<".a:method."> line1=".a:line1." line2=".a:line2.")")
-   if method == 3   " ftp (no <.netrc>)
-    let fourblanklines= line2 - 3
-    silent fourblanklines.",".line2."g/^\s*/d"
-   endif
-"   call Dret("NetReadFixup")
- endfun
-endif
 
 " ------------------------------------------------------------------------
 " Modelines And Restoration: {{{1

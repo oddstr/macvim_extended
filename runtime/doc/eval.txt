@@ -1,4 +1,4 @@
-*eval.txt*	For Vim version 7.2.  Last change: 2008 Nov 27
+*eval.txt*	For Vim version 7.2.  Last change: 2008 Dec 03
 
 
 		  VIM REFERENCE MANUAL	  by Bram Moolenaar
@@ -853,7 +853,8 @@ expr8[expr1]		item of String or |List|	*expr-[]* *E111*
 
 If expr8 is a Number or String this results in a String that contains the
 expr1'th single byte from expr8.  expr8 is used as a String, expr1 as a
-Number.  Note that this doesn't recognize multi-byte encodings.
+Number.  This doesn't recognize multi-byte encodings, see |byteidx()| for
+an alternative.
 
 Index zero gives the first character.  This is like it works in C.  Careful:
 text column numbers start with one!  Example, to get the character under the
@@ -878,8 +879,8 @@ expr8[expr1a : expr1b]	substring or sublist		*expr-[:]*
 
 If expr8 is a Number or String this results in the substring with the bytes
 from expr1a to and including expr1b.  expr8 is used as a String, expr1a and
-expr1b are used as a Number.  Note that this doesn't recognize multi-byte
-encodings.
+expr1b are used as a Number.  This doesn't recognize multi-byte encodings, see
+|byteidx()| for computing the indexes.
 
 If expr1a is omitted zero is used.  If expr1b is omitted the length of the
 string minus one is used.
@@ -1317,6 +1318,8 @@ v:count		The count given for the last Normal mode command.  Can be used
 	:map _x :<C-U>echo "the count is " . v:count<CR>
 <		Note: The <C-U> is required to remove the line range that you
 		get when typing ':' after a count.
+		When there are two counts, as in "3d2w", they are multiplied,
+		just like what happens in the command, "d6w" for the example.
 		Also used for evaluating the 'formatexpr' option.
 		"count" also works, for backwards compatibility.
 
@@ -2476,7 +2479,7 @@ empty({expr})						*empty()*
 		Return the Number 1 if {expr} is empty, zero otherwise.
 		A |List| or |Dictionary| is empty when it does not have any
 		items.	A Number is empty when its value is zero.
-		For a long |List| this is much faster then comparing the
+		For a long |List| this is much faster than comparing the
 		length with zero.
 
 escape({string}, {chars})				*escape()*
@@ -3052,7 +3055,7 @@ getcharmod()						*getcharmod()*
 			128	Macintosh only: command
 		Only the modifiers that have not been included in the
 		character itself are obtained.	Thus Shift-a results in "A"
-		with no modifier.
+		without a modifier.
 
 getcmdline()						*getcmdline()*
 		Return the current command-line.  Only works when the command
@@ -3180,7 +3183,7 @@ getloclist({nr})					*getloclist()*
 		window {nr}. When {nr} is zero the current window is used.
 		For a location list window, the displayed location list is
 		returned.  For an invalid window number {nr}, an empty list is
-		returned. Otherwise, same as getqflist().
+		returned. Otherwise, same as |getqflist()|.
 
 getmatches()						*getmatches()*
 		Returns a |List| with all matches previously defined by
@@ -3502,7 +3505,10 @@ indent({lnum})	The result is a Number, which is indent of line {lnum} in the
 
 index({list}, {expr} [, {start} [, {ic}]])			*index()*
 		Return the lowest index in |List| {list} where the item has a
-		value equal to {expr}.
+		value equal to {expr}.  There is no automatic conversion, so
+		the String "4" is different from the Number 4.  And the number
+		4 is different from the Float 4.0.  The value of 'ignorecase'
+		is not used here, case always matters.
 		If {start} is given then start looking at the item with index
 		{start} (may be negative for an item relative to the end).
 		When {ic} is given and it is non-zero, ignore case.  Otherwise
@@ -3558,8 +3564,8 @@ input({prompt} [, {text} [, {completion}]])		*input()*
 			:endfunction
 
 inputdialog({prompt} [, {text} [, {cancelreturn}]])		*inputdialog()*
-		Like input(), but when the GUI is running and text dialogs are
-		supported, a dialog window pops up to input the text.
+		Like |input()|, but when the GUI is running and text dialogs
+		are supported, a dialog window pops up to input the text.
 		Example: >
 			:let n = inputdialog("value for shiftwidth", &sw)
 			:if n != ""
@@ -3588,7 +3594,7 @@ inputlist({textlist})					*inputlist()*
 				\ '2. green', '3. blue'])
 
 inputrestore()						*inputrestore()*
-		Restore typeahead that was saved with a previous inputsave().
+		Restore typeahead that was saved with a previous |inputsave()|.
 		Should be called the same number of times inputsave() is
 		called.  Calling it more often is harmless though.
 		Returns 1 when there is nothing to restore, 0 otherwise.
@@ -3725,7 +3731,7 @@ libcall({libname}, {funcname}, {argument})
 <
 							*libcallnr()*
 libcallnr({libname}, {funcname}, {argument})
-		Just like libcall(), but used for a function that returns an
+		Just like |libcall()|, but used for a function that returns an
 		int instead of a string.
 		{only in Win32 on some Unix versions, when the |+libcall|
 		feature is present}
@@ -3988,8 +3994,8 @@ matchdelete({id})			       *matchdelete()* *E802* *E803*
 		be deleted in one operation by |clearmatches()|.
 
 matchend({expr}, {pat}[, {start}[, {count}]])			*matchend()*
-		Same as match(), but return the index of first character after
-		the match.  Example: >
+		Same as |match()|, but return the index of first character
+		after the match.  Example: >
 			:echo matchend("testing", "ing")
 <		results in "7".
 							*strspn()* *strcspn()*
@@ -3999,15 +4005,15 @@ matchend({expr}, {pat}[, {start}[, {count}]])			*matchend()*
 			:let span = matchend(line, '[^a-zA-Z]')
 <		Except that -1 is returned when there are no matches.
 
-		The {start}, if given, has the same meaning as for match(). >
+		The {start}, if given, has the same meaning as for |match()|. >
 			:echo matchend("testing", "ing", 2)
 <		results in "7". >
 			:echo matchend("testing", "ing", 5)
 <		result is "-1".
-		When {expr} is a |List| the result is equal to match().
+		When {expr} is a |List| the result is equal to |match()|.
 
 matchlist({expr}, {pat}[, {start}[, {count}]])			*matchlist()*
-		Same as match(), but return a |List|.  The first item in the
+		Same as |match()|, but return a |List|.  The first item in the
 		list is the matched string, same as what matchstr() would
 		return.  Following items are submatches, like "\1", "\2", etc.
 		in |:substitute|.  When an optional submatch didn't match an
@@ -4021,7 +4027,7 @@ matchstr({expr}, {pat}[, {start}[, {count}]])			*matchstr()*
 			:echo matchstr("testing", "ing")
 <		results in "ing".
 		When there is no match "" is returned.
-		The {start}, if given, has the same meaning as for match(). >
+		The {start}, if given, has the same meaning as for |match()|. >
 			:echo matchstr("testing", "ing", 2)
 <		results in "ing". >
 			:echo matchstr("testing", "ing", 5)
@@ -4495,9 +4501,9 @@ remote_send({server}, {string} [, {idvar}])
 <
 remove({list}, {idx} [, {end}])				*remove()*
 		Without {end}: Remove the item at {idx} from |List| {list} and
-		return it.
+		return the item.
 		With {end}: Remove items from {idx} to {end} (inclusive) and
-		return a list with these items.  When {idx} points to the same
+		return a List with these items.  When {idx} points to the same
 		item as {end} a list with one item is returned.  When {end}
 		points to an item before {idx} this is an error.
 		See |list-index| for possible values of {idx} and {end}.
@@ -4747,7 +4753,7 @@ searchpair({start}, {middle}, {end} [, {flags} [, {skip}
 							*searchpairpos()*
 searchpairpos({start}, {middle}, {end} [, {flags} [, {skip}
 				[, {stopline} [, {timeout}]]]])
-		Same as searchpair(), but returns a |List| with the line and
+		Same as |searchpair()|, but returns a |List| with the line and
 		column position of the match. The first element of the |List|
 		is the line number and the second element is the byte index of
 		the column position of the match.  If no match is found,
@@ -5048,15 +5054,20 @@ sort({list} [, {func}])					*sort()* *E702*
 		When {func} is given and it is one then case is ignored.
 		When {func} is a |Funcref| or a function name, this function
 		is called to compare items.  The function is invoked with two
-		items as argument and must return zero if they are equal, 1 if
-		the first one sorts after the second one, -1 if the first one
-		sorts before the second one.  Example: >
+		items as argument and must return zero if they are equal, 1 or
+		bigger if the first one sorts after the second one, -1 or
+		smaller if the first one sorts before the second one.
+		Example: >
 			func MyCompare(i1, i2)
 			   return a:i1 == a:i2 ? 0 : a:i1 > a:i2 ? 1 : -1
 			endfunc
 			let sortedlist = sort(mylist, "MyCompare")
+<		A shorter compare version for this specific simple case, which
+		ignores overflow: >
+			func MyCompare(i1, i2)
+			   return a:i1 - a:i2
+			endfunc
 <
-
 							*soundfold()*
 soundfold({word})
 		Return the sound-folded equivalent of {word}.  Uses the first
@@ -5841,7 +5852,7 @@ mouse_netterm		Compiled with support for netterm mouse.
 mouse_pterm		Compiled with support for qnx pterm mouse.
 mouse_sysmouse		Compiled with support for sysmouse (*BSD console mouse)
 mouse_xterm		Compiled with support for xterm mouse.
-multi_byte		Compiled with support for 'encoding'
+multi_byte		Compiled with support for editing Korean et al.
 multi_byte_encoding	'encoding' is set to a multi-byte encoding.
 multi_byte_ime		Compiled with support for IME input method.
 multi_lang		Compiled with support for multiple languages.
@@ -6821,7 +6832,7 @@ This would call the function "my_func_whizz(parameter)".
 		:execute 'while i < 5 | echo i | let i = i + 1 | endwhile'
 <
 
-							*:comment*
+							*:exe-comment*
 			":execute", ":echo" and ":echon" cannot be followed by
 			a comment directly, because they see the '"' as the
 			start of a string.  But, you can use '|' followed by a
