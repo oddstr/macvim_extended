@@ -2006,7 +2006,7 @@ $VIMRUNTIME	starting.txt	/*$VIMRUNTIME*
 :command-range	map.txt	/*:command-range*
 :command-register	map.txt	/*:command-register*
 :command-verbose	map.txt	/*:command-verbose*
-:comment	eval.txt	/*:comment*
+:comment	cmdline.txt	/*:comment*
 :comp	quickfix.txt	/*:comp*
 :compiler	quickfix.txt	/*:compiler*
 :con	eval.txt	/*:con*
@@ -2123,6 +2123,7 @@ $VIMRUNTIME	starting.txt	/*$VIMRUNTIME*
 :enew!	editing.txt	/*:enew!*
 :ex	editing.txt	/*:ex*
 :exe	eval.txt	/*:exe*
+:exe-comment	eval.txt	/*:exe-comment*
 :execute	eval.txt	/*:execute*
 :exi	editing.txt	/*:exi*
 :exit	editing.txt	/*:exit*
@@ -4175,6 +4176,7 @@ E807	eval.txt	/*E807*
 E808	eval.txt	/*E808*
 E809	cmdline.txt	/*E809*
 E81	map.txt	/*E81*
+E810	diff.txt	/*E810*
 E82	message.txt	/*E82*
 E83	message.txt	/*E83*
 E84	windows.txt	/*E84*
