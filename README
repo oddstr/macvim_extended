@@ -1,0 +1,82 @@
+----------
+README of MacVim_extended
+----------
+1. What is this?
+  This is a merge project of
+    - MacVim          (http://repo.or.cz/w/MacVim.git)
+    - vim_extended    (http://repo.or.cz/w/vim_extended.git)
+    - kaoriya patches (http://www.kaoriya.net/#VIM71)
+    - vimGdb          (http://clewn.sourceforge.net/)
+
+2. About branches
+    - master         : master branch of this project
+    - kaoriya/*      : numerous patches by kaoriya
+    - kaoriya/master : merge branch of all kaoriya branches
+    - gdb            : integrated gdb interface
+
+3. How to build
+  If you don't have git, you can build from official source,
+  install via MacPorts or installer.
+    http://git.or.cz/#download
+    http://www.macports.org/
+    http://code.google.com/p/git-osx-installer/downloads/list?can=3
+  Also Developer's tool is necessary. Get it from apple.
+    http://developer.apple.com/technology/xcode.html
+
+  First, clone repository to your mac.
+    % git clone git://github.com/wzvplala/macvim_extended.git
+    % cd macvim_extended
+
+  Master branch is autoconfed and configured with
+    --enable-gui=macvim --with-feature=big
+  so you can just 
+    % cd src; make
+
+    Or if you want customize configuration,
+      % cd src; make config --help
+      % vim Makefile
+      % make scratch; make config; make
+
+  Now, Vim binary was made, so let's build MacVim.app.
+    % cd MacVim
+    % xcodebuild
+    % open build/Release/MacVim.app
+
+" vim: set helplang=enfenc=utf-8 sw=2 et:
+----------
+
+
+----------
+1. これは何？
+    - MacVim          (http://repo.or.cz/w/MacVim.git)
+    - vim_extended    (http://repo.or.cz/w/vim_extended.git)
+    - 香り屋パッチ    (http://www.kaoriya.net/#VIM71)
+    - vimGdb          (http://clewn.sourceforge.net/)
+  を、ごった煮しようという試み
+
+2. ブランチがたくさんあるけど？
+    - master         : マスターブランチ。
+    - kaoriya/*      : 香り屋パッチを、機能ごとに当てたもの。
+      - mbyte_japanese : 日本語関連
+      - memwatch       : (未テスト)
+      - migemo         : migemo検索 (要cmigemo、再configure)
+      - misc           : もろもろ
+      - spidermonkey   : spidermonkey (javascript) インタープリタ
+      - uimfep         : uimfepをvimから操作
+      - win32_specific : mac には無関係なもの。masterには入ってません
+    - kaoriya/master : 全ての香り屋パッチ統合版。
+    - gdb            : gdb インターフェイス組み込みブランチ。
+
+3. どうやったら動く？
+  必要なもの： git, xcode
+  手順：
+    % git clone git://github.com/wzvplala/macvim_extended.git
+    % cd macvim_extended
+    % cd src; make
+    % cd MacVim
+    % xcodebuild
+    % open build/Release/MacVim.app
+  詳細は、上の How to build も参照。
+
+" vim: set helplang=ja fenc=utf-8 sw=2 et:
+----------
