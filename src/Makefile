@@ -385,7 +385,7 @@ CONF_ARGS = --with-modified-by="Vim extended"
 
 # ECL - For creating Vim with ECL interface
 # Uncomment this when you want to include the ECL interface.
-CONF_OPT_ECL = --enable-eclinterp
+#CONF_OPT_ECL = --enable-eclinterp
 
 # PYTHON
 # Uncomment this when you want to include the Python interface.
@@ -405,7 +405,7 @@ CONF_OPT_ECL = --enable-eclinterp
 
 # LUA
 # Uncomment this when you want to include the Lua interface.
-CONF_OPT_LUA = --enable-luainterp
+#CONF_OPT_LUA = --enable-luainterp
 # Lua installation dir (also in LUA_PREFIX environment variable)
 #CONF_OPT_LUA_PREFIX = --with-lua-prefix=/usr/local
 #CONF_OPT_LUA_PREFIX = --with-lua-prefix=/usr
