@@ -1,6 +1,12 @@
 ----------
 README of MacVim_extended
 ----------
+0. Quick start
+  % git clone git://github.com/wzvplala/macvim_extended.git
+  % cd macvim_extended
+  % ./buildmacvim.sh
+  % open src/MacVim/build/Release/MacVim.app
+
 1. What is this?
   This is a merge project of
     - MacVim          (http://repo.or.cz/w/MacVim.git)
@@ -42,11 +48,17 @@ README of MacVim_extended
     % xcodebuild
     % open build/Release/MacVim.app
 
-" vim: set helplang=enfenc=utf-8 sw=2 et:
+" vim: set helplang=en fenc=utf-8 sw=2 et:
 ----------
 
 
 ----------
+0. Quick start
+  % git clone git://github.com/wzvplala/macvim_extended.git
+  % cd macvim_extended
+  % ./buildmacvim.sh
+  % open src/MacVim/build/Release/MacVim.app
+
 1. これは何？
     - MacVim          (http://repo.or.cz/w/MacVim.git)
     - vim_extended    (http://repo.or.cz/w/vim_extended.git)
