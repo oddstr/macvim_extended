@@ -36,3 +36,10 @@ src/types.vim
 src/vim
 src/xxd/xxd
 src/xxd/xxd.dSYM
+src/cmigemo/build/
+src/cmigemo/dict/SKK-JISYO.L
+src/cmigemo/dict/base-dict
+src/cmigemo/dict/euc-jp.d/
+src/cmigemo/dict/migemo-dict
+src/cmigemo/dict/utf-8.d/
+src/cmigemo/dist/
