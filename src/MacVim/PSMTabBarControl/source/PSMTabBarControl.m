@@ -147,7 +147,7 @@
         [_addTabButton setNeedsDisplay:YES];
     }
 }
-    
+
 - (id)initWithFrame:(NSRect)frame
 {
     self = [super initWithFrame:frame];
@@ -379,6 +379,22 @@
 {
     return _overflowPopUpButton;
 }
+
+#pragma mark -
+#pragma mark Tool tips
+
+- (void)setToolTip:(NSString *)value forTabViewItem:(NSTabViewItem *)tvi
+{
+    int i, cellCount = [_cells count];
+    for (i = 0; i < cellCount; i++) {
+        PSMTabBarCell *cell = [_cells objectAtIndex:i];
+        if ([cell representedObject] == tvi)
+            [cell setToolTip:value];
+    }
+
+    [self update];
+}
+
 
 #pragma mark -
 #pragma mark Functionality
@@ -746,6 +762,7 @@
     NSRect cellRect = [self genericCellRect];
     for(i = 0; i < cellCount; i++){
         PSMTabBarCell *cell = [_cells objectAtIndex:i];
+        NSTabViewItem *tvi = [cell representedObject];
         int tabState = 0;
         if (i < numberOfVisibleCells) {
             // set cell frame
@@ -764,12 +781,13 @@
             [cell setCellTrackingTag:tag];
             [cell setEnabled:YES];
 
-            // add tool tip if label will be truncated
-            if ([cell desiredWidthOfCell] > NSWidth([cell frame]))
-                [self addToolTipRect:cellRect owner:[cell stringValue] userData:NULL];
+            // add tool tip
+            NSString *tt = [cell toolTip];
+            if (tt && [tt length] > 0)
+                [self addToolTipRect:cellRect owner:tt userData:NULL];
 
             // selected? set tab states...
-            if([[cell representedObject] isEqualTo:[tabView selectedTabViewItem]]){
+            if([tvi isEqualTo:[tabView selectedTabViewItem]]){
                 [cell setState:NSOnState];
                 tabState |= PSMTab_SelectedMask;
                 // previous cell
@@ -818,13 +836,13 @@
             }
             menuItem = [[[NSMenuItem alloc] initWithTitle:[[cell attributedStringValue] string] action:@selector(overflowMenuAction:) keyEquivalent:@""] autorelease];
             [menuItem setTarget:self];
-            [menuItem setRepresentedObject:[cell representedObject]];
+            [menuItem setRepresentedObject:tvi];
             [cell setIsInOverflowMenu:YES];
             [[cell indicator] removeFromSuperview];
-            if ([[cell representedObject] isEqualTo:[tabView selectedTabViewItem]])
+            if ([tvi isEqualTo:[tabView selectedTabViewItem]])
                 [menuItem setState:NSOnState];
             if([cell hasIcon])
-                [menuItem setImage:[[[[cell representedObject] identifier] content] icon]];
+                [menuItem setImage:[[[tvi identifier] content] icon]];
             if([cell count] > 0)
                 [menuItem setTitle:[[menuItem title] stringByAppendingFormat:@" (%d)",[cell count]]];
             [overflowMenu addItem:menuItem];

@@ -45,7 +45,8 @@ ml_get errors after reloading a file that was overwritten with ":silent! w!
 tabs.  Patch by Yukihiro Nakadaira, 2008 Nov 23.
 New version: 2008 Dec 4, Dec 5.
 
-Patch to set v:prevcount properly. (Ben Schmidt, 2008 Aug 20)
+netrw: dragging status line causes selection of entry.  Should check row
+number to be below last visible line.
 
 After doing "su" $HOME can be the old user's home, thus ~root/file is not
 correct.  Don't use it in the swap file.
@@ -83,27 +84,6 @@ Runtime files for Clojure. (Toralf Wittner, 2008 Jun 25)
 MS-Windows: editing the first, empty buffer, 'ffs' set to "unix,dos", ":enew"
 doesn't set 'ff' to "unix".  (Ben Fritz, 2008 Dec 5) Reusing the old buffer
 probably causes this.
-
-Patch to make synIDattr() support "guisp". (Matt Wozniski, 2008 Aug 15)
-
-Screen update bug when using "." on a Visual block and the last line doesn't
-change. (Moritz Orbach, 2008 Oct 25, with patch)
-
-Patch for 2html.vim to avoid "&amp;nbsp;". (Markus Heidelberg, 2008 Jul 19)
-
-Add MD5 and MD5SUMS to the ftp directories.
-
-netrw: dragging status line causes selection of entry.  Should check row
-number to be below last visible line.
-
-Have a look at patch for utf-8 line breaking. (Yongwei Wu, 2008 Mar 1, Mar 23)
-
-Update src/testdir/main.aap.
-
-Tag stack not returning to right tag with ":tag". (Erik Falor, 2008 Nov 5)
-Patch 2008 Nov 12.
-
-Runtime files for Clojure. (Toralf Wittner, 2008 Jun 25)
 
 Crash with dragn-n-drop of file combined with netrw (Marius Gedminas, 2008 Jun
 11)  I can't reproduce it.  It's probably caused by a handle_drop() call
@@ -378,12 +358,6 @@ Netbeans problem.  Use "nc -l 127.0.0.1 55555" for the server, then run gvim
 with "gvim -nb:localhost:55555:foo".  From nc do: '1:editFile!0 "foo"'.  Then
 go to Insert mode and add a few lines.  Then backspacing every other time
 moves the cursor instead of deleting. (Chris Kaiser, 2007 Sep 25)
-
-When 'bomb' is changed the window title is updated to show/hide a "+", but the
-tab page label isn't. (Patrick Texier, 2008 Jun 24)
-
-When using ":saveas bar.c" the tab label isn't updated right away.
-(Francois Ingelrest, 2008 Nov 12)
 
 When 'bomb' is changed the window title is updated to show/hide a "+", but the
 tab page label isn't. (Patrick Texier, 2008 Jun 24)
