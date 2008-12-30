@@ -19,6 +19,7 @@ README of MacVim_extended
     - kaoriya/*      : numerous patches by kaoriya
     - kaoriya/master : merge branch of all kaoriya branches
     - gdb            : integrated gdb interface
+    - with-cmigemo   : contains cmigemo source tree
 
 3. How to build
   If you don't have git, you can build from official source,
@@ -78,6 +79,7 @@ README of MacVim_extended
       - win32_specific : mac には無関係なもの。masterには入ってません
     - kaoriya/master : 全ての香り屋パッチ統合版。
     - gdb            : gdb インターフェイス組み込みブランチ。
+    - with-cmigemo   : cmigemo ソース同梱。
 
 3. どうやったら動く？
   必要なもの： git, xcode
