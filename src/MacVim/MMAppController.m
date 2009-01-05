@@ -162,6 +162,7 @@ fsEventCallback(ConstFSEventStreamRef streamRef,
         [NSNumber numberWithInt:64],    MMTabMinWidthKey,
         [NSNumber numberWithInt:6*64],  MMTabMaxWidthKey,
         [NSNumber numberWithInt:132],   MMTabOptimumWidthKey,
+        [NSNumber numberWithBool:YES],  MMShowAddTabButtonKey,
         [NSNumber numberWithInt:2],     MMTextInsetLeftKey,
         [NSNumber numberWithInt:1],     MMTextInsetRightKey,
         [NSNumber numberWithInt:1],     MMTextInsetTopKey,
@@ -807,7 +808,7 @@ fsEventCallback(ConstFSEventStreamRef streamRef,
         NSString *input = [NSString stringWithFormat:@"<C-\\><C-N>"
                 ":let oldswb=&swb|let &swb=\"useopen,usetab\"|"
                 "tab sb %@|let &swb=oldswb|unl oldswb|"
-                "cal foreground()|redr|f<CR>", firstFile];
+                "cal foreground()<CR>", firstFile];
 
         [firstController addVimInput:input];
 
@@ -1077,7 +1078,7 @@ fsEventCallback(ConstFSEventStreamRef streamRef,
         // MacVim would steal the focus if another app was activated while the
         // untitled window was loading.
         if (!args || args != [NSNull null])
-            [NSApp activateIgnoringOtherApps:YES];
+            [self activateWhenNextWindowOpens];
 
         if (args)
             [pidArguments removeObjectForKey:pidKey];
