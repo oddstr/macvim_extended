@@ -4103,35 +4103,159 @@ dis_msg(p, skip_esc)
 }
 
 /*
- * join 'count' lines (minimal 2), including u_save()
+ * Join 'count' lines (minimal 2) at cursor position, including u_save()
+ * "redraw" is TRUE when the screen should be updated.
+ * Caller must have setup for undo.
+ *
+ * return FAIL for failure, OK otherwise
  */
-    void
+    int
 do_do_join(count, insert_space)
     long    count;
     int	    insert_space;
 {
-    colnr_T	col = MAXCOL;
+    char_u	*curr, *cend;
+    char_u	*newp;
+    char_u	*spaces;	/* array of spaces added between lines */
+    int		endcurr1, endcurr2;
+    int		currsize;	/* size of the current line */
+    int		sumsize=0;	/* size of the new (big) line */
+    linenr_T	t;
+    colnr_T	col = 0;
 
     if (u_save((linenr_T)(curwin->w_cursor.lnum - 1),
-		    (linenr_T)(curwin->w_cursor.lnum + count)) == FAIL)
-	return;
+	    (linenr_T)(curwin->w_cursor.lnum + count)) == FAIL)
+	return FAIL;
 
-    while (--count > 0)
+    /*
+     * Allocate the local array of space strings lengths.
+     * We will use it to pre-compute the length of the new line
+     * and the proper placement of each original line in the new one.
+     */
+    spaces=lalloc_clear((long_u)count, TRUE);
+    if (spaces == NUL)
+	return FAIL;
+
+    /*
+     * Don't move anything, just compute the final line length
+     * and setup the array of space strings lengths
+     */
+    for (t = 0; t < count; t++)
     {
-	line_breakcheck();
-	if (got_int || do_join(insert_space) == FAIL)
+	curr = ml_get((linenr_T)(curwin->w_cursor.lnum + t));
+	if (insert_space && t > 0)
 	{
-	    beep_flush();
-	    break;
+	    curr = skipwhite(curr);
+	    if (*curr != ')' && currsize != 0 && endcurr1 != TAB
+#ifdef FEAT_MBYTE
+		    && (!has_format_option(FO_MBYTE_JOIN)
+			|| (mb_ptr2char(curr) < 0x100 && endcurr1 < 0x100))
+		    && (!has_format_option(FO_MBYTE_JOIN2)
+			|| mb_ptr2char(curr) < 0x100 || endcurr1 < 0x100)
+#endif
+	       )
+	    {
+		/* don't add a space if the line is ending in a space */
+		if (endcurr1 == ' ')
+		    endcurr1 = endcurr2;
+		else
+		    ++spaces[t];
+		/* extra space when 'joinspaces' set and line ends in '.' */
+		if (       p_js
+			&& (endcurr1 == '.'
+			    || (vim_strchr(p_cpo, CPO_JOINSP) == NULL
+				&& (endcurr1 == '?' || endcurr1 == '!'))))
+		    ++spaces[t];
+	    }
 	}
-	if (col == MAXCOL && vim_strchr(p_cpo, CPO_JOINCOL) != NULL)
-	    col = curwin->w_cursor.col;
+	currsize = (int)STRLEN(curr);
+	sumsize += currsize + spaces[t];
+	endcurr1 = endcurr2 = NUL;
+	if (insert_space && currsize > 0)
+	{
+#ifdef FEAT_MBYTE
+	    if (has_mbyte)
+	    {
+		cend = curr + currsize;
+		mb_ptr_back(curr, cend);
+		endcurr1 = (*mb_ptr2char)(cend);
+		if (cend > curr)
+		{
+		    mb_ptr_back(curr, cend);
+		    endcurr2 = (*mb_ptr2char)(cend);
+		}
+	    }
+	    else
+#endif
+	    {
+		endcurr1 = *(curr + currsize - 1);
+		if (currsize > 1)
+		    endcurr2 = *(curr + currsize - 2);
+	    }
+	}
     }
 
-    /* Vi compatible: use the column of the first join */
-    if (col != MAXCOL && vim_strchr(p_cpo, CPO_JOINCOL) != NULL)
-	curwin->w_cursor.col = col;
+    /* store the column position before last line */
+    col = sumsize - currsize - spaces[count - 1];
 
+    /* Allocate the space for the new line */
+    newp = alloc_check((unsigned)(sumsize + 1));
+    cend = newp + sumsize;
+    *cend = 0;
+
+    /*
+     * Move affected lines to the new long one.
+     *
+     * Move marks from each deleted line to the joined line, adjusting the
+     * column.  This is not Vi compatible, but Vi deletes the marks, thus that
+     * should not really be a problem.
+     */
+    for (t = count - 1;; t--)
+    {
+	cend -= (currsize + spaces[t]);
+	mch_memmove(cend + spaces[t], curr, (size_t)currsize);
+	if (spaces[t])
+	    copy_spaces(cend, (size_t)(spaces[t]));
+	mark_col_adjust(curwin->w_cursor.lnum + t, (colnr_T)0, (linenr_T)-t,
+				 (long)(cend - newp + spaces[t]));
+	if (t == 0)
+	    break;
+	curr = ml_get((linenr_T)(curwin->w_cursor.lnum + t - 1));
+	if (insert_space && t > 1)
+	    curr = skipwhite(curr);
+	currsize = (int)STRLEN(curr);
+    }
+    mch_memmove(cend, curr, (size_t)currsize);
+    ml_replace(curwin->w_cursor.lnum, newp, FALSE);
+
+    /* Only report the change in the first line here, del_lines() will report
+     * the deleted line. */
+    changed_lines(curwin->w_cursor.lnum, currsize,
+					       curwin->w_cursor.lnum + 1, 0L);
+
+    /*
+     * Delete following lines. To do this we move the cursor there
+     * briefly, and then move it back. After del_lines() the cursor may
+     * have moved up (last line deleted), so the current lnum is kept in t.
+     */
+    t = curwin->w_cursor.lnum;
+    ++curwin->w_cursor.lnum;
+    del_lines(count - 1, FALSE);
+    curwin->w_cursor.lnum = t;
+
+    /*
+     * Cursor column setting
+     * Vi compatible: use the column of the first join
+     * vim: use the column of the last join
+     */
+    curwin->w_cursor.col =
+	(vim_strchr(p_cpo, CPO_JOINCOL) != NULL ? currsize : col);
+    check_cursor_col();
+
+#ifdef FEAT_VIRTUALEDIT
+    curwin->w_cursor.coladd = 0;
+#endif
+    curwin->w_set_curswant = TRUE;
 #if 0
     /*
      * Need to update the screen if the line where the cursor is became too
@@ -4139,6 +4263,10 @@ do_do_join(count, insert_space)
      */
     update_topline_redraw();
 #endif
+
+    /* free the local array of space strings lengths and return */
+    vim_free(spaces);
+    return OK;
 }
 
 /*
@@ -4152,123 +4280,7 @@ do_do_join(count, insert_space)
 do_join(insert_space)
     int		insert_space;
 {
-    char_u	*curr;
-    char_u	*next, *next_start;
-    char_u	*newp;
-    int		endcurr1, endcurr2;
-    int		currsize;	/* size of the current line */
-    int		nextsize;	/* size of the next line */
-    int		spaces;		/* number of spaces to insert */
-    linenr_T	t;
-
-    if (curwin->w_cursor.lnum == curbuf->b_ml.ml_line_count)
-	return FAIL;		/* can't join on last line */
-
-    curr = ml_get_curline();
-    currsize = (int)STRLEN(curr);
-    endcurr1 = endcurr2 = NUL;
-    if (insert_space && currsize > 0)
-    {
-#ifdef FEAT_MBYTE
-	if (has_mbyte)
-	{
-	    next = curr + currsize;
-	    mb_ptr_back(curr, next);
-	    endcurr1 = (*mb_ptr2char)(next);
-	    if (next > curr)
-	    {
-		mb_ptr_back(curr, next);
-		endcurr2 = (*mb_ptr2char)(next);
-	    }
-	}
-	else
-#endif
-	{
-	    endcurr1 = *(curr + currsize - 1);
-	    if (currsize > 1)
-		endcurr2 = *(curr + currsize - 2);
-	}
-    }
-
-    next = next_start = ml_get((linenr_T)(curwin->w_cursor.lnum + 1));
-    spaces = 0;
-    if (insert_space)
-    {
-	next = skipwhite(next);
-	if (*next != ')' && currsize != 0 && endcurr1 != TAB
-#ifdef FEAT_MBYTE
-		&& (!has_format_option(FO_MBYTE_JOIN)
-			|| (mb_ptr2char(next) < 0x100 && endcurr1 < 0x100))
-		&& (!has_format_option(FO_MBYTE_JOIN2)
-			|| mb_ptr2char(next) < 0x100 || endcurr1 < 0x100)
-#endif
-		)
-	{
-	    /* don't add a space if the line is ending in a space */
-	    if (endcurr1 == ' ')
-		endcurr1 = endcurr2;
-	    else
-		++spaces;
-	    /* extra space when 'joinspaces' set and line ends in '.' */
-	    if (       p_js
-		    && (endcurr1 == '.'
-			|| (vim_strchr(p_cpo, CPO_JOINSP) == NULL
-			    && (endcurr1 == '?' || endcurr1 == '!'))))
-		++spaces;
-	}
-    }
-    nextsize = (int)STRLEN(next);
-
-    newp = alloc_check((unsigned)(currsize + nextsize + spaces + 1));
-    if (newp == NULL)
-	return FAIL;
-
-    /*
-     * Insert the next line first, because we already have that pointer.
-     * Curr has to be obtained again, because getting next will have
-     * invalidated it.
-     */
-    mch_memmove(newp + currsize + spaces, next, (size_t)(nextsize + 1));
-
-    curr = ml_get_curline();
-    mch_memmove(newp, curr, (size_t)currsize);
-
-    copy_spaces(newp + currsize, (size_t)spaces);
-
-    ml_replace(curwin->w_cursor.lnum, newp, FALSE);
-
-    /* Only report the change in the first line here, del_lines() will report
-     * the deleted line. */
-    changed_lines(curwin->w_cursor.lnum, currsize,
-					       curwin->w_cursor.lnum + 1, 0L);
-
-    /*
-     * Delete the following line. To do this we move the cursor there
-     * briefly, and then move it back. After del_lines() the cursor may
-     * have moved up (last line deleted), so the current lnum is kept in t.
-     *
-     * Move marks from the deleted line to the joined line, adjusting the
-     * column.  This is not Vi compatible, but Vi deletes the marks, thus that
-     * should not really be a problem.
-     */
-    t = curwin->w_cursor.lnum;
-    mark_col_adjust(t + 1, (colnr_T)0, (linenr_T)-1,
-			     (long)(currsize + spaces - (next - next_start)));
-    ++curwin->w_cursor.lnum;
-    del_lines(1L, FALSE);
-    curwin->w_cursor.lnum = t;
-
-    /*
-     * go to first character of the joined line
-     */
-    curwin->w_cursor.col = currsize;
-    check_cursor_col();
-#ifdef FEAT_VIRTUALEDIT
-    curwin->w_cursor.coladd = 0;
-#endif
-    curwin->w_set_curswant = TRUE;
-
-    return OK;
+    return do_do_join(2, insert_space);
 }
 
 #ifdef FEAT_COMMENTS
