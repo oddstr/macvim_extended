@@ -1919,7 +1919,7 @@ op_delete(oap)
 							    );
 	    curwin->w_cursor = curpos;		/* restore curwin->w_cursor */
 
-	    (void)do_join(FALSE);
+	    (void)do_join(2,FALSE);
 	}
     }
 
@@ -4110,7 +4110,7 @@ dis_msg(p, skip_esc)
  * return FAIL for failure, OK otherwise
  */
     int
-do_do_join(count, insert_space)
+do_join(count, insert_space)
     long    count;
     int	    insert_space;
 {
@@ -4267,20 +4267,6 @@ do_do_join(count, insert_space)
     /* free the local array of space strings lengths and return */
     vim_free(spaces);
     return OK;
-}
-
-/*
- * Join two lines at the cursor position.
- * "redraw" is TRUE when the screen should be updated.
- * Caller must have setup for undo.
- *
- * return FAIL for failure, OK otherwise
- */
-    int
-do_join(insert_space)
-    int		insert_space;
-{
-    return do_do_join(2, insert_space);
 }
 
 #ifdef FEAT_COMMENTS
@@ -4716,7 +4702,7 @@ format_lines(line_count, avoid_fex)
 						      (long)-next_leader_len);
 #endif
 		curwin->w_cursor.lnum--;
-		if (do_join(TRUE) == FAIL)
+		if (do_join(2,TRUE) == FAIL)
 		{
 		    beep_flush();
 		    break;
