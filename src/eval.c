@@ -7945,9 +7945,9 @@ get_func_tv(name, len, rettv, arg, firstline, lastline, doesrange,
     else if (!aborting())
     {
 	if (argcount == MAX_FUNC_ARGS)
-	    emsg_funcname("E740: Too many arguments for function %s", name);
+	    emsg_funcname(N_("E740: Too many arguments for function %s"), name);
 	else
-	    emsg_funcname("E116: Invalid arguments for function %s", name);
+	    emsg_funcname(N_("E116: Invalid arguments for function %s"), name);
     }
 
     while (--argcount >= 0)
@@ -8180,6 +8180,7 @@ call_func(name, len, rettv, argcount, argvars, firstline, lastline,
 
 /*
  * Give an error message with a function name.  Handle <SNR> things.
+ * "ermsg" is to be passed without translation, use N_() instead of _().
  */
     static void
 emsg_funcname(ermsg, name)
@@ -20070,7 +20071,7 @@ ex_function(eap)
 		}
 	    }
 	    else
-		emsg_funcname("E123: Undefined function: %s", name);
+		emsg_funcname(N_("E123: Undefined function: %s"), name);
 	}
 	goto ret_free;
     }
@@ -20114,7 +20115,7 @@ ex_function(eap)
 						      : eval_isnamec(arg[j])))
 		++j;
 	    if (arg[j] != NUL)
-		emsg_funcname(_(e_invarg2), arg);
+		emsg_funcname(e_invarg2, arg);
 	}
     }
 
@@ -20386,7 +20387,7 @@ ex_function(eap)
 	v = find_var(name, &ht);
 	if (v != NULL && v->di_tv.v_type == VAR_FUNC)
 	{
-	    emsg_funcname("E707: Function name conflicts with variable: %s",
+	    emsg_funcname(N_("E707: Function name conflicts with variable: %s"),
 									name);
 	    goto erret;
 	}
@@ -20401,7 +20402,7 @@ ex_function(eap)
 	    }
 	    if (fp->uf_calls > 0)
 	    {
-		emsg_funcname("E127: Cannot redefine function %s: It is in use",
+		emsg_funcname(N_("E127: Cannot redefine function %s: It is in use"),
 									name);
 		goto erret;
 	    }
@@ -21680,7 +21681,7 @@ call_user_func(fp, argcount, argvars, rettv, firstline, lastline, selfdict)
 
 /*
  * Return TRUE if items in "fc" do not have "copyID".  That means they are not
- * referenced from anywyere.
+ * referenced from anywhere.
  */
     static int
 can_free_funccal(fc, copyID)
