@@ -4138,11 +4138,23 @@ do_set(arg, opt_flags)
 					   && options[opt_idx].var == VAR_WIN)
 		goto skip;
 
-	    /* Disallow changing some options from modelines */
-	    if ((opt_flags & OPT_MODELINE) && (flags & P_SECURE))
+	    /* Disallow changing some options from modelines. */
+	    if (opt_flags & OPT_MODELINE)
 	    {
-		errmsg = (char_u *)_("E520: Not allowed in a modeline");
-		goto skip;
+		if (flags & P_SECURE)
+		{
+		    errmsg = (char_u *)_("E520: Not allowed in a modeline");
+		    goto skip;
+		}
+#ifdef FEAT_DIFF
+		/* In diff mode some options are overruled.  This avoids that
+		 * 'foldmethod' becomes "marker" instead of "diff" and that
+		 * "wrap" gets set. */
+		if (curwin->w_p_diff
+			&& (options[opt_idx].indir == PV_FDM
+			    || options[opt_idx].indir == PV_WRAP))
+		    goto skip;
+#endif
 	    }
 
 #ifdef HAVE_SANDBOX
@@ -5295,6 +5307,21 @@ insecure_flag(opt_idx, opt_flags)
 }
 #endif
 
+#ifdef FEAT_TITLE
+static void redraw_titles __ARGS((void));
+
+/*
+ * Redraw the window title and/or tab page text later.
+ */
+static void redraw_titles()
+{
+    need_maketitle = TRUE;
+# ifdef FEAT_WINDOWS
+    redraw_tabline = TRUE;
+# endif
+}
+#endif
+
 /*
  * Set a string option to a new value (without checking the effect).
  * The string is copied into allocated memory.
@@ -5699,7 +5726,7 @@ did_set_string_option(opt_idx, varp, new_value_alloced, oldval, errbuf,
 	    {
 # ifdef FEAT_TITLE
 		/* May show a "+" in the title now. */
-		need_maketitle = TRUE;
+		redraw_titles();
 # endif
 		/* Add 'fileencoding' to the swap file. */
 		ml_setflags(curbuf);
@@ -5718,7 +5745,7 @@ did_set_string_option(opt_idx, varp, new_value_alloced, oldval, errbuf,
 	    {
 		errmsg = mb_init();
 # ifdef FEAT_TITLE
-		need_maketitle = TRUE;
+		redraw_titles();
 # endif
 	    }
 	}
@@ -5827,7 +5854,7 @@ did_set_string_option(opt_idx, varp, new_value_alloced, oldval, errbuf,
 	    else
 		curbuf->b_p_tx = FALSE;
 #ifdef FEAT_TITLE
-	    need_maketitle = TRUE;
+	    redraw_titles();
 #endif
 	    /* update flag in swap file */
 	    ml_setflags(curbuf);
@@ -7236,22 +7263,28 @@ set_bool_option(opt_idx, varp, value, opt_flags)
 	    curbuf->b_did_warn = FALSE;
 
 #ifdef FEAT_TITLE
-	need_maketitle = TRUE;
+	redraw_titles();
 #endif
     }
 
 #ifdef FEAT_TITLE
     /* when 'modifiable' is changed, redraw the window title */
     else if ((int *)varp == &curbuf->b_p_ma)
-	need_maketitle = TRUE;
+    {
+	redraw_titles();
+    }
     /* when 'endofline' is changed, redraw the window title */
     else if ((int *)varp == &curbuf->b_p_eol)
-	need_maketitle = TRUE;
-#ifdef FEAT_MBYTE
-    /* when 'bomb' is changed, redraw the window title */
+    {
+	redraw_titles();
+    }
+# ifdef FEAT_MBYTE
+    /* when 'bomb' is changed, redraw the window title and tab page text */
     else if ((int *)varp == &curbuf->b_p_bomb)
-	need_maketitle = TRUE;
-#endif
+    {
+	redraw_titles();
+    }
+# endif
 #endif
 
     /* when 'bin' is set also set some other options */
@@ -7259,7 +7292,7 @@ set_bool_option(opt_idx, varp, value, opt_flags)
     {
 	set_options_bin(old_value, curbuf->b_p_bin, opt_flags);
 #ifdef FEAT_TITLE
-	need_maketitle = TRUE;
+	redraw_titles();
 #endif
     }
 
@@ -7410,7 +7443,7 @@ set_bool_option(opt_idx, varp, value, opt_flags)
 	if (!value)
 	    save_file_ff(curbuf);	/* Buffer is unchanged */
 #ifdef FEAT_TITLE
-	need_maketitle = TRUE;
+	redraw_titles();
 #endif
 #ifdef FEAT_AUTOCMD
 	modified_was_set = value;
@@ -7852,7 +7885,7 @@ set_num_option(opt_idx, varp, value, errbuf, errbuflen, opt_flags)
 	newFoldLevel();
     }
 
-    /* 'foldminlevel' */
+    /* 'foldminlines' */
     else if (pp == &curwin->w_p_fml)
     {
 	foldUpdateAll(curwin);
