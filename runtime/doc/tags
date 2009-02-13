@@ -4533,6 +4533,7 @@ abandon	editing.txt	/*abandon*
 abbreviations	map.txt	/*abbreviations*
 abel.vim	syntax.txt	/*abel.vim*
 abs()	eval.txt	/*abs()*
+acos()	eval.txt	/*acos()*
 active-buffer	windows.txt	/*active-buffer*
 ada#Create_Tags()	ft_ada.txt	/*ada#Create_Tags()*
 ada#Jump_Tag()	ft_ada.txt	/*ada#Jump_Tag()*
@@ -4596,11 +4597,13 @@ arglist-quit	usr_07.txt	/*arglist-quit*
 argument-list	editing.txt	/*argument-list*
 argv()	eval.txt	/*argv()*
 as	motion.txt	/*as*
+asin()	eval.txt	/*asin()*
 asm.vim	syntax.txt	/*asm.vim*
 asm68k	syntax.txt	/*asm68k*
 asmh8300.vim	syntax.txt	/*asmh8300.vim*
 at	motion.txt	/*at*
 atan()	eval.txt	/*atan()*
+atan2()	eval.txt	/*atan2()*
 athena-intellimouse	gui.txt	/*athena-intellimouse*
 attr-list	syntax.txt	/*attr-list*
 author	intro.txt	/*author*
@@ -4920,6 +4923,7 @@ copy-move	change.txt	/*copy-move*
 copying	uganda.txt	/*copying*
 copyright	uganda.txt	/*copyright*
 cos()	eval.txt	/*cos()*
+cosh()	eval.txt	/*cosh()*
 count	intro.txt	/*count*
 count()	eval.txt	/*count()*
 count-bytes	tips.txt	/*count-bytes*
@@ -5239,6 +5243,7 @@ executable()	eval.txt	/*executable()*
 execute-menus	gui.txt	/*execute-menus*
 exim	starting.txt	/*exim*
 exists()	eval.txt	/*exists()*
+exp()	eval.txt	/*exp()*
 expand()	eval.txt	/*expand()*
 expand-env	options.txt	/*expand-env*
 expand-environment-var	options.txt	/*expand-environment-var*
@@ -5368,6 +5373,7 @@ float2nr()	eval.txt	/*float2nr()*
 floating-point-format	eval.txt	/*floating-point-format*
 floating-point-precision	eval.txt	/*floating-point-precision*
 floor()	eval.txt	/*floor()*
+fmod()	eval.txt	/*fmod()*
 fname_diff-variable	eval.txt	/*fname_diff-variable*
 fname_in-variable	eval.txt	/*fname_in-variable*
 fname_new-variable	eval.txt	/*fname_new-variable*
@@ -6314,6 +6320,7 @@ locale-name	mbyte.txt	/*locale-name*
 localtime()	eval.txt	/*localtime()*
 location-list	quickfix.txt	/*location-list*
 location-list-window	quickfix.txt	/*location-list-window*
+log()	eval.txt	/*log()*
 log10()	eval.txt	/*log10()*
 long-lines	version5.txt	/*long-lines*
 lowercase	change.txt	/*lowercase*
@@ -7221,6 +7228,7 @@ simplify()	eval.txt	/*simplify()*
 simulated-command	vi_diff.txt	/*simulated-command*
 sin()	eval.txt	/*sin()*
 single-repeat	repeat.txt	/*single-repeat*
+sinh()	eval.txt	/*sinh()*
 skeleton	autocmd.txt	/*skeleton*
 slice	eval.txt	/*slice*
 slow-fast-terminal	term.txt	/*slow-fast-terminal*
@@ -7651,6 +7659,8 @@ tags-file-format	tagsrch.txt	/*tags-file-format*
 tags-option	tagsrch.txt	/*tags-option*
 tagsrch.txt	tagsrch.txt	/*tagsrch.txt*
 tagstack	tagsrch.txt	/*tagstack*
+tan()	eval.txt	/*tan()*
+tanh()	eval.txt	/*tanh()*
 tar	pi_tar.txt	/*tar*
 tar-contents	pi_tar.txt	/*tar-contents*
 tar-copyright	pi_tar.txt	/*tar-copyright*
