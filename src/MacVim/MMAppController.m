@@ -341,14 +341,17 @@ fsEventCallback(ConstFSEventStreamRef streamRef,
     // The user default MMUntitledWindow can be set to control whether an
     // untitled window should open on 'Open' and 'Reopen' events.
     int untitledWindowFlag = [ud integerForKey:MMUntitledWindowKey];
-    if ([desc eventID] == kAEOpenApplication
-            && (untitledWindowFlag & MMUntitledWindowOnOpen) == 0)
+
+    BOOL isAppOpenEvent = [desc eventID] == kAEOpenApplication;
+    if (isAppOpenEvent && (untitledWindowFlag & MMUntitledWindowOnOpen) == 0)
         return NO;
-    else if ([desc eventID] == kAEReopenApplication
+
+    BOOL isAppReopenEvent = [desc eventID] == kAEReopenApplication;
+    if (isAppReopenEvent
             && (untitledWindowFlag & MMUntitledWindowOnReopen) == 0)
         return NO;
 
-    // When a process is started from the command line, the 'Open' event will
+    // When a process is started from the command line, the 'Open' event may
     // contain a parameter to surpress the opening of an untitled window.
     desc = [desc paramDescriptorForKeyword:keyAEPropData];
     desc = [desc paramDescriptorForKeyword:keyMMUntitledWindow];
@@ -361,8 +364,12 @@ fsEventCallback(ConstFSEventStreamRef streamRef,
         return NO;
 
     // NOTE!  This way it possible to start the app with the command-line
-    // argument '-nowindow yes' and no window will be opened by default.
-    return ![ud boolForKey:MMNoWindowKey];
+    // argument '-nowindow yes' and no window will be opened by default but
+    // this argument will only be heeded when the application is opening.
+    if (isAppOpenEvent && [ud boolForKey:MMNoWindowKey] == YES)
+        return NO;
+
+    return YES;
 }
 
 - (BOOL)applicationOpenUntitledFile:(NSApplication *)sender
@@ -1324,10 +1331,21 @@ fsEventCallback(ConstFSEventStreamRef streamRef,
     }
 
     if (-1 != pid) {
-        // Add a null argument to the pidArguments dictionary.  This is later
-        // used to detect that a process without arguments is being launched.
-        [pidArguments setObject:[NSNull null]
-                         forKey:[NSNumber numberWithInt:pid]];
+        // The 'pidArguments' dictionary keeps arguments to be passed to the
+        // process when it connects (this is in contrast to arguments which are
+        // passed on the command line, like '-f' and '-g').
+        // If this method is called with nil arguments we take this as a hint
+        // that this is an "untitled window" being launched and add a null
+        // object to the 'pidArguments' dictionary.  This way we can detect if
+        // an untitled window is being launched by looking for null objects in
+        // this dictionary.
+        // If this method is called with non-nil arguments then it is assumed
+        // that the caller takes care of adding items to 'pidArguments' as
+        // necessary (only some arguments are passed on connect, e.g. files to
+        // open).
+        if (!args)
+            [pidArguments setObject:[NSNull null]
+                             forKey:[NSNumber numberWithInt:pid]];
     } else {
         NSLog(@"WARNING: %s%@ failed (useLoginShell=%d)", _cmd, args,
                 useLoginShell);
